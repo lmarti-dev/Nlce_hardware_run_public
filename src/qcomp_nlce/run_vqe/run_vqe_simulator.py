@@ -1,16 +1,15 @@
+import numpy as np
+
 from qcomp_nlce.utils import (
-    get_tfim_ham,
-    get_hva_vqe,
     get_custom_vqe,
-    optimize_circuit,
     get_ground_energy,
+    get_hva_vqe,
+    get_tfim_ham,
+    optimize_circuit,
     save_optimized_vqe,
 )
-import numpy as np
-import matplotlib.pyplot as plt
 
-
-hamiltonian = get_tfim_ham(4, 1, 0.7, periodic=True)
+hamiltonian = get_tfim_ham(4, 1, 0.7, periodic=False)
 n_layers = int(np.floor(hamiltonian.num_qubits) / 2)
 
 circuit = get_hva_vqe(hamiltonian, n_layers=n_layers)
