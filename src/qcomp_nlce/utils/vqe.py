@@ -2,9 +2,11 @@ import numpy as np
 from pathlib import Path
 from qiskit import QuantumCircuit, qpy
 from qiskit.circuit import Parameter
-from uuid import uuid1
+from qiskit.circuit.library import PauliEvolutionGate
+from uuid import uuid4
 from qiskit.circuit.library import hamiltonian_variational_ansatz
 from qiskit.quantum_info import SparsePauliOp
+from qcomp_nlce.utils.hamiltonian import get_pauli_indices, pretty_pauli_str
 import os
 
 
@@ -12,8 +14,8 @@ def get_custom_vqe(n_qubits: int, n_layers: int) -> QuantumCircuit:
     circuit = QuantumCircuit(n_qubits)
     for _ in range(n_layers):
         for x in range(n_qubits):
-            param1 = Parameter(name=str(uuid1()))
-            param2 = Parameter(name=str(uuid1()))
+            param1 = Parameter(name=str(uuid4()))
+            param2 = Parameter(name=str(uuid4()))
             circuit.ry(param1, x)
             circuit.rx(param2, x)
         for x, y in zip(range(n_qubits - 1), range(1, n_qubits)):
@@ -59,5 +61,17 @@ def load_sim(dirname: str):
     return hamiltonian, circuit, weights, ground_energy
 
 
-def get_hva_vqe(hamiltonian: SparsePauliOp, n_layers: int) -> QuantumCircuit:
-    return hamiltonian_variational_ansatz(hamiltonian, n_layers)
+def get_hva_vqe(
+    hamiltonian: SparsePauliOp, n_layers: int, unique_weights: bool = False
+) -> QuantumCircuit:
+    if unique_weights:
+        circuit = QuantumCircuit(hamiltonian.num_qubits)
+        for layer in range(n_layers):
+            for term in hamiltonian:
+                p = term.paulis[0]
+                param = Parameter(f"l{layer}_{pretty_pauli_str(p)}")
+                circuit.append(PauliEvolutionGate(term, time=param), range(len(p)))
+
+    else:
+        circuit = hamiltonian_variational_ansatz(hamiltonian, n_layers)
+    return circuit

@@ -20,7 +20,9 @@ def optimize_circuit(circuit: QuantumCircuit, hamiltonian: SparsePauliOp) -> lis
     xks = []
 
     def callback(xk: np.ndarray, *args):
-        energy_values.append(fun(xk=xk))
+        e = fun(xk=xk)
+        print(e, end="\r")
+        energy_values.append(e)
         xks.append(xk)
 
     def fun(xk: np.ndarray):
@@ -28,6 +30,19 @@ def optimize_circuit(circuit: QuantumCircuit, hamiltonian: SparsePauliOp) -> lis
             circuit=circuit, observables=[hamiltonian], param_sweep=xk
         )
         return result.data.evs[0]
+
+    def jac(x: np.ndarray) -> np.ndarray:
+        out = np.zeros_like(x)
+        for ind in range(len(x)):
+            p = x.copy()
+            p[ind] += np.pi / 2
+            m = x.copy()
+            m[ind] -= np.pi / 2
+            res = estimate_observables(
+                circuit=circuit, observables=[hamiltonian], param_sweep=[p, m]
+            )
+            out[ind] = 0.5 * (res.data.evs[1] - res.data.evs[0])
+        return out
 
     minimize(
         fun=fun,
