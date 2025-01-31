@@ -105,6 +105,4 @@ if __name__ == "__main__":
         "nlce_hardware_run_small_system_hardware_run", dry_run=dry_run
     )
     run_on_ibmq = True
-    get_expectations_from_sources(edm, "tfim_3q_2l_hva", run_on_ibmq=run_on_ibmq)
-    edm.new_run()
-    get_expectations_from_sources(edm, "tfim_4q_2l_hva", run_on_ibmq=run_on_ibmq)
+    get_expectations_from_sources(edm, "tfim_5q_3l_hva", run_on_ibmq=run_on_ibmq)

@@ -1,7 +1,6 @@
 import numpy as np
 
 from qcomp_nlce.utils import (
-    get_custom_vqe,
     get_ground_energy,
     get_hva_vqe,
     get_tfim_ham,
@@ -10,7 +9,7 @@ from qcomp_nlce.utils import (
 )
 
 
-for n_qubits in (3, 4):
+for n_qubits in (3, 4, 5, 6):
     periodic = False
     hamiltonian = get_tfim_ham(n_qubits, 1, 0.7, periodic=periodic)
     n_layers = int(np.ceil(hamiltonian.num_qubits / 2))
