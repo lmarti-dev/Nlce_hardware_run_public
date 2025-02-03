@@ -8,9 +8,9 @@ from qcomp_nlce.utils import (
     load_sim,
     get_optimal_parameters,
 )
-import io
-from pathlib import Path
 from data_manager import ExperimentDataManager
+
+from qcomp_nlce.utils.hardware import get_token
 
 
 def get_expectations_from_sources(
@@ -46,13 +46,7 @@ def get_expectations_from_sources(
     ).data.evs
 
     if run_on_ibmq:
-        home = Path(__file__).parent
-        token_fpath = Path(home, "../files/token.dat")
-        token = io.open(
-            token_fpath,
-            "r",
-            encoding="utf8",
-        ).read()
+        token = get_token()
         service = QiskitRuntimeService(channel="ibm_quantum", token=token)
         real_backend = service.least_busy(
             simulator=False, operational=True, min_num_qubits=circuit.num_qubits

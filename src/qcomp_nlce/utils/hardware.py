@@ -1,8 +1,10 @@
+from pathlib import Path
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import EstimatorV2, RuntimeJob
+import io
 
 
 def backend_estimate(
@@ -22,3 +24,15 @@ def backend_estimate(
         [(isa_circuit, isa_observables, parameters)], precision=1 / np.sqrt(n_shots)
     )
     return job
+
+
+def get_token():
+    home = Path(__file__).parent
+    token_fpath = Path(home, "../files/token.dat")
+    token = io.open(
+        token_fpath,
+        "r",
+        encoding="utf8",
+    ).read()
+
+    return token
