@@ -1,5 +1,67 @@
 from qiskit.quantum_info import SparsePauliOp, Pauli
 from scipy.sparse.linalg import eigsh
+import numpy as np
+from typing import Union
+
+
+def binleftpad(integer: int, left_pad: int):
+    b = format(integer, "0{lp}b".format(lp=left_pad))
+    return b
+
+
+def to_bitstring(ind: int, n_qubits: int, right_to_left: bool = False) -> str:
+    if isinstance(ind, (int, np.integer)):
+        if n_qubits is None:
+            b = bin(ind)
+        else:
+            b = binleftpad(integer=ind, left_pad=n_qubits)
+    elif isinstance(ind, str):
+        b = ind
+    else:
+        raise ValueError(f"Expected ind to be int or str, got: {type(ind)}")
+    if "b" in b:
+        b = b.split("b")[1]
+    if right_to_left:
+        b = "".join(list(reversed(b)))
+
+    return b
+
+
+def index_bits(
+    a: Union[str, int], N: int = None, ones=True, right_to_left: bool = False
+) -> list:
+    """Takes a binary number and returns a list of indices where the bit is one (or zero)
+    Args:
+        a (binary number): The binary number whose ones or zeroes will be indexed
+        ones (bool): If true, index ones. If false, index zeroes
+    Returns:
+        list: List of indices where a is one (or zero)
+    """
+    if isinstance(a, int):
+        if N is None:
+            b = bin(a)
+        else:
+            b = binleftpad(integer=a, left_pad=N)
+    else:
+        b = a
+    if "b" in b:
+        b = b.split("b")[1]
+    if right_to_left:
+        b = list(reversed(b))
+    if ones:
+        return [idx for idx, v in enumerate(b) if int(v)]
+    elif not ones:
+        return [idx for idx, v in enumerate(b) if not int(v)]
+
+
+def from_bitstring(b: str, n_qubits: int, right_to_left: bool = False) -> int:
+    if "b" in b:
+        b = b.split("b")[1]
+    idx = index_bits(a=b, N=n_qubits, right_to_left=True)
+    if right_to_left:
+        return sum([2 ** (n_qubits - 1 - iii) for iii in idx])
+    else:
+        return sum([2**iii for iii in idx])
 
 
 def get_op_indices(op: SparsePauliOp) -> list:
@@ -45,3 +107,24 @@ def get_ground_energy(hamiltonian: SparsePauliOp) -> float:
 def pretty_pauli_str(p: Pauli) -> str:
     idx = get_pauli_indices(p)
     return "".join([f"{x}{y}" for x, y in zip(p[::-1][idx], idx)])
+
+
+def subspace_diagonalize(bitstrings: Union[list[int], list[str]], ham: SparsePauliOp):
+    if isinstance(bitstrings[0], str):
+        ind_list = [
+            from_bitstring(bx, len(bx), right_to_left=True) for bx in bitstrings
+        ]
+    else:
+        ind_list = [int(x) for x in bitstrings]
+
+    sparse_ham = ham.to_matrix(sparse=True)
+    n_samples = len(bitstrings)
+    sub_ham = np.zeros((n_samples, n_samples), dtype=complex)
+    for x in range(n_samples):
+        for y in range(x, len(bitstrings)):
+            ind_x = ind_list[x]
+            ind_y = ind_list[y]
+            sub_ham[x, y] = sparse_ham[ind_x, ind_y]
+    sub_ham += np.triu(sub_ham, k=1).T
+    ground_energy = np.min(np.linalg.eigvalsh(sub_ham))
+    return ground_energy

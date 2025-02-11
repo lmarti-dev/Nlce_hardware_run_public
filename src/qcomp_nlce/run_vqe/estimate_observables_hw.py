@@ -1,12 +1,12 @@
 import numpy as np
 from qiskit_ibm_runtime import QiskitRuntimeService
-from qiskit_ibm_runtime.fake_provider import FakeJakartaV2
 
 from qcomp_nlce.utils import (
     backend_estimate,
     estimate_observables,
     load_sim,
     get_optimal_parameters,
+    get_appropriate_fake_backend,
 )
 from data_manager import ExperimentDataManager
 
@@ -20,9 +20,8 @@ def get_expectations_from_sources(
     run_on_ibmq: bool = False,
     override_params: bool = False,
 ):
-
-    fake_backend = FakeJakartaV2()
     hamiltonian, circuit, weights, ground_energy = load_sim(dirname)
+    fake_backend = get_appropriate_fake_backend(circuit.num_qubits)
 
     def relerr(e):
         return np.abs(e - ground_energy) / np.abs(ground_energy)
@@ -94,9 +93,9 @@ def get_expectations_from_sources(
 
 
 if __name__ == "__main__":
-    dry_run = False
+    dry_run = True
     edm = ExperimentDataManager(
         "nlce_hardware_run_small_system_hardware_run", dry_run=dry_run
     )
-    run_on_ibmq = True
-    get_expectations_from_sources(edm, "tfim_5q_3l_hva", run_on_ibmq=run_on_ibmq)
+    run_on_ibmq = False
+    get_expectations_from_sources(edm, "tfim_8q_4l_hva", run_on_ibmq=run_on_ibmq)
