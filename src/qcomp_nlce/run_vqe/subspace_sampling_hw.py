@@ -72,7 +72,7 @@ def get_expectations_from_sources(
         real_unique_bitstring = get_unique_bitstrings(real_counts)
         real_bitstring_prop = len(real_unique_bitstring) / (2**circuit.num_qubits)
         real_energy = subspace_diagonalize(
-            bitstrings=fake_unique_bitstring, ham=hamiltonian
+            bitstrings=real_unique_bitstring, ham=hamiltonian
         )
 
         print(
@@ -90,6 +90,7 @@ def get_expectations_from_sources(
             "name": fake_backend.name,
             "error": relerr(fake_backend_energy),
             "energy": fake_backend_energy,
+            "unique_bitstrings": fake_unique_bitstring,
             "bitstring_prop": fake_backend_bitstring_prop,
             "n_shots": n_shots,
         },
@@ -108,6 +109,7 @@ def get_expectations_from_sources(
             "name": real_backend.name,
             "error": relerr(real_energy),
             "energy": real_energy,
+            "unique_bitstrings": real_unique_bitstring,
             "bitstring_prop": real_bitstring_prop,
             "n_shots": n_shots,
         }
