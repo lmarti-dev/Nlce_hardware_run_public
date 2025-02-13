@@ -4,7 +4,7 @@ from qiskit_ibm_runtime import QiskitRuntimeService
 from qcomp_nlce.utils import (
     backend_estimate,
     estimate_observables,
-    load_sim,
+    load_optimized_vqe,
     get_optimal_parameters,
     get_appropriate_fake_backend,
 )
@@ -20,7 +20,7 @@ def get_expectations_from_sources(
     run_on_ibmq: bool = False,
     override_params: bool = False,
 ):
-    hamiltonian, circuit, weights, ground_energy = load_sim(dirname)
+    hamiltonian, circuit, weights, ground_energy = load_optimized_vqe(dirname)
     fake_backend = get_appropriate_fake_backend(circuit.num_qubits)
 
     def relerr(e):

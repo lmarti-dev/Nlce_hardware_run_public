@@ -6,7 +6,7 @@ from qiskit.circuit.library import PauliEvolutionGate
 from uuid import uuid4
 from qiskit.circuit.library import hamiltonian_variational_ansatz
 from qiskit.quantum_info import SparsePauliOp
-from qcomp_nlce.utils.hamiltonian import get_pauli_indices, pretty_pauli_str
+from qcomp_nlce.utils.hamiltonian import pretty_pauli_str
 import os
 
 
@@ -44,7 +44,7 @@ def save_optimized_vqe(
         np.save(fd, hamiltonian.to_list(True))
 
 
-def load_sim(dirname: str):
+def load_optimized_vqe(dirname: str):
     home = Path(__file__).parent.parent
     save_dir = Path(home, f"res_sim/{dirname}/")
     if not os.path.isdir(save_dir):

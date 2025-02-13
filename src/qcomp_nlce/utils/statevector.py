@@ -1,7 +1,7 @@
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.primitives import StatevectorEstimator
-from qiskit.quantum_info import SparsePauliOp
+from qiskit.quantum_info import SparsePauliOp, Statevector
 from scipy.optimize import minimize
 
 
@@ -52,3 +52,7 @@ def optimize_circuit(circuit: QuantumCircuit, hamiltonian: SparsePauliOp) -> lis
         bounds=circuit.num_parameters * [(0, np.pi)],
     )
     return energy_values, xks
+
+
+def get_circuit_energy(hamiltonian: SparsePauliOp, circuit: QuantumCircuit):
+    return Statevector(circuit).expectation_value(hamiltonian)

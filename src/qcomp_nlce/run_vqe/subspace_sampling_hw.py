@@ -8,7 +8,7 @@ from qcomp_nlce.utils import (
     get_unique_bitstrings,
     estimate_observables,
     add_meas_layer,
-    load_sim,
+    load_optimized_vqe,
     get_optimal_parameters,
     get_appropriate_fake_backend,
 )
@@ -25,7 +25,7 @@ def get_expectations_from_sources(
     override_params: bool = False,
 ):
 
-    hamiltonian, circuit, weights, ground_energy = load_sim(dirname)
+    hamiltonian, circuit, weights, ground_energy = load_optimized_vqe(dirname)
     fake_backend = get_appropriate_fake_backend(circuit.num_qubits)
 
     circuit_to_sample = add_meas_layer(circuit)
@@ -76,13 +76,13 @@ def get_expectations_from_sources(
         )
 
         print(
-            f"RealBackend ({real_backend.name}) {relerr(real_energy)} sub. mat.: {len(real_unique_bitstring)} x {len(real_unique_bitstring)} %: {real_bitstring_prop}"
+            f"RealBackend ({real_backend.name}) {relerr(real_energy)} sub. mat.: {len(real_unique_bitstring)} x {len(real_unique_bitstring)}: {real_bitstring_prop*100}%"
         )
 
     print(f"Statevector {relerr(statevector_energy)}")
 
     print(
-        f"FakeBackend: {relerr(fake_backend_energy)} sub. mat.: {len(fake_unique_bitstring)} x {len(fake_unique_bitstring)} %: {fake_backend_bitstring_prop}"
+        f"FakeBackend: {relerr(fake_backend_energy)} sub. mat.: {len(fake_unique_bitstring)} x {len(fake_unique_bitstring)}: {fake_backend_bitstring_prop*100}"
     )
 
     jobj = {
@@ -118,9 +118,15 @@ def get_expectations_from_sources(
 
 
 if __name__ == "__main__":
-    dry_run = False
+    dry_run = True
     edm = ExperimentDataManager(
         "nlce_hardware_run_small_system_hardware_run", dry_run=dry_run
     )
-    run_on_ibmq = True
-    get_expectations_from_sources(edm, "tfim_8q_4l_hva", run_on_ibmq=run_on_ibmq)
+    run_on_ibmq = False
+    sizes = [(3, 2), (4, 2), (5, 3), (6, 3), (7, 4), (9, 5)]
+    sizes = [(9, 5)]
+    for x in sizes:
+        get_expectations_from_sources(
+            edm, f"tfim_{x[0]}q_{x[1]}l_hva", run_on_ibmq=run_on_ibmq
+        )
+        edm.new_run()

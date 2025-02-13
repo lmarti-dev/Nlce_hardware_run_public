@@ -76,7 +76,9 @@ def get_pauli_indices(term: Pauli) -> list:
     return [ind for ind in range(len(term)) if str(term)[ind] != "I"]
 
 
-def get_tfim_ham(n_qubits: int, h: float, J: float, periodic: bool = False):
+def get_tfim_ham(
+    n_qubits: int, h: float, J: float, periodic: bool = False, split_parts: bool = False
+):
 
     hamiltonian_J = sum(
         [
@@ -86,14 +88,18 @@ def get_tfim_ham(n_qubits: int, h: float, J: float, periodic: bool = False):
     )
     if periodic:
         hamiltonian_J += SparsePauliOp("X" + "I" * (n_qubits - 2) + "X")
-    hamiltonian_g = sum(
+    hamiltonian_h = sum(
         [
             -h * SparsePauliOp(s * "I" + "Z" + (n_qubits - 1 - s) * "I")
             for s in range(n_qubits)
         ]
     )
 
-    hamiltonian = hamiltonian_J + hamiltonian_g
+    if split_parts:
+        # J: XX h: Z
+        return hamiltonian_J, hamiltonian_h
+
+    hamiltonian = hamiltonian_J + hamiltonian_h
 
     return hamiltonian
 
@@ -102,6 +108,17 @@ def get_ground_energy(hamiltonian: SparsePauliOp) -> float:
     mat = hamiltonian.to_matrix(sparse=True)
     ground_energy, _ = eigsh(mat, k=1, which="SA")
     return ground_energy
+
+
+def get_min_gap(hamiltonian: SparsePauliOp) -> float:
+    mat = hamiltonian.to_matrix(sparse=True)
+    min_gap = 0
+    k = 2
+    while np.isclose(min_gap, 0):
+        energies, _ = eigsh(mat, k=k, which="SA")
+        min_gap = np.abs(energies[-1] - energies[0])
+        k += 1
+    return min_gap
 
 
 def pretty_pauli_str(p: Pauli) -> str:

@@ -30,6 +30,13 @@ def get_appropriate_fake_backend(n_qubits: int) -> FakeBackendV2:
         return FakeWashingtonV2()
 
 
+def isa_circuit_param_dict(
+    new_circuit: QuantumCircuit, old_circuit: QuantumCircuit, parameters: np.ndarray
+) -> dict:
+    param_dict = {k: v for k, v in zip(old_circuit.parameters, parameters)}
+    return {k: param_dict[k] for k in new_circuit.parameters}
+
+
 def add_meas_layer(circuit: QuantumCircuit) -> QuantumCircuit:
     circuit = circuit.copy()
     meas_register = ClassicalRegister(circuit.num_qubits)
@@ -46,17 +53,18 @@ def backend_sample(
     n_shots: int,
 ) -> RuntimeJob:
     sampler = SamplerV2(mode=backend)
-    pm = generate_preset_pass_manager(backend=backend, optimization_level=1)
+    pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
     isa_circuit = pm.run(circuit)
     job = sampler.run(
-        [(isa_circuit, {k: v for k, v in zip(circuit.parameters, parameters)})],
+        [(isa_circuit, isa_circuit_param_dict(isa_circuit, circuit, parameters))],
         shots=int(n_shots),
     )
     return job
 
 
 def get_counts_from_job(job: RuntimeJob) -> np.array:
-    return job.result()[0].data.c0.array.T[0]
+    key = list(job.result()[0].data.keys())[0]
+    return job.result()[0].data[key].array.T[0]
 
 
 def get_unique_bitstrings(shots: np.ndarray) -> list[str]:
@@ -81,7 +89,7 @@ def backend_estimate(
             (
                 isa_circuit,
                 isa_observables,
-                {k: v for k, v in zip(circuit.parameters, parameters)},
+                isa_circuit_param_dict(isa_circuit, circuit, parameters),
             )
         ],
         precision=1 / np.sqrt(n_shots),

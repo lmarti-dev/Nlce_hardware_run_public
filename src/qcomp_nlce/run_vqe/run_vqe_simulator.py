@@ -9,7 +9,7 @@ from qcomp_nlce.utils import (
 )
 
 
-for n_qubits in (7, 8, 9):
+for n_qubits in (10,):
     periodic = False
     hamiltonian = get_tfim_ham(n_qubits, 1, 0.7, periodic=periodic)
     n_layers = int(np.ceil(hamiltonian.num_qubits / 2))
