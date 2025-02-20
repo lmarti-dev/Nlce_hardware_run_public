@@ -124,9 +124,9 @@ def get_expectations_from_sources(
 
     edm.var_dump(**var_dict)
 
-    jobj = {"fake_job": fake_job}
+    jobj = {"fake_result": fake_job.result()}
     if run_on_ibmq:
-        jobj["real_job"] = real_job
+        jobj["real_result"] = real_job.result()
     edm.save_dict(jobj)
 
 
