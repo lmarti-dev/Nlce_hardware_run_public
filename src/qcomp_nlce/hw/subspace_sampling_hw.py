@@ -9,12 +9,15 @@ from qcomp_nlce.utils import (
     estimate_observables,
     add_meas_layer,
     load_optimized_vqe,
+    load_sweep,
     get_optimal_parameters,
     get_appropriate_fake_backend,
 )
 from data_manager import ExperimentDataManager
 
 from qcomp_nlce.utils.hardware import get_token
+from pathlib import Path
+import os
 
 
 def get_expectations_from_sources(
@@ -23,9 +26,19 @@ def get_expectations_from_sources(
     n_shots: int = 1e3,
     run_on_ibmq: bool = False,
     override_params: bool = False,
+    which: str = "vqe",
 ):
 
-    hamiltonian, circuit, weights, ground_energy = load_optimized_vqe(dirname)
+    if which == "vqe":
+        hamiltonian, circuit, weights, ground_energy = load_optimized_vqe(dirname)
+        if override_params:
+            parameters = get_optimal_parameters(dirname)
+        else:
+            parameters = weights[-1]
+    elif which == "sweep":
+        hamiltonian, circuit, ground_energy = load_sweep(dirname)
+        weights = None
+        parameters = None
     fake_backend = get_appropriate_fake_backend(circuit.num_qubits)
 
     circuit_to_sample = add_meas_layer(circuit)
@@ -33,18 +46,13 @@ def get_expectations_from_sources(
     def relerr(e):
         return np.abs(e - ground_energy) / np.abs(ground_energy)
 
-    if override_params:
-        parameters = get_optimal_parameters(dirname)
-    else:
-        parameters = weights[-1]
-
-    job = backend_sample(
+    fake_job = backend_sample(
         backend=fake_backend,
         circuit=circuit_to_sample,
         parameters=parameters,
         n_shots=n_shots,
     )
-    fake_counts = get_counts_from_job(job)
+    fake_counts = get_counts_from_job(fake_job)
     fake_unique_bitstring = get_unique_bitstrings(fake_counts)
     fake_backend_bitstring_prop = len(fake_unique_bitstring) / (2**circuit.num_qubits)
     fake_backend_energy = subspace_diagonalize(
@@ -85,7 +93,7 @@ def get_expectations_from_sources(
         f"FakeBackend: {relerr(fake_backend_energy)} sub. mat.: {len(fake_unique_bitstring)} x {len(fake_unique_bitstring)}: {fake_backend_bitstring_prop*100}"
     )
 
-    jobj = {
+    var_dict = {
         "fake_backend": {
             "name": fake_backend.name,
             "error": relerr(fake_backend_energy),
@@ -105,7 +113,7 @@ def get_expectations_from_sources(
         },
     }
     if run_on_ibmq:
-        jobj["real_backend"] = {
+        var_dict["real_backend"] = {
             "name": real_backend.name,
             "error": relerr(real_energy),
             "energy": real_energy,
@@ -114,19 +122,37 @@ def get_expectations_from_sources(
             "n_shots": n_shots,
         }
 
-    edm.var_dump(**jobj)
+    edm.var_dump(**var_dict)
+
+    jobj = {"fake_job": fake_job}
+    if run_on_ibmq:
+        jobj["real_job"] = real_job
+    edm.save_dict(jobj)
+
+
+def run_all_vqes(edm: ExperimentDataManager, run_on_ibmq: bool):
+    HOME = Path(__file__).parent
+    dirnames = os.listdir(Path(HOME, "../res_sim/vqe"))
+    for x in dirnames:
+        get_expectations_from_sources(edm, x, run_on_ibmq=run_on_ibmq, which="vqe")
+        edm.new_run()
+
+
+def run_all_sweeps(edm: ExperimentDataManager, run_on_ibmq: bool):
+    HOME = Path(__file__).parent
+    dirnames = os.listdir(Path(HOME, "../res_sim/sweep"))
+    for x in dirnames:
+        print(f"Loading {x}")
+        get_expectations_from_sources(edm, x, run_on_ibmq=run_on_ibmq, which="sweep")
+        edm.new_run()
 
 
 if __name__ == "__main__":
-    dry_run = True
-    edm = ExperimentDataManager(
-        "nlce_hardware_run_small_system_hardware_run", dry_run=dry_run
-    )
+    dry_run = False
+    which = "sweep"
+    edm = ExperimentDataManager(f"nlce_hardware_run_{which}", dry_run=dry_run)
     run_on_ibmq = False
-    sizes = [(3, 2), (4, 2), (5, 3), (6, 3), (7, 4), (9, 5)]
-    sizes = [(9, 5)]
-    for x in sizes:
-        get_expectations_from_sources(
-            edm, f"tfim_{x[0]}q_{x[1]}l_hva", run_on_ibmq=run_on_ibmq
-        )
-        edm.new_run()
+    if which == "sweep":
+        run_all_sweeps(edm, run_on_ibmq)
+    elif which == "vqe":
+        run_all_vqes(edm, run_on_ibmq)

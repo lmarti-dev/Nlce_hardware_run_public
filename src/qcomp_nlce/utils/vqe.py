@@ -31,7 +31,7 @@ def save_optimized_vqe(
     ground_energy: float,
 ):
     home = Path(__file__).parent.parent
-    save_dir = Path(home, f"res_sim/{dirname}/")
+    save_dir = Path(home, f"res_sim/vqe/{dirname}/")
     if not os.path.isdir(save_dir):
         os.mkdir(save_dir)
     with open(Path(save_dir, "circuit.qpy"), "wb+") as fd:
@@ -46,7 +46,7 @@ def save_optimized_vqe(
 
 def load_optimized_vqe(dirname: str):
     home = Path(__file__).parent.parent
-    save_dir = Path(home, f"res_sim/{dirname}/")
+    save_dir = Path(home, f"res_sim/vqe/{dirname}/")
     if not os.path.isdir(save_dir):
         os.mkdir(save_dir)
     with open(Path(save_dir, "circuit.qpy"), "rb") as fd:

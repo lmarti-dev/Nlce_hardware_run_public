@@ -1,9 +1,13 @@
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, qpy
 from qiskit.quantum_info import SparsePauliOp
 
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.synthesis import SuzukiTrotter, LieTrotter
 import numpy as np
+
+
+from pathlib import Path
+import os
 
 
 def get_sweep_function(kind: str):
@@ -51,6 +55,34 @@ def get_tfim_sweep_circuit(
 
 
 def save_sweep(
-    name: str, hamiltonian: SparsePauliOp, circuit: QuantumCircuit, ground_energy: float
-): ...
-def load_sweep(name: str): ...
+    dirname: str,
+    hamiltonian: SparsePauliOp,
+    circuit: QuantumCircuit,
+    ground_energy: float,
+):
+
+    home = Path(__file__).parent.parent
+    save_dir = Path(home, f"res_sim/sweep/{dirname}/")
+    if not os.path.isdir(save_dir):
+        os.mkdir(save_dir)
+    with open(Path(save_dir, "circuit.qpy"), "wb+") as fd:
+        qpy.dump(circuit, fd)
+    with open(Path(save_dir, "ground_energy.npy"), "wb+") as fd:
+        np.save(fd, np.array(ground_energy))
+    with open(Path(save_dir, "hamiltonian.npy"), "wb+") as fd:
+        np.save(fd, hamiltonian.to_list(True))
+
+
+def load_sweep(dirname: str):
+    home = Path(__file__).parent.parent
+    save_dir = Path(home, f"res_sim/sweep/{dirname}/")
+    if not os.path.isdir(save_dir):
+        os.mkdir(save_dir)
+    with open(Path(save_dir, "circuit.qpy"), "rb") as fd:
+        circuit = qpy.load(fd)[0]
+    with open(Path(save_dir, "ground_energy.npy"), "rb") as fd:
+        ground_energy = np.load(fd)
+    with open(Path(save_dir, "hamiltonian.npy"), "rb") as fd:
+        hamiltonian = SparsePauliOp.from_list(np.load(fd))
+
+    return hamiltonian, circuit, ground_energy

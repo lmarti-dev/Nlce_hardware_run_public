@@ -55,8 +55,15 @@ def backend_sample(
     sampler = SamplerV2(mode=backend)
     pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
     isa_circuit = pm.run(circuit)
+    if parameters is None:
+        payload = isa_circuit
+    else:
+        payload = (
+            isa_circuit,
+            isa_circuit_param_dict(isa_circuit, circuit, parameters),
+        )
     job = sampler.run(
-        [(isa_circuit, isa_circuit_param_dict(isa_circuit, circuit, parameters))],
+        [payload],
         shots=int(n_shots),
     )
     return job
