@@ -1,4 +1,5 @@
 import numpy as np
+from uuid import uuid4
 
 from qcomp_nlce.utils import (
     get_ground_energy,
@@ -26,7 +27,7 @@ for n_qubits in (10,):
     )
 
     save_optimized_vqe(
-        f"tfim_{hamiltonian.num_qubits}q_{n_layers}l_hva" + "_periodic" * int(periodic),
+        f"new_test/vqe/{uuid4()}",
         hamiltonian,
         circuit,
         params,
