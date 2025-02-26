@@ -4,6 +4,7 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.synthesis import SuzukiTrotter, LieTrotter
 import numpy as np
+from scipy.linalg import expm
 
 
 def get_sweep_function(kind: str):
@@ -23,9 +24,26 @@ def get_sweep_function(kind: str):
     return sweep_function
 
 
+def get_sweep_spectrum(
+    ham_0: SparsePauliOp,
+    ham_1: SparsePauliOp,
+    n_steps: int,
+    sweep_function: str = "simple",
+):
+    spectrum = np.zeros((2**ham_0.num_qubits, n_steps))
+    sf = get_sweep_function(sweep_function)
+    for n in range(n_steps):
+        alpha = sf(n / (n_steps - 1))
+        sweep_ham = ham_0 * (1 - alpha) + ham_1 * alpha
+        v = np.linalg.eigvalsh(sweep_ham.to_matrix())
+        spectrum[:, n] = v
+
+    return spectrum
+
+
 def get_tfim_sweep_circuit(
-    ham_j: SparsePauliOp,
-    ham_h: SparsePauliOp,
+    ham_0: SparsePauliOp,
+    ham_1: SparsePauliOp,
     total_time: float,
     n_steps: int,
     sweep_function: str = "simple",
@@ -37,14 +55,15 @@ def get_tfim_sweep_circuit(
         synth_fn = LieTrotter()
     elif synthesis == "suzuki":
         synth_fn = SuzukiTrotter()
-    circuit = QuantumCircuit((ham_j + ham_h).num_qubits)
+    circuit = QuantumCircuit((ham_0 + ham_1).num_qubits)
     for n in range(n_steps):
+        alpha = sf(n / (n_steps - 1))
         circuit.append(
             PauliEvolutionGate(
-                ham_h + ham_j * sf(n / (n_steps - 1)),
+                ham_0 * (1 - alpha) + ham_1 * alpha,
                 total_time / n_steps,
                 synthesis=synth_fn,
             ),
-            range((ham_j + ham_h).num_qubits),
+            range((ham_0 + ham_1).num_qubits),
         )
     return circuit

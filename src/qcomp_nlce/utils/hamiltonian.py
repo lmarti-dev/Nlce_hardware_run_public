@@ -76,9 +76,19 @@ def get_pauli_indices(term: Pauli) -> list:
     return [ind for ind in range(len(term)) if str(term)[ind] != "I"]
 
 
+def get_singlet_ham(n_qubits: int, h: float, J: float) -> SparsePauliOp:
+    hamiltonian = sum(
+        [
+            -J * SparsePauliOp(s * "I" + "XX" + (n_qubits - 2 - s) * "I")
+            for s in range(0, n_qubits - 1, 2)
+        ]
+    )
+    return hamiltonian
+
+
 def get_tfim_ham(
     n_qubits: int, h: float, J: float, periodic: bool = False, split_parts: bool = False
-):
+) -> SparsePauliOp:
 
     hamiltonian_J = sum(
         [
