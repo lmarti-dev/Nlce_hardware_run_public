@@ -86,6 +86,15 @@ def get_singlet_ham(n_qubits: int, h: float, J: float) -> SparsePauliOp:
     return hamiltonian
 
 
+def get_tfim_ratio(ham: SparsePauliOp) -> float:
+    c = ham.coeffs
+    u = np.unique_counts(c)
+    idx = np.argsort(u.counts)
+    j = u.values[idx[0]]
+    h = u.values[idx[-1]]
+    return np.real(j / h).astype(float)
+
+
 def get_tfim_ham(
     n_qubits: int, h: float, J: float, periodic: bool = False, split_parts: bool = False
 ) -> SparsePauliOp:

@@ -30,12 +30,11 @@ def save_sweep(
 
 
 def load_sweep(dirname: str):
-    save_dir = get_save_directory(dirname)
-    with open(Path(save_dir, "circuit.qpy"), "rb") as fd:
+    with open(Path(dirname, "circuit.qpy"), "rb") as fd:
         circuit = qpy.load(fd)[0]
-    with open(Path(save_dir, "ground_energy.npy"), "rb") as fd:
+    with open(Path(dirname, "ground_energy.npy"), "rb") as fd:
         ground_energy = np.load(fd)
-    with open(Path(save_dir, "hamiltonian.npy"), "rb") as fd:
+    with open(Path(dirname, "hamiltonian.npy"), "rb") as fd:
         hamiltonian = SparsePauliOp.from_list(np.load(fd))
 
     return hamiltonian, circuit, ground_energy
@@ -60,14 +59,13 @@ def save_optimized_vqe(
 
 
 def load_optimized_vqe(dirname: str):
-    save_dir = get_save_directory(dirname)
-    with open(Path(save_dir, "circuit.qpy"), "rb") as fd:
+    with open(Path(dirname, "circuit.qpy"), "rb") as fd:
         circuit = qpy.load(fd)[0]
-    with open(Path(save_dir, "weights.npy"), "rb") as fd:
+    with open(Path(dirname, "weights.npy"), "rb") as fd:
         weights = np.load(fd)
-    with open(Path(save_dir, "ground_energy.npy"), "rb") as fd:
+    with open(Path(dirname, "ground_energy.npy"), "rb") as fd:
         ground_energy = np.load(fd)
-    with open(Path(save_dir, "hamiltonian.npy"), "rb") as fd:
+    with open(Path(dirname, "hamiltonian.npy"), "rb") as fd:
         hamiltonian = SparsePauliOp.from_list(np.load(fd))
 
     return hamiltonian, circuit, weights, ground_energy

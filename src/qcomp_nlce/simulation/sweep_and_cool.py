@@ -12,13 +12,14 @@ from qcomp_nlce.utils import (
 )
 
 from qiskit import QuantumCircuit
+import matplotlib.pyplot as plt
 
 dry_run = True
 add_cooling = True
 
 
 for n_qubits in range(9, 11):
-    for j in np.linspace(0.9, 1, 5):
+    for j in np.linspace(0.9, 1, 2):
         ham_j, ham_h = get_tfim_ham(n_qubits, 1, j, periodic=False, split_parts=True)
         hamiltonian = ham_j + ham_h
 
@@ -37,18 +38,15 @@ for n_qubits in range(9, 11):
             final_circuit.compose(circuit, range(hamiltonian.num_qubits), inplace=True)
             final_circuit.compose(
                 cooling_circ(
-                    ham=hamiltonian, omega=0.3303173818894809, weaken_coupling=100
+                    ham=hamiltonian, omega=0.3303173818894809, weaken_coupling=10
                 ),
                 range(hamiltonian.num_qubits + 1),
                 inplace=True,
             )
+
         else:
             final_circuit = circuit
         ground_energy = get_ground_energy(hamiltonian)
-
-        print(
-            f"The circuit depth is {final_circuit.depth()} for {hamiltonian.num_qubits} qubits j/h={j:.3f}"
-        )
 
         final_energy = get_circuit_energy(hamiltonian, final_circuit)
         print(

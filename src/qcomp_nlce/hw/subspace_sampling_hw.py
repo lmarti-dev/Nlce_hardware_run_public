@@ -10,8 +10,8 @@ from qcomp_nlce.utils import (
     add_meas_layer,
     load_optimized_vqe,
     load_sweep,
-    get_optimal_parameters,
     get_appropriate_fake_backend,
+    get_tfim_ratio,
 )
 from data_manager import ExperimentDataManager
 
@@ -25,21 +25,20 @@ def get_expectations_from_sources(
     dirname: str,
     n_shots: int = 1e3,
     run_on_ibmq: bool = False,
-    override_params: bool = False,
     which: str = "vqe",
 ):
 
     if which == "vqe":
         hamiltonian, circuit, weights, ground_energy = load_optimized_vqe(dirname)
-        if override_params:
-            parameters = get_optimal_parameters(dirname)
-        else:
-            parameters = weights[-1]
+
+        parameters = weights[-1]
     elif which == "sweep":
         hamiltonian, circuit, ground_energy = load_sweep(dirname)
         weights = None
         parameters = None
     fake_backend = get_appropriate_fake_backend(circuit.num_qubits)
+
+    print(f"n_qubits: {hamiltonian.num_qubits}, j/h {get_tfim_ratio(hamiltonian)}")
 
     circuit_to_sample = add_meas_layer(circuit)
 
@@ -130,29 +129,24 @@ def get_expectations_from_sources(
     edm.save_dict(jobj)
 
 
-def run_all_vqes(edm: ExperimentDataManager, run_on_ibmq: bool):
+def run_all(dirname: str, edm: ExperimentDataManager, run_on_ibmq: bool, which: str):
     HOME = Path(__file__).parent
-    dirnames = os.listdir(Path(HOME, "../res_sim/vqe"))
-    for x in dirnames:
-        get_expectations_from_sources(edm, x, run_on_ibmq=run_on_ibmq, which="vqe")
-        edm.new_run()
-
-
-def run_all_sweeps(edm: ExperimentDataManager, run_on_ibmq: bool):
-    HOME = Path(__file__).parent
-    dirnames = os.listdir(Path(HOME, "../res_sim/sweep"))
-    for x in dirnames:
+    dirname = Path(HOME, f"../res_sim/{dirname}/sweep")
+    experiments = os.listdir(dirname)
+    for x in experiments:
         print(f"Loading {x}")
-        get_expectations_from_sources(edm, x, run_on_ibmq=run_on_ibmq, which="sweep")
+        get_expectations_from_sources(
+            edm, Path(dirname, x), run_on_ibmq=run_on_ibmq, which=which
+        )
         edm.new_run()
 
 
 if __name__ == "__main__":
-    dry_run = False
+    dry_run = True
     which = "sweep"
     edm = ExperimentDataManager(f"nlce_hardware_run_{which}", dry_run=dry_run)
     run_on_ibmq = False
     if which == "sweep":
-        run_all_sweeps(edm, run_on_ibmq)
+        run_all("scan_jh", edm, run_on_ibmq, which=which)
     elif which == "vqe":
-        run_all_vqes(edm, run_on_ibmq)
+        run_all("first_test", edm, run_on_ibmq, which=which)
