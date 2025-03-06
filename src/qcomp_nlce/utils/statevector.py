@@ -56,5 +56,14 @@ def optimize_circuit(circuit: QuantumCircuit, hamiltonian: SparsePauliOp) -> lis
 
 def get_circuit_energy(hamiltonian: SparsePauliOp, circuit: QuantumCircuit):
     return Statevector(circuit).expectation_value(
-        hamiltonian, range(hamiltonian.num_qubits)
+        hamiltonian,
+        range(
+            circuit.num_qubits - 1, circuit.num_qubits - hamiltonian.num_qubits - 1, -1
+        ),
     )
+
+
+def statevector_sample_unique(circuit: QuantumCircuit, n_shots: int) -> list:
+    sv = Statevector(circuit)
+    counts = sv.sample_counts(n_shots)
+    return [str(k) for k in counts.keys()]

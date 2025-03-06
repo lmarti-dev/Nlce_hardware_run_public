@@ -7,7 +7,7 @@ from qcomp_nlce.utils import (
     get_tfim_ham,
     get_circuit_energy,
     get_min_gap,
-    cooling_circ,
+    cooling_step,
     save_sweep,
 )
 

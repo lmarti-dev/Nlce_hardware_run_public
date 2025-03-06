@@ -55,7 +55,7 @@ def get_expectations_from_sources(
     fake_unique_bitstring = get_unique_bitstrings(fake_counts)
     fake_backend_bitstring_prop = len(fake_unique_bitstring) / (2**circuit.num_qubits)
     fake_backend_energy = subspace_diagonalize(
-        bitstrings=fake_unique_bitstring, ham=hamiltonian
+        unique_bitstrings=fake_unique_bitstring, ham=hamiltonian
     )
 
     statevector_energy = estimate_observables(
@@ -79,7 +79,7 @@ def get_expectations_from_sources(
         real_unique_bitstring = get_unique_bitstrings(real_counts)
         real_bitstring_prop = len(real_unique_bitstring) / (2**circuit.num_qubits)
         real_energy = subspace_diagonalize(
-            bitstrings=real_unique_bitstring, ham=hamiltonian
+            unique_bitstrings=real_unique_bitstring, ham=hamiltonian
         )
 
         print(

@@ -126,7 +126,7 @@ def get_tfim_ham(
 def get_ground_energy(hamiltonian: SparsePauliOp) -> float:
     mat = hamiltonian.to_matrix(sparse=True)
     ground_energy, _ = eigsh(mat, k=1, which="SA")
-    return ground_energy
+    return ground_energy[0]
 
 
 def get_min_gap(hamiltonian: SparsePauliOp) -> float:
@@ -145,19 +145,21 @@ def pretty_pauli_str(p: Pauli) -> str:
     return "".join([f"{x}{y}" for x, y in zip(p[::-1][idx], idx)])
 
 
-def subspace_diagonalize(bitstrings: Union[list[int], list[str]], ham: SparsePauliOp):
-    if isinstance(bitstrings[0], str):
+def subspace_diagonalize(
+    unique_bitstrings: Union[list[int], list[str]], ham: SparsePauliOp
+):
+    if isinstance(unique_bitstrings[0], str):
         ind_list = [
-            from_bitstring(bx, len(bx), right_to_left=True) for bx in bitstrings
+            from_bitstring(bx, len(bx), right_to_left=True) for bx in unique_bitstrings
         ]
     else:
-        ind_list = [int(x) for x in bitstrings]
+        ind_list = [int(x) for x in unique_bitstrings]
 
     sparse_ham = ham.to_matrix(sparse=True)
-    n_samples = len(bitstrings)
+    n_samples = len(unique_bitstrings)
     sub_ham = np.zeros((n_samples, n_samples), dtype=complex)
     for x in range(n_samples):
-        for y in range(x, len(bitstrings)):
+        for y in range(x, len(unique_bitstrings)):
             ind_x = ind_list[x]
             ind_y = ind_list[y]
             sub_ham[x, y] = sparse_ham[ind_x, ind_y]
