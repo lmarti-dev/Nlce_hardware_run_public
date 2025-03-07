@@ -65,7 +65,7 @@ for indq, n_qubits in enumerate(qubit_sizes):
                         omega=energies[1] - energies[0],
                         weaken_coupling=5,
                         n_steps=n_cooling_steps,
-                        coupler_type="XX",
+                        coupler_type="proj",
                     ),
                     range(hamiltonian.num_qubits + 1),
                     inplace=True,
