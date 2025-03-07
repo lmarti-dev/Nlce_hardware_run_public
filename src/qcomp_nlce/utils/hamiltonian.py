@@ -1,4 +1,10 @@
-from qiskit.quantum_info import SparsePauliOp, Pauli
+from qiskit.quantum_info import (
+    SparsePauliOp,
+    Pauli,
+    state_fidelity,
+    Statevector,
+    DensityMatrix,
+)
 from scipy.sparse.linalg import eigsh
 import numpy as np
 from typing import Union
@@ -129,6 +135,24 @@ def get_ground_energy(hamiltonian: SparsePauliOp) -> float:
     return ground_energy[0]
 
 
+def get_ground_state(hamiltonian: SparsePauliOp) -> np.ndarray:
+    mat = hamiltonian.to_matrix(sparse=True)
+    _, ground_state = eigsh(mat, k=1, which="SA")
+    return ground_state
+
+
+def ground_state_fidelity(
+    state: Statevector | DensityMatrix, hamiltonian: SparsePauliOp
+) -> float:
+    return state_fidelity(state, get_ground_state(hamiltonian))
+
+
+def ground_state_bitstrings(hamiltonian: SparsePauliOp) -> list[str]:
+    ground_state = get_ground_state(hamiltonian)
+    idx = np.where(1 - np.isclose(np.abs(ground_state.T[0]), 0))[0]
+    return [to_bitstring(jj, hamiltonian.num_qubits, True) for jj in idx]
+
+
 def get_min_gap(hamiltonian: SparsePauliOp) -> float:
     mat = hamiltonian.to_matrix(sparse=True)
     min_gap = 0
@@ -166,3 +190,13 @@ def subspace_diagonalize(
     sub_ham += np.triu(sub_ham, k=1).T
     ground_energy = np.min(np.linalg.eigvalsh(sub_ham))
     return ground_energy
+
+
+def eigenvector_decomposition(
+    state: Statevector | DensityMatrix, hamiltonian: SparsePauliOp
+) -> np.ndarray:
+    _, eig_states = np.linalg.eigh(hamiltonian.to_matrix(False))
+    fidelities = np.zeros((eig_states.shape[-1],))
+    for k in range(eig_states.shape[-1]):
+        fidelities[k] = state_fidelity(state, Statevector(eig_states[:, k]))
+    return fidelities

@@ -5,6 +5,8 @@ from qiskit import QuantumCircuit
 import numpy as np
 import itertools
 
+from scipy.sparse.linalg import eigsh
+
 
 def mat_to_pauli(mat: np.ndarray) -> SparsePauliOp:
     out = []
@@ -23,6 +25,7 @@ def cooling_step(
     ham: SparsePauliOp,
     omega: float,
     weaken_coupling: float,
+    n_steps: int,
     coupler_type: str = "XX+YY",
 ) -> QuantumCircuit:
     n_qubits = ham.num_qubits
@@ -32,23 +35,32 @@ def cooling_step(
         SparsePauliOp("I" * (n_qubits + 1)) - SparsePauliOp("I" * n_qubits + "Z")
     )
     circuit = QuantumCircuit(ham.num_qubits + 1)
+    coupler = get_coupler(ham, coupler_type, n_qubits)
+    evolution_time = np.pi / alpha
+    cooling_ham = SparsePauliOp("I").expand(ham) + coupler * alpha + omega * anc_ham
+    for step in range(n_steps):
+        circuit.append(
+            PauliEvolutionGate(
+                cooling_ham,
+                evolution_time / n_steps,
+            ),
+            range(ham.num_qubits + 1),
+        )
+    return circuit
+
+
+def get_coupler(ham: SparsePauliOp, coupler_type: str, n_qubits: int) -> SparsePauliOp:
     if coupler_type == "XX+YY":
         coupler = SparsePauliOp("I" * (n_qubits - 1) + "XX") + SparsePauliOp(
             "I" * (n_qubits - 1) + "YY"
         )
+    elif coupler_type == "XX":
+        coupler = SparsePauliOp("I" * (n_qubits - 1) + "XX")
     elif coupler_type == "proj":
-        w, v = np.linalg.eigh(ham.to_matrix())
+        w, v = eigsh(ham.to_matrix(True), k=2, which="SA")
         proj = np.multiply.outer(v[:, 0], np.conj(v[:, 1]))
         coupler = mat_to_pauli(proj)
         coupler = (SparsePauliOp("X") - 1j * SparsePauliOp("Y")).expand(coupler)
         coupler += coupler.adjoint()
         coupler = coupler.simplify()
-    evolution_time = np.pi / alpha
-    circuit.append(
-        PauliEvolutionGate(
-            SparsePauliOp("I").expand(ham) + coupler * alpha + omega * anc_ham,
-            evolution_time,
-        ),
-        range(ham.num_qubits + 1),
-    )
-    return circuit
+    return coupler

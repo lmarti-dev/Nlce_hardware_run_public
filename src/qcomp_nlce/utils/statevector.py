@@ -57,9 +57,7 @@ def optimize_circuit(circuit: QuantumCircuit, hamiltonian: SparsePauliOp) -> lis
 def get_circuit_energy(hamiltonian: SparsePauliOp, circuit: QuantumCircuit):
     return Statevector(circuit).expectation_value(
         hamiltonian,
-        range(
-            circuit.num_qubits - 1, circuit.num_qubits - hamiltonian.num_qubits - 1, -1
-        ),
+        range(0, hamiltonian.num_qubits),
     )
 
 
