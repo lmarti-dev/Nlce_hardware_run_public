@@ -56,16 +56,20 @@ def get_coupler(ham: SparsePauliOp, coupler_type: str, n_qubits: int) -> SparseP
         )
     elif coupler_type == "XX":
         coupler = SparsePauliOp("I" * (n_qubits - 1) + "XX")
-    elif coupler_type == "proj":
-        to_pauli = False
-        w, v = eigsh(ham.to_matrix(True), k=2, which="SA")
-        proj = np.multiply.outer(v[:, 0], np.conj(v[:, 1]))
+    elif isinstance(coupler_type, int) or coupler_type == "proj":
+        if coupler_type == "proj":
+            coupler_type = 1
+        to_pauli = True
+        w, v = eigsh(ham.to_matrix(True), k=coupler_type + 1, which="SA")
+        proj = np.multiply.outer(v[:, 0], np.conj(v[:, coupler_type]))
         if to_pauli:
             coupler = mat_to_pauli(proj)
             coupler = (SparsePauliOp("X") - 1j * SparsePauliOp("Y")).expand(coupler)
             coupler += coupler.adjoint()
             coupler = coupler.simplify()
         else:
-            raise NotImplementedError("Cannot make a Hamiltonian without that")
+            raise NotImplementedError(
+                "Cannot make a Hamiltonian without Pauli conversion"
+            )
 
     return coupler

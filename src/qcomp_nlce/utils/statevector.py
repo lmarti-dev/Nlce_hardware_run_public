@@ -1,15 +1,23 @@
 import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.primitives import StatevectorEstimator
-from qiskit.quantum_info import SparsePauliOp, Statevector
+from qiskit.primitives import StatevectorEstimator, StatevectorSampler
+from qiskit.quantum_info import SparsePauliOp, Statevector, partial_trace
 from scipy.optimize import minimize
 
 
 def estimate_observables(
-    circuit: QuantumCircuit, observables: list, param_sweep: np.ndarray
+    circuit: QuantumCircuit, observables: list[SparsePauliOp], param_sweep: np.ndarray
 ):
     estimator = StatevectorEstimator()
-    pub = (circuit, observables, param_sweep)
+    job_observables = []
+    for ind, o in enumerate(observables):
+        if o.num_qubits < circuit.num_qubits:
+            job_observables.append(
+                SparsePauliOp("I" * (circuit.num_qubits - o.num_qubits)).expand(o)
+            )
+        else:
+            job_observables.append(o)
+    pub = (circuit, job_observables, param_sweep)
     job = estimator.run([pub])
     result = job.result()[0]
     return result
@@ -54,14 +62,38 @@ def optimize_circuit(circuit: QuantumCircuit, hamiltonian: SparsePauliOp) -> lis
     return energy_values, xks
 
 
-def get_circuit_energy(hamiltonian: SparsePauliOp, circuit: QuantumCircuit):
-    return Statevector(circuit).expectation_value(
-        hamiltonian,
-        range(0, hamiltonian.num_qubits),
-    )
+def get_circuit_energy(
+    hamiltonian: SparsePauliOp, circuit: QuantumCircuit, use_estimator: bool = False
+):
+    if use_estimator:
+        return estimate_observables(circuit, [hamiltonian], None).data.evs[0]
+    else:
+        return Statevector(circuit).expectation_value(
+            hamiltonian,
+            range(0, hamiltonian.num_qubits),
+        )
 
 
-def statevector_sample_unique(circuit: QuantumCircuit, n_shots: int) -> list:
-    sv = Statevector(circuit)
-    counts = sv.sample_counts(n_shots)
-    return [str(k) for k in counts.keys()]
+def statevector_sample_unique(
+    circuit: QuantumCircuit,
+    n_shots: int,
+    qubits: list = None,
+    use_sampler: bool = False,
+) -> list:
+    out_circ = circuit.remove_final_measurements(inplace=False)
+    out_circ.measure_all(add_bits=True)
+    if qubits is None:
+        qubits = list(range(circuit.num_qubits))
+    if use_sampler:
+        sampler = StatevectorSampler(seed=0)
+        job = sampler.run([out_circ], shots=n_shots)
+        job.result()[0]
+    else:
+        sv = Statevector(circuit)
+        if len(qubits) < circuit.num_qubits:
+            sv = partial_trace(
+                sv, [q for q in range(circuit.num_qubits) if q not in qubits]
+            )
+        counts = sv.sample_counts(n_shots)
+        res = [str(k) for k in counts.keys()]
+    return res
