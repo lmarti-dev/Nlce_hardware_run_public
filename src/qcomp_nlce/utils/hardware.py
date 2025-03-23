@@ -1,6 +1,6 @@
 from pathlib import Path
 import numpy as np
-from qiskit import QuantumCircuit, ClassicalRegister
+from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import EstimatorV2, RuntimeJob, SamplerV2
@@ -35,15 +35,6 @@ def isa_circuit_param_dict(
 ) -> dict:
     param_dict = {k: v for k, v in zip(old_circuit.parameters, parameters)}
     return {k: param_dict[k] for k in new_circuit.parameters}
-
-
-def add_meas_layer(circuit: QuantumCircuit) -> QuantumCircuit:
-    circuit = circuit.copy()
-    meas_register = ClassicalRegister(circuit.num_qubits)
-    circuit.add_register(meas_register)
-    for q, c in zip(circuit.qubits, meas_register):
-        circuit.measure(q, c)
-    return circuit
 
 
 def backend_sample(

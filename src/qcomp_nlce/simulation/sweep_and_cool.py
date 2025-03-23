@@ -21,8 +21,8 @@ from scipy.sparse.linalg import eigsh
 
 dry_run = True
 
-qubit_sizes = list(range(9, 12))
-j_vals = np.linspace(0.99, 1, 2)
+qubit_sizes = (9, 10)
+j_vals = (0.8, 0.9, 1)
 coolings = (False, True)
 decompositions = np.zeros((qubit_sizes[0] ** 2, 2))
 

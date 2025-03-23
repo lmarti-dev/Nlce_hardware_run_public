@@ -37,3 +37,16 @@ def get_hva_vqe(
     else:
         circuit = hamiltonian_variational_ansatz(hamiltonian, n_layers)
     return circuit
+
+
+def get_givens_vqe(hamiltonian: SparsePauliOp, n_layers: int) -> QuantumCircuit:
+    n_qubits = hamiltonian.num_qubits
+    circuit = QuantumCircuit(n_qubits)
+    for layer in range(n_layers):
+        for q in range(n_qubits - 1):
+            xx = SparsePauliOp(q * "I" + "XX" + (n_qubits - 2 - q) * "I")
+            yy = SparsePauliOp(q * "I" + "YY" + (n_qubits - 2 - q) * "I")
+            param = Parameter(f"l{layer}_{q}")
+            circuit.append(PauliEvolutionGate(xx + yy, time=param), range(n_qubits))
+
+    return circuit

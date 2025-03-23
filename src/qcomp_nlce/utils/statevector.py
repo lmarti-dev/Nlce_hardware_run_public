@@ -1,8 +1,17 @@
 import numpy as np
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, ClassicalRegister
 from qiskit.primitives import StatevectorEstimator, StatevectorSampler
 from qiskit.quantum_info import SparsePauliOp, Statevector, partial_trace
 from scipy.optimize import minimize
+
+
+def add_meas_layer(circuit: QuantumCircuit) -> QuantumCircuit:
+    circuit = circuit.copy()
+    meas_register = ClassicalRegister(circuit.num_qubits)
+    circuit.add_register(meas_register)
+    for q, c in zip(circuit.qubits, meas_register):
+        circuit.measure(q, c)
+    return circuit
 
 
 def estimate_observables(
@@ -87,7 +96,7 @@ def statevector_sample_unique(
     if use_sampler:
         sampler = StatevectorSampler(seed=0)
         job = sampler.run([out_circ], shots=n_shots)
-        job.result()[0]
+        counts = job.result()[0].data.meas.get_counts()
     else:
         sv = Statevector(circuit)
         if len(qubits) < circuit.num_qubits:
@@ -95,5 +104,5 @@ def statevector_sample_unique(
                 sv, [q for q in range(circuit.num_qubits) if q not in qubits]
             )
         counts = sv.sample_counts(n_shots)
-        res = [str(k) for k in counts.keys()]
+    res = [str(k) for k in counts.keys()]
     return res

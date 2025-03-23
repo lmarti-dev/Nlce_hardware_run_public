@@ -10,6 +10,9 @@ import numpy as np
 from typing import Union
 
 
+import itertools
+
+
 def binleftpad(integer: int, left_pad: int):
     b = format(integer, "0{lp}b".format(lp=left_pad))
     return b
@@ -133,6 +136,29 @@ def get_ground_energy(hamiltonian: SparsePauliOp) -> float:
     mat = hamiltonian.to_matrix(sparse=True)
     ground_energy, _ = eigsh(mat, k=1, which="SA")
     return ground_energy[0]
+
+
+def hamming_weight(bitstring: str) -> int:
+    return sum([1 if x == "1" else 0 for x in bitstring])
+
+
+def hamming_weight_index(idx: int, n_qubits: int):
+    bs = to_bitstring(idx, n_qubits, True)
+    return hamming_weight(bs)
+
+
+def n_qp_indices(n_qubits: int, n_qp: int):
+    main_bs = [*["0" for _ in range(n_qubits - n_qp)], *["1" for _ in range(n_qp)]]
+    all_bs = itertools.permutations(main_bs, n_qubits)
+    return [from_bitstring(b, n_qubits, True) for b in all_bs]
+
+
+def get_ground_energy_n_qp(hamiltonian: SparsePauliOp, n_qp: int):
+    mat = hamiltonian.to_matrix(sparse=True)
+    n_qubits = hamiltonian.num_qubits
+    idx = n_qp_indices(n_qubits, n_qp)
+    ground_energy, _ = eigsh(mat[np.ix_(idx, idx)], k=1, which="SA")
+    return ground_energy
 
 
 def get_ground_state(hamiltonian: SparsePauliOp) -> np.ndarray:

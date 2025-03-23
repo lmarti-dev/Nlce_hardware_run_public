@@ -1,6 +1,6 @@
 from qiskit.quantum_info import SparsePauliOp
 
-from qiskit.circuit.library import PauliEvolutionGate, UnitaryGate
+from qiskit.circuit.library import PauliEvolutionGate
 from qiskit import QuantumCircuit
 import numpy as np
 import itertools
@@ -61,7 +61,7 @@ def get_coupler(ham: SparsePauliOp, coupler_type: str, n_qubits: int) -> SparseP
             coupler_type = 1
         to_pauli = True
         w, v = eigsh(ham.to_matrix(True), k=coupler_type + 1, which="SA")
-        proj = np.multiply.outer(v[:, 0], np.conj(v[:, coupler_type]))
+        proj = np.outer(v[:, 0], np.conj(v[:, coupler_type]))
         if to_pauli:
             coupler = mat_to_pauli(proj)
             coupler = (SparsePauliOp("X") - 1j * SparsePauliOp("Y")).expand(coupler)

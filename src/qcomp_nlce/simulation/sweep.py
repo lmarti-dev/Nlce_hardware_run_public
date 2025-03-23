@@ -14,16 +14,16 @@ from qcomp_nlce.utils import (
 
 dry_run = True
 
-for n_qubits in range(9, 11):
-    for j in np.linspace(0.9, 1, 5):
-        ham_j, ham_h = get_tfim_ham(n_qubits, 1, j, periodic=False, split_parts=True)
+for n_qubits in (9, 10):
+    for J in (0.8, 0.9, 1):
+        ham_j, ham_h = get_tfim_ham(n_qubits, 1, J, periodic=False, split_parts=True)
         hamiltonian = ham_j + ham_h
 
         min_gap = get_min_gap(hamiltonian)
 
         total_time = 1 / (min_gap**3)
         n_steps = 5 * hamiltonian.num_qubits
-        mult = 100
+        mult = 10
 
         circuit = get_tfim_sweep_circuit(
             ham_h, ham_j + ham_h, total_time=mult * total_time, n_steps=mult * n_steps
