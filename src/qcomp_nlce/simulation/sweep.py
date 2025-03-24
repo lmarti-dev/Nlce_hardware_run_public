@@ -31,7 +31,7 @@ for n_qubits in (9, 10):
         ground_energy = get_ground_energy(hamiltonian)
 
         print(
-            f"The circuit depth is {circuit.depth()} for {hamiltonian.num_qubits} qubits j/h={j:.3f}"
+            f"The circuit depth is {circuit.depth()} for {hamiltonian.num_qubits} qubits j/h={J:.3f}"
         )
 
         final_energy = get_circuit_energy(hamiltonian, circuit)
@@ -40,7 +40,7 @@ for n_qubits in (9, 10):
         )
         if not dry_run:
             save_sweep(
-                f"from_xx/sweep/{uuid4()}",
+                f"9q_10q_gs/sweep/{uuid4()}",
                 hamiltonian,
                 circuit,
                 ground_energy,

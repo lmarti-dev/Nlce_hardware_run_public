@@ -64,7 +64,7 @@ def optimize_circuit(circuit: QuantumCircuit, hamiltonian: SparsePauliOp) -> lis
     minimize(
         fun=fun,
         x0=np.zeros((len(circuit.parameters))),
-        method="trust-constr",
+        method="COBYLA",
         callback=callback,
         bounds=circuit.num_parameters * [(0, np.pi)],
     )

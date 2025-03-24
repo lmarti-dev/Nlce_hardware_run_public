@@ -1,13 +1,11 @@
-import numpy as np
-from pathlib import Path
-from qiskit import QuantumCircuit, qpy
+from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
 from uuid import uuid4
 from qiskit.circuit.library import hamiltonian_variational_ansatz
 from qiskit.quantum_info import SparsePauliOp
 from qcomp_nlce.utils.hamiltonian import pretty_pauli_str
-import os
+import itertools
 
 
 def get_custom_vqe(n_qubits: int, n_layers: int) -> QuantumCircuit:
@@ -39,14 +37,34 @@ def get_hva_vqe(
     return circuit
 
 
+def get_nq_paulistr(n_qubits: int, nq_pauli: str = "XX"):
+    combs = itertools.combinations(range(n_qubits), len(nq_pauli))
+    paulistr_list = []
+    for comb in combs:
+        pid = ["I"] * n_qubits
+        for ind, val in enumerate(comb):
+            pid[val] = nq_pauli[ind]
+        paulistr_list.append("".join(pid))
+    return paulistr_list
+
+
 def get_givens_vqe(hamiltonian: SparsePauliOp, n_layers: int) -> QuantumCircuit:
     n_qubits = hamiltonian.num_qubits
     circuit = QuantumCircuit(n_qubits)
+    xx_list = get_nq_paulistr(n_qubits, nq_pauli="XX")
+    yy_list = get_nq_paulistr(n_qubits, nq_pauli="YY")
     for layer in range(n_layers):
-        for q in range(n_qubits - 1):
-            xx = SparsePauliOp(q * "I" + "XX" + (n_qubits - 2 - q) * "I")
-            yy = SparsePauliOp(q * "I" + "YY" + (n_qubits - 2 - q) * "I")
-            param = Parameter(f"l{layer}_{q}")
+        for ind, (xx_str, yy_str) in enumerate(zip(xx_list, yy_list)):
+            xx = SparsePauliOp(xx_str)
+            yy = SparsePauliOp(yy_str)
+            param = Parameter(f"l{layer}_{ind}")
             circuit.append(PauliEvolutionGate(xx + yy, time=param), range(n_qubits))
-
     return circuit
+
+
+def circuit_composed_with_prep(circuit: QuantumCircuit, n_qp: int) -> QuantumCircuit:
+    init_circuit = QuantumCircuit(circuit.num_qubits)
+    for q in range(n_qp):
+        init_circuit.x(q)
+
+    return init_circuit.compose(circuit, qubits=circuit.qubits, inplace=False)

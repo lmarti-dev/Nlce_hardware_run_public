@@ -132,12 +132,6 @@ def get_tfim_ham(
     return hamiltonian
 
 
-def get_ground_energy(hamiltonian: SparsePauliOp) -> float:
-    mat = hamiltonian.to_matrix(sparse=True)
-    ground_energy, _ = eigsh(mat, k=1, which="SA")
-    return ground_energy[0]
-
-
 def hamming_weight(bitstring: str) -> int:
     return sum([1 if x == "1" else 0 for x in bitstring])
 
@@ -147,18 +141,31 @@ def hamming_weight_index(idx: int, n_qubits: int):
     return hamming_weight(bs)
 
 
-def n_qp_indices(n_qubits: int, n_qp: int):
-    main_bs = [*["0" for _ in range(n_qubits - n_qp)], *["1" for _ in range(n_qp)]]
-    all_bs = itertools.permutations(main_bs, n_qubits)
-    return [from_bitstring(b, n_qubits, True) for b in all_bs]
+def n_qp_indices(n_qubits: int, n_qp: int, right_to_left: bool):
+    qp_combs = itertools.combinations(range(n_qubits), n_qp)
+
+    out_idx = []
+    for qp_comb in qp_combs:
+        if right_to_left:
+            iii = sum([2 ** (n_qubits - 1 - iii) for iii in qp_comb])
+        else:
+            iii = sum([2**iii for iii in qp_comb])
+        out_idx.append(iii)
+    return out_idx
 
 
-def get_ground_energy_n_qp(hamiltonian: SparsePauliOp, n_qp: int):
+def get_ground_energy(hamiltonian: SparsePauliOp) -> float:
+    mat = hamiltonian.to_matrix(sparse=True)
+    ground_energy, _ = eigsh(mat, k=1, which="SA")
+    return ground_energy[0]
+
+
+def get_ground_energy_n_qp(hamiltonian: SparsePauliOp, n_qp: int) -> float:
     mat = hamiltonian.to_matrix(sparse=True)
     n_qubits = hamiltonian.num_qubits
-    idx = n_qp_indices(n_qubits, n_qp)
+    idx = n_qp_indices(n_qubits, n_qp, True)
     ground_energy, _ = eigsh(mat[np.ix_(idx, idx)], k=1, which="SA")
-    return ground_energy
+    return ground_energy[0]
 
 
 def get_ground_state(hamiltonian: SparsePauliOp) -> np.ndarray:
