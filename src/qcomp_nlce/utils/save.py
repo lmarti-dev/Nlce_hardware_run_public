@@ -19,14 +19,16 @@ def save_sweep(
     hamiltonian: SparsePauliOp,
     circuit: QuantumCircuit,
     ground_energy: float,
+    dry_run: bool,
 ):
-    save_dir = get_save_directory(dirname)
-    with open(Path(save_dir, "circuit.qpy"), "wb+") as fd:
-        qpy.dump(circuit, fd)
-    with open(Path(save_dir, "ground_energy.npy"), "wb+") as fd:
-        np.save(fd, np.array(ground_energy))
-    with open(Path(save_dir, "hamiltonian.npy"), "wb+") as fd:
-        np.save(fd, hamiltonian.to_list(True))
+    if not dry_run:
+        save_dir = get_save_directory(dirname)
+        with open(Path(save_dir, "circuit.qpy"), "wb+") as fd:
+            qpy.dump(circuit, fd)
+        with open(Path(save_dir, "ground_energy.npy"), "wb+") as fd:
+            np.save(fd, np.array(ground_energy))
+        with open(Path(save_dir, "hamiltonian.npy"), "wb+") as fd:
+            np.save(fd, hamiltonian.to_list(True))
 
 
 def load_sweep(dirname: str):
@@ -46,16 +48,18 @@ def save_optimized_vqe(
     circuit: QuantumCircuit,
     weights: np.ndarray,
     ground_energy: float,
+    dry_run: bool,
 ):
-    save_dir = get_save_directory(dirname)
-    with open(Path(save_dir, "circuit.qpy"), "wb+") as fd:
-        qpy.dump(circuit, fd)
-    with open(Path(save_dir, "weights.npy"), "wb+") as fd:
-        np.save(fd, weights)
-    with open(Path(save_dir, "ground_energy.npy"), "wb+") as fd:
-        np.save(fd, np.array(ground_energy))
-    with open(Path(save_dir, "hamiltonian.npy"), "wb+") as fd:
-        np.save(fd, hamiltonian.to_list(True))
+    if not dry_run:
+        save_dir = get_save_directory(dirname)
+        with open(Path(save_dir, "circuit.qpy"), "wb+") as fd:
+            qpy.dump(circuit, fd)
+        with open(Path(save_dir, "weights.npy"), "wb+") as fd:
+            np.save(fd, weights)
+        with open(Path(save_dir, "ground_energy.npy"), "wb+") as fd:
+            np.save(fd, np.array(ground_energy))
+        with open(Path(save_dir, "hamiltonian.npy"), "wb+") as fd:
+            np.save(fd, hamiltonian.to_list(True))
 
 
 def load_optimized_vqe(dirname: str):

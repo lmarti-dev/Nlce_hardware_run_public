@@ -24,7 +24,6 @@ dry_run = True
 qubit_sizes = (9, 10)
 j_vals = (0.8, 0.9, 1)
 coolings = (False, True)
-decompositions = np.zeros((qubit_sizes[0] ** 2, 2))
 
 
 errors = np.zeros((len(qubit_sizes), len(j_vals), 2, 2))
@@ -42,7 +41,7 @@ for indq, n_qubits in enumerate(qubit_sizes):
             total_time = 1 / (min_gap**3)
             n_sweep_steps = 5 * hamiltonian.num_qubits
             n_sweep_steps = 5
-            n_cooling_steps = 5
+            n_cooling_steps = 1
             mult = 1
 
             circuit = get_tfim_sweep_circuit(
@@ -65,7 +64,7 @@ for indq, n_qubits in enumerate(qubit_sizes):
                         omega=energies[1] - energies[0],
                         weaken_coupling=5,
                         n_steps=n_cooling_steps,
-                        coupler_type="proj",
+                        coupler_type="XX+YY",
                     ),
                     range(hamiltonian.num_qubits + 1),
                     inplace=True,
@@ -86,7 +85,7 @@ for indq, n_qubits in enumerate(qubit_sizes):
             unique_bitstrings = statevector_sample_unique(final_circuit, 1000)
             if add_cooling:
                 tmp_unique_bitstrings = [
-                    u[1:] for u in unique_bitstrings if u[0] == "0"
+                    u[1:] for u in unique_bitstrings if u[0] == "1"
                 ]
                 if tmp_unique_bitstrings != []:
                     unique_bitstrings = tmp_unique_bitstrings
@@ -102,16 +101,16 @@ for indq, n_qubits in enumerate(qubit_sizes):
             print(f"final fidelity: {ground_state_fidelity(final_sv,hamiltonian):.4e}")
             err0 = relerr(final_energy)
             err1 = relerr(subspace_energy)
-            print(f"sv e {err0:4e} sub e {err1:4e}")
+            print(f"Statevector {err0:4e} subspace {err1:4e}")
             errors[indq, indj, indc, 0] = err0
             errors[indq, indj, indc, 1] = err1
-            if not dry_run:
-                save_sweep(
-                    f"from_xx/sweep/{uuid4()}",
-                    hamiltonian,
-                    final_circuit,
-                    ground_energy,
-                )
+            save_sweep(
+                f"from_xx/sweep/{uuid4()}",
+                hamiltonian,
+                final_circuit,
+                ground_energy,
+                dry_run,
+            )
 
 mark = "xods+"
 col = "rbg"

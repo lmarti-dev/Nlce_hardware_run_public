@@ -59,8 +59,8 @@ def get_expectations_from_sources(
     )
 
     statevector_energy = estimate_observables(
-        circuit=circuit, observables=hamiltonian, param_sweep=parameters
-    ).data.evs
+        circuit=circuit, observables=[hamiltonian], param_sweep=parameters
+    ).data.evs[0]
 
     if run_on_ibmq:
         token = get_token()
@@ -83,13 +83,13 @@ def get_expectations_from_sources(
         )
 
         print(
-            f"RealBackend ({real_backend.name}) {relerr(real_energy)} sub. mat.: {len(real_unique_bitstring)} x {len(real_unique_bitstring)}: {real_bitstring_prop*100}%"
+            f"RealBackend ({real_backend.name}) {relerr(real_energy):.5e} sub. mat.: {len(real_unique_bitstring)} × {len(real_unique_bitstring)}: {real_bitstring_prop*100:.3f}%"
         )
 
-    print(f"Statevector {relerr(statevector_energy)}")
+    print(f"Statevector {relerr(statevector_energy):.5e}")
 
     print(
-        f"FakeBackend: {relerr(fake_backend_energy)} sub. mat.: {len(fake_unique_bitstring)} x {len(fake_unique_bitstring)}: {fake_backend_bitstring_prop*100}"
+        f"FakeBackend ({fake_backend.name}) {relerr(fake_backend_energy):.5e} sub. mat.: {len(fake_unique_bitstring)} × {len(fake_unique_bitstring)}: {fake_backend_bitstring_prop*100:.3f}%"
     )
 
     var_dict = {
@@ -131,7 +131,7 @@ def get_expectations_from_sources(
 
 def run_all(dirname: str, edm: ExperimentDataManager, run_on_ibmq: bool, which: str):
     HOME = Path(__file__).parent
-    dirname = Path(HOME, f"../res_sim/{dirname}/sweep")
+    dirname = Path(HOME, f"../res_sim/{dirname}/{which}")
     experiments = os.listdir(dirname)
     for x in experiments:
         print(f"Loading {x}")
@@ -142,11 +142,11 @@ def run_all(dirname: str, edm: ExperimentDataManager, run_on_ibmq: bool, which: 
 
 
 if __name__ == "__main__":
-    dry_run = True
+    dry_run = False
     which = "sweep"
-    edm = ExperimentDataManager(f"nlce_hardware_run_{which}", dry_run=dry_run)
-    run_on_ibmq = False
+    edm = ExperimentDataManager(f"nlce_hardware_run_{which}_gs", dry_run=dry_run)
+    run_on_ibmq = True
     if which == "sweep":
-        run_all("scan_jh", edm, run_on_ibmq, which=which)
+        run_all("9q_10q_gs", edm, run_on_ibmq, which=which)
     elif which == "vqe":
-        run_all("first_test", edm, run_on_ibmq, which=which)
+        run_all("9q_10q_gs", edm, run_on_ibmq, which=which)

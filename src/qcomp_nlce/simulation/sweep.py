@@ -12,7 +12,7 @@ from qcomp_nlce.utils import (
 )
 
 
-dry_run = True
+dry_run = False
 
 for n_qubits in (9, 10):
     for J in (0.8, 0.9, 1):
@@ -38,10 +38,6 @@ for n_qubits in (9, 10):
         print(
             f"final energy error is {np.abs(ground_energy-final_energy)/np.abs(ground_energy)}"
         )
-        if not dry_run:
-            save_sweep(
-                f"9q_10q_gs/sweep/{uuid4()}",
-                hamiltonian,
-                circuit,
-                ground_energy,
-            )
+        save_sweep(
+            f"9q_10q_gs/sweep/{uuid4()}", hamiltonian, circuit, ground_energy, dry_run
+        )

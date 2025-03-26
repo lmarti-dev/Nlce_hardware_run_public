@@ -9,6 +9,7 @@ from qcomp_nlce.utils import (
     save_optimized_vqe,
 )
 
+dry_run = True
 
 for n_qubits in (9, 10):
     for J in (0.8, 0.9, 1):
@@ -34,4 +35,5 @@ for n_qubits in (9, 10):
             circuit,
             params,
             ground_energy,
+            dry_run,
         )
