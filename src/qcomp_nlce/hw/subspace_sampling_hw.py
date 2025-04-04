@@ -109,6 +109,8 @@ def get_expectations_from_sources(
             "ground_energy": ground_energy,
             "n_qubits": circuit.num_qubits,
             "name": dirname,
+            "hamiltonian": hamiltonian,
+            "ratio": get_tfim_ratio(hamiltonian),
         },
     }
     if run_on_ibmq:
@@ -136,7 +138,7 @@ def run_all(dirname: str, edm: ExperimentDataManager, run_on_ibmq: bool, which: 
     for x in experiments:
         print(f"Loading {x}")
         get_expectations_from_sources(
-            edm, Path(dirname, x), run_on_ibmq=run_on_ibmq, which=which
+            edm, Path(dirname, x), run_on_ibmq=run_on_ibmq, which=which, n_shots=10000
         )
         edm.new_run()
 
@@ -147,6 +149,6 @@ if __name__ == "__main__":
     edm = ExperimentDataManager(f"nlce_hardware_run_{which}_gs", dry_run=dry_run)
     run_on_ibmq = True
     if which == "sweep":
-        run_all("9q_10q_gs", edm, run_on_ibmq, which=which)
+        run_all("9q_10q_gs_new", edm, run_on_ibmq, which=which)
     elif which == "vqe":
         run_all("9q_10q_gs", edm, run_on_ibmq, which=which)

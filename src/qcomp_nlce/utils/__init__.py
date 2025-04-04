@@ -5,3 +5,4 @@ from .vqe import *
 from .sweep import *
 from .save import *
 from .cool import *
+from .nlce import *

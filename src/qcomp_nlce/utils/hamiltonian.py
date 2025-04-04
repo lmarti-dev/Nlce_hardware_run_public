@@ -161,6 +161,7 @@ def get_ground_energy(hamiltonian: SparsePauliOp) -> float:
 
 
 def get_ground_energy_n_qp(hamiltonian: SparsePauliOp, n_qp: int) -> float:
+    # this might be wrong: you don't get an eigenstate of the whole Hamiltonian!
     mat = hamiltonian.to_matrix(sparse=True)
     n_qubits = hamiltonian.num_qubits
     idx = n_qp_indices(n_qubits, n_qp, True)
