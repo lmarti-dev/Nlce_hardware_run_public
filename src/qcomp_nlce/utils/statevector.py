@@ -1,17 +1,8 @@
 import numpy as np
-from qiskit import QuantumCircuit, ClassicalRegister
+from qiskit import QuantumCircuit
 from qiskit.primitives import StatevectorEstimator, StatevectorSampler
 from qiskit.quantum_info import SparsePauliOp, Statevector, partial_trace
 from scipy.optimize import minimize
-
-
-def add_meas_layer(circuit: QuantumCircuit) -> QuantumCircuit:
-    circuit = circuit.copy()
-    meas_register = ClassicalRegister(circuit.num_qubits)
-    circuit.add_register(meas_register)
-    for q, c in zip(circuit.qubits, meas_register):
-        circuit.measure(q, c)
-    return circuit
 
 
 def estimate_observables(
@@ -32,21 +23,25 @@ def estimate_observables(
     return result
 
 
-def optimize_circuit(circuit: QuantumCircuit, hamiltonian: SparsePauliOp) -> list:
+def optimize_circuit(
+    circuit: QuantumCircuit, hamiltonian: SparsePauliOp, cost: callable = None
+) -> list:
     energy_values = []
     xks = []
 
     def callback(xk: np.ndarray, *args):
-        e = fun(xk=xk)
+        e = cost(xk=xk)
         print(e, end="\r")
         energy_values.append(e)
         xks.append(xk)
 
-    def fun(xk: np.ndarray):
-        result = estimate_observables(
-            circuit=circuit, observables=[hamiltonian], param_sweep=xk
-        )
-        return result.data.evs[0]
+    if cost is None:
+
+        def cost(xk: np.ndarray):
+            result = estimate_observables(
+                circuit=circuit, observables=[hamiltonian], param_sweep=xk
+            )
+            return result.data.evs[0]
 
     def jac(x: np.ndarray) -> np.ndarray:
         out = np.zeros_like(x)
@@ -62,7 +57,7 @@ def optimize_circuit(circuit: QuantumCircuit, hamiltonian: SparsePauliOp) -> lis
         return out
 
     minimize(
-        fun=fun,
+        fun=cost,
         x0=np.zeros((len(circuit.parameters))),
         method="COBYLA",
         callback=callback,

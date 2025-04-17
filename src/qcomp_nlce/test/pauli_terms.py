@@ -1,7 +1,7 @@
-from qcomp_nlce.utils import get_pauli_indices, get_tfim_ham
+from qcomp_nlce.utils import get_pauli_indices, TFIM
 
 
-ham = get_tfim_ham(n_qubits=4, h=1, J=0.7)
+ham = TFIM(n_qubits=4, h=1, J=0.7)
 
 
 for term in ham:

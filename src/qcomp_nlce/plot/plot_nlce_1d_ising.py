@@ -5,7 +5,7 @@ from qcomp_nlce.utils import (
     load_sweep,
     get_tfim_ratio,
     pfeuty_energy,
-    get_tfim_ham,
+    TFIM,
     get_ground_energy,
 )
 import matplotlib.pyplot as plt
@@ -16,10 +16,10 @@ from fauplotstyle import style
 
 def ED_nlce(q1: int, q2: int, ratio: float) -> float:
 
-    ham1 = get_tfim_ham(n_qubits=q1, h=1, J=ratio)
+    ham1 = TFIM(n_qubits=q1, h=1, J=ratio)
     e1 = get_ground_energy(ham1)
 
-    ham2 = get_tfim_ham(n_qubits=q2, h=1, J=ratio)
+    ham2 = TFIM(n_qubits=q2, h=1, J=ratio)
     e2 = get_ground_energy(ham2)
 
     return e2 - e1

@@ -60,12 +60,6 @@ def backend_sample(
     return job
 
 
-def get_counts_from_job(job: RuntimeJob) -> dict:
-    key = list(job.result()[0].data.keys())[0]
-    counts = job.result()[0].data[key].get_counts()
-    return counts
-
-
 def get_unique_bitstrings(counts: dict) -> list[str]:
     return np.unique(list(counts.keys()))
 

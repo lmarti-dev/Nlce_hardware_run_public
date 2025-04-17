@@ -4,7 +4,7 @@ from uuid import uuid4
 from qcomp_nlce.utils import (
     get_ground_energy,
     get_hva_vqe,
-    get_tfim_ham,
+    TFIM,
     optimize_circuit,
     save_optimized_vqe,
 )
@@ -15,7 +15,7 @@ for n_qubits in (9, 10):
     for J in (0.8, 0.9, 1):
         periodic = False
         h = 1
-        hamiltonian = get_tfim_ham(n_qubits, h, J, periodic=periodic)
+        hamiltonian = TFIM(n_qubits, h, J, periodic=periodic)
         n_layers = int(np.ceil(hamiltonian.num_qubits / 2))
 
         circuit = get_hva_vqe(hamiltonian, n_layers=n_layers, unique_weights=True)

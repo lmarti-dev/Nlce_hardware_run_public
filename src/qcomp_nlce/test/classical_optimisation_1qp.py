@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import get_tfim_ham
+from qcomp_nlce.utils import TFIM
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
 from scipy.optimize import minimize
@@ -68,6 +68,6 @@ if __name__ == "__main__":
     J = 1
     periodic = False
 
-    hamiltonian = get_tfim_ham(n_qubits, h, J, periodic=periodic)
+    hamiltonian = TFIM(n_qubits, h, J, periodic=periodic)
 
     energy_values, xks = optimize_ansatz(hamiltonian)

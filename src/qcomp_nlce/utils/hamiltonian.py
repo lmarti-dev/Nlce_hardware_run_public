@@ -37,7 +37,7 @@ def to_bitstring(ind: int, n_qubits: int, right_to_left: bool = False) -> str:
 
 
 def index_bits(
-    a: Union[str, int], N: int = None, ones=True, right_to_left: bool = False
+    a: Union[str, int], n_qubits: int = None, ones=True, right_to_left: bool = False
 ) -> list:
     """Takes a binary number and returns a list of indices where the bit is one (or zero)
     Args:
@@ -47,10 +47,10 @@ def index_bits(
         list: List of indices where a is one (or zero)
     """
     if isinstance(a, int):
-        if N is None:
+        if n_qubits is None:
             b = bin(a)
         else:
-            b = binleftpad(integer=a, left_pad=N)
+            b = binleftpad(integer=a, left_pad=n_qubits)
     else:
         b = a
     if "b" in b:
@@ -66,7 +66,7 @@ def index_bits(
 def from_bitstring(b: str, n_qubits: int, right_to_left: bool = False) -> int:
     if "b" in b:
         b = b.split("b")[1]
-    idx = index_bits(a=b, N=n_qubits, right_to_left=True)
+    idx = index_bits(a=b, n_qubits=n_qubits, right_to_left=True)
     if right_to_left:
         return sum([2 ** (n_qubits - 1 - iii) for iii in idx])
     else:
@@ -85,7 +85,7 @@ def get_pauli_indices(term: Pauli) -> list:
     return [ind for ind in range(len(term)) if str(term)[ind] != "I"]
 
 
-def get_singlet_ham(n_qubits: int, h: float, J: float) -> SparsePauliOp:
+def get_singlet_ham(n_qubits: int, J: float) -> SparsePauliOp:
     hamiltonian = sum(
         [
             -J * SparsePauliOp(s * "I" + "XX" + (n_qubits - 2 - s) * "I")
@@ -104,7 +104,16 @@ def get_tfim_ratio(ham: SparsePauliOp) -> float:
     return np.real(j / h).astype(float)
 
 
-def get_tfim_ham(
+def field_pauli_sum(n_qubits: int, pauli: str):
+    return sum(
+        [
+            SparsePauliOp(s * "I" + pauli + (n_qubits - 1 - s) * "I")
+            for s in range(n_qubits)
+        ]
+    )
+
+
+def TFIM(
     n_qubits: int, h: float, J: float, periodic: bool = False, split_parts: bool = False
 ) -> SparsePauliOp:
 
@@ -136,12 +145,12 @@ def hamming_weight(bitstring: str) -> int:
     return sum([1 if x == "1" else 0 for x in bitstring])
 
 
-def hamming_weight_index(idx: int, n_qubits: int):
+def hamming_weight_from_index(idx: int, n_qubits: int):
     bs = to_bitstring(idx, n_qubits, True)
     return hamming_weight(bs)
 
 
-def n_qp_indices(n_qubits: int, n_qp: int, right_to_left: bool):
+def n_qp_indices(n_qubits: int, n_qp: int, right_to_left: bool) -> list[int]:
     qp_combs = itertools.combinations(range(n_qubits), n_qp)
 
     out_idx = []
@@ -152,6 +161,14 @@ def n_qp_indices(n_qubits: int, n_qp: int, right_to_left: bool):
             iii = sum([2**iii for iii in qp_comb])
         out_idx.append(iii)
     return out_idx
+
+
+def n_qp_bitstrings(n_qubits: int, n_qp: int, right_to_left: bool) -> list[str]:
+    qp_idx = n_qp_indices(n_qubits, n_qp, right_to_left)
+    out_str = []
+    for idx in qp_idx:
+        out_str.append(to_bitstring(idx, n_qubits, right_to_left))
+    return out_str
 
 
 def get_ground_energy(hamiltonian: SparsePauliOp) -> float:

@@ -4,7 +4,7 @@ from uuid import uuid4
 from qcomp_nlce.utils import (
     get_ground_energy,
     get_tfim_sweep_circuit,
-    get_tfim_ham,
+    TFIM,
     get_circuit_energy,
     get_min_gap,
     cooling_step,
@@ -16,7 +16,7 @@ dry_run = False
 
 for n_qubits in (9, 10):
     for J in (0.8, 0.9, 1):
-        ham_j, ham_h = get_tfim_ham(n_qubits, 1, J, periodic=False, split_parts=True)
+        ham_j, ham_h = TFIM(n_qubits, 1, J, periodic=False, split_parts=True)
         hamiltonian = ham_j + ham_h
 
         min_gap = get_min_gap(hamiltonian)
