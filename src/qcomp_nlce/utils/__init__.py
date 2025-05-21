@@ -1,5 +1,6 @@
 from .hamiltonian import *
-from .hardware import *
+from .ibm_hardware import *
+from .lrz_hardware import *
 from .statevector import *
 from .vqe import *
 from .sweep import *

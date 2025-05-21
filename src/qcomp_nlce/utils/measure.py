@@ -1,5 +1,5 @@
 from qiskit.primitives import StatevectorSampler
-from qcomp_nlce.utils.hardware import backend_sample
+from qcomp_nlce.utils.ibm_hardware import backend_sample
 from qiskit_ibm_runtime import IBMBackend, RuntimeJob
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
 from qiskit import ClassicalRegister, QuantumCircuit

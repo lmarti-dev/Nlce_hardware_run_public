@@ -1,10 +1,10 @@
 from qiskit_ibm_runtime import QiskitRuntimeService
-from qcomp_nlce.utils import get_token
+from qcomp_nlce.utils import get_ibm_token
 
 service = QiskitRuntimeService(
     channel="ibm_quantum",
     instance="ibm-q/open/main",
-    token=get_token(),
+    token=get_ibm_token(),
 )
 job = service.job("crx14dshazpg0084b9xg")
 job_result = job.result()

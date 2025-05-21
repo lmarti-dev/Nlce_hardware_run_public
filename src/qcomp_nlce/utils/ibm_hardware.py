@@ -90,9 +90,9 @@ def backend_estimate(
     return job
 
 
-def get_token():
+def get_ibm_token():
     home = Path(__file__).parent
-    token_fpath = Path(home, "../files/token.dat")
+    token_fpath = Path(home, "../files/ibm_token.dat")
     token = io.open(
         token_fpath,
         "r",
