@@ -175,7 +175,8 @@ cython_debug/
 
 .vscode/
 
-token.dat
+files/ibm_token.dat
+files/lrz_token.dat
 
 data_folder/
 hardware/
