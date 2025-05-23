@@ -2,7 +2,12 @@ from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
 from uuid import uuid4
-from qiskit.circuit.library import hamiltonian_variational_ansatz
+
+
+from qiskit import __version__ as qiskit_version
+
+if qiskit_version > "1.3.0":
+    from qiskit.circuit.library import hamiltonian_variational_ansatz
 from qiskit.quantum_info import SparsePauliOp
 from qcomp_nlce.utils.hamiltonian import pretty_pauli_str
 import itertools

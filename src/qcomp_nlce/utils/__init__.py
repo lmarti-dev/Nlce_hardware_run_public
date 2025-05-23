@@ -1,6 +1,5 @@
 from .hamiltonian import *
-from .ibm_hardware import *
-from .lrz_hardware import *
+from .hardware import *
 from .statevector import *
 from .vqe import *
 from .sweep import *
@@ -9,3 +8,4 @@ from .cool import *
 from .nlce import *
 from .cost import *
 from .overlap import *
+from .measure import *

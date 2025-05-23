@@ -1,7 +1,5 @@
 import numpy as np
-from qiskit_ibm_runtime import QiskitRuntimeService
 
-from Nlce_hardware_run.src.qcomp_nlce.utils.measure import add_meas_layer
 from qcomp_nlce.utils import (
     backend_sample,
     subspace_diagonalize,
@@ -12,22 +10,26 @@ from qcomp_nlce.utils import (
     get_appropriate_fake_backend,
     get_tfim_ratio,
     get_counts_from_job,
+    get_backend,
+    add_meas_layer,
 )
 from data_manager import ExperimentDataManager
 
-from qcomp_nlce.utils.ibm_hardware import get_ibm_token
 from pathlib import Path
 import os
+
+
+PROVIDER = "LRZ"
 
 
 def get_expectations_from_sources(
     edm: ExperimentDataManager,
     dirname: str,
     n_shots: int = 1e3,
-    run_on_ibmq: bool = False,
+    run_on_hardware: bool = False,
     which: str = "vqe",
 ):
-
+    backend_name = "AQT" if PROVIDER == "LRZ" else "IBM"
     if which == "vqe":
         hamiltonian, circuit, weights, ground_energy = load_optimized_vqe(dirname)
 
@@ -36,7 +38,7 @@ def get_expectations_from_sources(
         hamiltonian, circuit, ground_energy = load_sweep(dirname)
         weights = None
         parameters = None
-    fake_backend = get_appropriate_fake_backend(circuit.num_qubits)
+    fake_backend = get_appropriate_fake_backend(circuit.num_qubits, backend_name)
 
     print(f"n_qubits: {hamiltonian.num_qubits}, j/h {get_tfim_ratio(hamiltonian)}")
 
@@ -62,13 +64,8 @@ def get_expectations_from_sources(
         circuit=circuit, observables=[hamiltonian], param_sweep=parameters
     ).data.evs[0]
 
-    if run_on_ibmq:
-        token = get_ibm_token()
-        service = QiskitRuntimeService(channel="ibm_quantum", token=token)
-        real_backend = service.least_busy(
-            simulator=False, operational=True, min_num_qubits=circuit.num_qubits
-        )
-
+    if run_on_hardware:
+        real_backend = get_backend(circuit.num_qubits, backend_name)
         real_job = backend_sample(
             backend=real_backend,
             circuit=circuit_to_sample,
@@ -113,7 +110,7 @@ def get_expectations_from_sources(
             "ratio": get_tfim_ratio(hamiltonian),
         },
     }
-    if run_on_ibmq:
+    if run_on_hardware:
         var_dict["real_backend"] = {
             "name": real_backend.name,
             "error": relerr(real_energy),
@@ -126,29 +123,50 @@ def get_expectations_from_sources(
     edm.var_dump(**var_dict)
 
     jobj = {"fake_result": fake_job.result()}
-    if run_on_ibmq:
+    if run_on_hardware:
         jobj["real_result"] = real_job.result()
     edm.save_dict(jobj)
 
 
-def run_all(dirname: str, edm: ExperimentDataManager, run_on_ibmq: bool, which: str):
+def run_all(
+    dirname: str, edm: ExperimentDataManager, run_on_hardware: bool, which: str
+):
     HOME = Path(__file__).parent
     dirname = Path(HOME, f"../res_sim/{dirname}/{which}")
     experiments = os.listdir(dirname)
     for x in experiments:
         print(f"Loading {x}")
         get_expectations_from_sources(
-            edm, Path(dirname, x), run_on_ibmq=run_on_ibmq, which=which, n_shots=10000
+            edm,
+            Path(dirname, x),
+            run_on_hardware=run_on_hardware,
+            which=which,
+            n_shots=100,
         )
         edm.new_run()
 
 
+def run_single(edm: ExperimentDataManager, run_on_hardware: bool):
+    HOME = Path(__file__).parent
+    dirname = Path(HOME, f"../res_sim/9q_10q_gs/vqe")
+    experiment = "6e4f28ef-ae5e-4f67-95e0-5c4575fcbdcf"
+    get_expectations_from_sources(
+        edm,
+        Path(dirname, experiment),
+        run_on_hardware=run_on_hardware,
+        which="vqe",
+        n_shots=100,
+    )
+
+
 if __name__ == "__main__":
     dry_run = False
-    which = "sweep"
+    which = "test"
     edm = ExperimentDataManager(f"nlce_hardware_run_{which}_gs", dry_run=dry_run)
-    run_on_ibmq = True
+    run_on_hardware = True
     if which == "sweep":
-        run_all("9q_10q_gs_new", edm, run_on_ibmq, which=which)
+        run_all("9q_10q_gs_new", edm, run_on_hardware, which=which)
     elif which == "vqe":
-        run_all("9q_10q_gs", edm, run_on_ibmq, which=which)
+        run_all("9q_10q_gs", edm, run_on_hardware, which=which)
+    elif which == "test":
+        run_single(edm, run_on_hardware)

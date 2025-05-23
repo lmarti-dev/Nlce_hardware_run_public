@@ -1,8 +1,11 @@
-from qiskit.primitives import StatevectorSampler
-from qcomp_nlce.utils.ibm_hardware import backend_sample
+from qiskit.primitives import StatevectorSampler, PrimitiveJob
+from qcomp_nlce.utils.hardware import backend_sample
 from qiskit_ibm_runtime import IBMBackend, RuntimeJob
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
 from qiskit import ClassicalRegister, QuantumCircuit
+from typing import Union
+from mqp.qiskit_provider.job import MQPJob
+
 import numpy as np
 
 
@@ -22,9 +25,20 @@ def sample_counts_circuit(
     return counts
 
 
-def get_counts_from_job(job: RuntimeJob) -> dict:
-    key = list(job.result()[0].data.keys())[0]
-    counts = job.result()[0].data[key].get_counts()
+def get_counts_from_job(job: Union[RuntimeJob, PrimitiveJob, MQPJob]) -> dict:
+    if isinstance(job, RuntimeJob):
+        key = list(job.result()[0].data.keys())[0]
+        counts = job.result()[0].data[key].get_counts()
+    elif isinstance(job, PrimitiveJob):
+        res = job.result()
+        qd = res.quasi_dists[0]
+        n_shots = res.metadata[0]["shots"]
+
+        counts = {k: int(qd[k] * n_shots) for k in qd.keys()}
+    elif isinstance(job, MQPJob):
+        counts = job.result().get_counts()
+    else:
+        raise ValueError(f"Unexpected job type: type {type(job)}")
     return counts
 
 
@@ -35,3 +49,7 @@ def add_meas_layer(circuit: QuantumCircuit) -> QuantumCircuit:
     for q, c in zip(circuit.qubits, meas_register):
         circuit.measure(q, c)
     return circuit
+
+
+def get_unique_bitstrings(counts: dict) -> list[str]:
+    return np.unique(list(counts.keys()))

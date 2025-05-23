@@ -5,12 +5,11 @@ from qcomp_nlce.utils import (
     backend_estimate,
     estimate_observables,
     load_optimized_vqe,
-    get_optimal_parameters,
     get_appropriate_fake_backend,
 )
 from data_manager import ExperimentDataManager
 
-from qcomp_nlce.utils.ibm_hardware import get_ibm_token
+from qcomp_nlce.utils.hardware import get_token
 
 
 def get_expectations_from_sources(
@@ -18,7 +17,6 @@ def get_expectations_from_sources(
     dirname: str,
     n_shots: int = 1e4,
     run_on_ibmq: bool = False,
-    override_params: bool = False,
 ):
     hamiltonian, circuit, weights, ground_energy = load_optimized_vqe(dirname)
     fake_backend = get_appropriate_fake_backend(circuit.num_qubits)
@@ -26,10 +24,7 @@ def get_expectations_from_sources(
     def relerr(e):
         return np.abs(e - ground_energy) / np.abs(ground_energy)
 
-    if override_params:
-        parameters = get_optimal_parameters(dirname)
-    else:
-        parameters = weights[-1]
+    parameters = weights[-1]
 
     job = backend_estimate(
         backend=fake_backend,
@@ -45,7 +40,7 @@ def get_expectations_from_sources(
     ).data.evs
 
     if run_on_ibmq:
-        token = get_ibm_token()
+        token = get_token()
         service = QiskitRuntimeService(channel="ibm_quantum", token=token)
         real_backend = service.least_busy(
             simulator=False, operational=True, min_num_qubits=circuit.num_qubits
