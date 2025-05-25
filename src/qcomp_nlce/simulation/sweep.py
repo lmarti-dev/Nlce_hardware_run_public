@@ -21,8 +21,8 @@ for n_qubits in (9, 10):
 
         min_gap = get_min_gap(hamiltonian)
 
-        total_time = 1 / (min_gap**3)
-        n_steps = 100 * hamiltonian.num_qubits
+        total_time = 1 / (min_gap**2)
+        n_steps = 20 * hamiltonian.num_qubits
         mult = 1
 
         circuit = get_tfim_sweep_circuit(
@@ -42,7 +42,7 @@ for n_qubits in (9, 10):
             f"final energy error is {np.abs(ground_energy-final_energy)/np.abs(ground_energy)}"
         )
         save_sweep(
-            f"9q_10q_gs_new/sweep/{uuid4()}",
+            f"9q_10q_gs_aqt/sweep/{uuid4()}",
             hamiltonian,
             circuit,
             ground_energy,

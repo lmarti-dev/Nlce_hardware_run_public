@@ -15,6 +15,7 @@ from qiskit_ibm_runtime.fake_provider import (
 )
 from typing import Literal, Union
 
+from qiskit.primitives.base.sampler_result import SamplerResult
 from qiskit_aqt_provider import AQTProvider
 from qiskit_aqt_provider.primitives import AQTSampler
 from qiskit_aqt_provider.aqt_resource import AQTResource
@@ -33,6 +34,17 @@ def get_aqt_backend(n_qubits: int) -> MQPBackend:
     provider = MQPProvider(token)
     backend = provider.get_backend("AQT20")
     return backend
+
+
+def sampler_result_to_json(sampler: SamplerResult):
+    d = {}
+
+    d["quasi_dists"] = [
+        dict(sampler.quasi_dists[m]) for m in range(len(sampler.quasi_dists))
+    ]
+    d["metadata"] = sampler.metadata
+
+    return d
 
 
 def get_ibm_backend(n_qubits: int) -> IBMBackend:

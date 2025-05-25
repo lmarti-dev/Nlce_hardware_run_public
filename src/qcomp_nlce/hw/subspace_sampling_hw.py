@@ -12,14 +12,23 @@ from qcomp_nlce.utils import (
     get_counts_from_job,
     get_backend,
     add_meas_layer,
+    sampler_result_to_json,
 )
 from data_manager import ExperimentDataManager
+from qiskit.primitives.base.sampler_result import SamplerResult
 
 from pathlib import Path
 import os
 
-
 PROVIDER = "LRZ"
+
+
+def encode_sampler_result(job):
+    res = job.result()
+    if isinstance(res, SamplerResult):
+        return sampler_result_to_json(res)
+    else:
+        return res
 
 
 def get_expectations_from_sources(
@@ -121,10 +130,9 @@ def get_expectations_from_sources(
         }
 
     edm.var_dump(**var_dict)
-
-    jobj = {"fake_result": fake_job.result()}
+    jobj = {"fake_result": encode_sampler_result(fake_job)}
     if run_on_hardware:
-        jobj["real_result"] = real_job.result()
+        jobj["real_result"] = encode_sampler_result(real_job)
     edm.save_dict(jobj)
 
 
@@ -165,7 +173,7 @@ if __name__ == "__main__":
     edm = ExperimentDataManager(f"nlce_hardware_run_{which}_gs", dry_run=dry_run)
     run_on_hardware = True
     if which == "sweep":
-        run_all("9q_10q_gs_new", edm, run_on_hardware, which=which)
+        run_all("9q_10q_gs_aqt", edm, run_on_hardware, which=which)
     elif which == "vqe":
         run_all("9q_10q_gs", edm, run_on_hardware, which=which)
     elif which == "test":
