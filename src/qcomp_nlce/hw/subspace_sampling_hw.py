@@ -149,7 +149,7 @@ def run_all(
             Path(dirname, x),
             run_on_hardware=run_on_hardware,
             which=which,
-            n_shots=100,
+            n_shots=200,
         )
         edm.new_run()
 
@@ -163,15 +163,15 @@ def run_single(edm: ExperimentDataManager, run_on_hardware: bool):
         Path(dirname, experiment),
         run_on_hardware=run_on_hardware,
         which="vqe",
-        n_shots=100,
+        n_shots=200,
     )
 
 
 if __name__ == "__main__":
     dry_run = False
-    which = "test"
+    which = "sweep"
     edm = ExperimentDataManager(f"nlce_hardware_run_{which}_gs", dry_run=dry_run)
-    run_on_hardware = True
+    run_on_hardware = False
     if which == "sweep":
         run_all("9q_10q_gs_aqt", edm, run_on_hardware, which=which)
     elif which == "vqe":

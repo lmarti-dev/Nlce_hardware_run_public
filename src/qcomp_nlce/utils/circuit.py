@@ -18,6 +18,8 @@ def to_controlled_gate(circuit: QuantumCircuit, parameters: np.ndarray) -> Gate:
 
 
 def parameters_dict(circuit: QuantumCircuit, parameters: np.ndarray) -> dict:
+    if circuit.parameters is None or parameters is None:
+        return {}
     return {k: v for k, v in zip(circuit.parameters, parameters)}
 
 

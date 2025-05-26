@@ -11,8 +11,10 @@ from qcomp_nlce.utils import (
     save_sweep,
 )
 
+from qiskit_aqt_provider.circuit_to_aqt import qiskit_to_aqt_circuit
 
-dry_run = False
+
+dry_run = True
 
 for n_qubits in (9, 10):
     for J in (0.8, 0.9, 1):
@@ -21,8 +23,8 @@ for n_qubits in (9, 10):
 
         min_gap = get_min_gap(hamiltonian)
 
-        total_time = 1 / (min_gap**2)
-        n_steps = 20 * hamiltonian.num_qubits
+        total_time = 0.2 / (min_gap**2)
+        n_steps = 2 * hamiltonian.num_qubits
         mult = 1
 
         circuit = get_tfim_sweep_circuit(
@@ -32,6 +34,8 @@ for n_qubits in (9, 10):
             n_steps=int(mult * n_steps),
         )
         ground_energy = get_ground_energy(hamiltonian)
+
+        aqt_depth = qiskit_to_aqt_circuit(circuit).depth()
 
         print(
             f"The circuit depth is {circuit.depth()} for {hamiltonian.num_qubits} qubits j/h={J:.3f}"
