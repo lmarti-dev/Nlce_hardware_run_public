@@ -171,7 +171,7 @@ if __name__ == "__main__":
     dry_run = False
     which = "sweep"
     edm = ExperimentDataManager(f"nlce_hardware_run_{which}_gs", dry_run=dry_run)
-    run_on_hardware = False
+    run_on_hardware = True
     if which == "sweep":
         run_all("9q_10q_gs_aqt", edm, run_on_hardware, which=which)
     elif which == "vqe":

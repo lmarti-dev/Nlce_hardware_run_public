@@ -47,7 +47,7 @@ def get_tfim_sweep_circuit(
     total_time: float,
     n_steps: int,
     sweep_function: str = "simple",
-    synthesis: str = "lie",
+    synthesis: str = "suzuki",
 ) -> QuantumCircuit:
 
     sf = get_sweep_function(sweep_function)
@@ -58,11 +58,12 @@ def get_tfim_sweep_circuit(
     circuit = QuantumCircuit((ham_0 + ham_1).num_qubits)
     for n in range(n_steps):
         alpha = sf(n / (n_steps - 1))
-        circuit.append(
-            PauliEvolutionGate(
-                ham_0 * (1 - alpha) + ham_1 * alpha,
-                total_time / n_steps,
-                synthesis=synth_fn,
+        circuit = circuit.compose(
+            synth_fn.synthesize(
+                PauliEvolutionGate(
+                    ham_0 * (1 - alpha) + ham_1 * alpha,
+                    total_time / n_steps,
+                )
             ),
             range((ham_0 + ham_1).num_qubits),
         )
