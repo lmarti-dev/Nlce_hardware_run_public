@@ -1,0 +1,53 @@
+import numpy as np
+from uuid import uuid4
+
+from qcomp_nlce.utils import (
+    get_ground_energy,
+    get_tfim_sweep_circuit,
+    TFIM,
+    get_circuit_energy,
+    get_min_gap,
+    save_sweep,
+)
+
+
+dry_run = True
+
+for n_qubits in (9, 10):
+    for J in (0.8, 0.9, 1):
+        ham_j, ham_h = TFIM(n_qubits, 1, J, periodic=False, split_parts=True)
+        hamiltonian = ham_j + ham_h
+
+        min_gap = get_min_gap(hamiltonian)
+
+        total_time = 0.7 / (min_gap**2)
+        n_steps = 4 * hamiltonian.num_qubits
+        mult = 1
+
+        circuit = get_tfim_sweep_circuit(
+            ham_h,
+            ham_j + ham_h,
+            total_time=(mult * total_time),
+            n_steps=int(mult * n_steps),
+        )
+        ground_energy = get_ground_energy(hamiltonian)
+
+        # circuit_to_sample = add_meas_layer(circuit)
+
+        # aqt_depth = qiskit_to_aqt_circuit(circuit_to_sample)
+
+        print(
+            f"The circuit depth is {circuit.depth()} for {hamiltonian.num_qubits} qubits j/h={J:.3f}"
+        )
+
+        final_energy = get_circuit_energy(hamiltonian, circuit)
+        print(
+            f"final energy error is {np.abs(ground_energy-final_energy)/np.abs(ground_energy)}"
+        )
+        save_sweep(
+            f"9q_10q_gs_aqt/sweep/{uuid4()}",
+            hamiltonian,
+            circuit,
+            ground_energy,
+            dry_run,
+        )
