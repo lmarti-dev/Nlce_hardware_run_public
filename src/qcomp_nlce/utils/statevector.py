@@ -3,6 +3,7 @@ from qiskit import QuantumCircuit
 from qiskit.primitives import StatevectorEstimator, StatevectorSampler
 from qiskit.quantum_info import SparsePauliOp, Statevector, partial_trace
 from scipy.optimize import minimize
+from itertools import combinations
 
 
 def estimate_observables(
@@ -101,3 +102,14 @@ def statevector_sample_unique(
         counts = sv.sample_counts(n_shots)
     res = [str(k) for k in counts.keys()]
     return res
+
+
+def hamming_weight_states(n_qubits: int, hamming_weight: int) -> list[str]:
+    comps = combinations(range(n_qubits), hamming_weight)
+    states = []
+    for comp in comps:
+        state = ["0"] * n_qubits
+        for c in comp:
+            state[c] = "1"
+        states.append(state)
+    return states

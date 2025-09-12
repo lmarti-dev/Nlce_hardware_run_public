@@ -17,9 +17,11 @@ def get_expectations_from_sources(
     dirname: str,
     n_shots: int = 1e4,
     run_on_ibmq: bool = False,
+    provider="AQT",
 ):
+    backend_name = "AQT" if provider == "LRZ" else "IBM"
     hamiltonian, circuit, weights, ground_energy = load_optimized_vqe(dirname)
-    fake_backend = get_appropriate_fake_backend(circuit.num_qubits)
+    fake_backend = get_appropriate_fake_backend(circuit.num_qubits, backend_name)
 
     def relerr(e):
         return np.abs(e - ground_energy) / np.abs(ground_energy)

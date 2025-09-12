@@ -1,5 +1,6 @@
 from qiskit import QuantumCircuit
 from qiskit.circuit.gate import Gate
+from qiskit.quantum_info import Operator
 import numpy as np
 
 
@@ -28,3 +29,14 @@ def isa_circuit_param_dict(
 ) -> dict:
     param_dict = parameters_dict(old_circuit, parameters)
     return {k: param_dict[k] for k in new_circuit.parameters}
+
+
+def circuit_to_matrix(circuit: QuantumCircuit) -> np.ndarray:
+    return Operator(circuit).to_matrix()
+
+
+def get_1qp_mat(circuit: QuantumCircuit):
+    mat = circuit_to_matrix(circuit)
+    n = int(np.log2(mat.shape[0]))
+    sl = [int(2**x) for x in range(n)]
+    return mat[np.ix_(sl, sl)]

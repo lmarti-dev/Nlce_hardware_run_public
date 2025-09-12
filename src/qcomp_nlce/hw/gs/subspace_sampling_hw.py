@@ -12,23 +12,13 @@ from qcomp_nlce.utils import (
     get_counts_from_job,
     get_backend,
     add_meas_layer,
-    sampler_result_to_json,
+    encode_sampler_result,
 )
 from data_manager import ExperimentDataManager
 from qiskit.primitives.base.sampler_result import SamplerResult
 
 from pathlib import Path
 import os
-
-PROVIDER = "LRZ"
-
-
-def encode_sampler_result(job):
-    res = job.result()
-    if isinstance(res, SamplerResult):
-        return sampler_result_to_json(res)
-    else:
-        return res
 
 
 def get_expectations_from_sources(
@@ -37,8 +27,9 @@ def get_expectations_from_sources(
     n_shots: int = 1e3,
     run_on_hardware: bool = False,
     which: str = "vqe",
+    provider: str = "LRZ",
 ):
-    backend_name = "AQT" if PROVIDER == "LRZ" else "IBM"
+    backend_name = "AQT" if provider == "LRZ" else "IBM"
     if which == "vqe":
         hamiltonian, circuit, weights, ground_energy = load_optimized_vqe(dirname)
 
@@ -48,8 +39,9 @@ def get_expectations_from_sources(
         weights = None
         parameters = None
     fake_backend = get_appropriate_fake_backend(circuit.num_qubits, backend_name)
+    ratio = get_tfim_ratio(hamiltonian)
 
-    print(f"n_qubits: {hamiltonian.num_qubits}, j/h {get_tfim_ratio(hamiltonian)}")
+    print(f"n_qubits: {hamiltonian.num_qubits}, j/h {ratio}")
 
     circuit_to_sample = add_meas_layer(circuit)
 
@@ -116,7 +108,7 @@ def get_expectations_from_sources(
             "n_qubits": circuit.num_qubits,
             "name": dirname,
             "hamiltonian": hamiltonian,
-            "ratio": get_tfim_ratio(hamiltonian),
+            "ratio": ratio,
         },
     }
     if run_on_hardware:
@@ -140,7 +132,7 @@ def run_all(
     dirname: str, edm: ExperimentDataManager, run_on_hardware: bool, which: str
 ):
     HOME = Path(__file__).parent
-    dirname = Path(HOME, f"../res_sim/{dirname}/{which}")
+    dirname = Path(HOME, f"../../res_sim/{dirname}/{which}")
     experiments = os.listdir(dirname)
     for x in experiments:
         print(f"Loading {x}")
@@ -156,7 +148,7 @@ def run_all(
 
 def run_single(edm: ExperimentDataManager, run_on_hardware: bool):
     HOME = Path(__file__).parent
-    dirname = Path(HOME, f"../res_sim/9q_10q_gs/vqe")
+    dirname = Path(HOME, f"../../res_sim/9q_10q_gs/vqe")
     experiment = "6e4f28ef-ae5e-4f67-95e0-5c4575fcbdcf"
     get_expectations_from_sources(
         edm,

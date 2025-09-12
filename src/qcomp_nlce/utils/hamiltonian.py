@@ -251,3 +251,10 @@ def eigenvector_decomposition(
     for k in range(eig_states.shape[-1]):
         fidelities[k] = state_fidelity(state, Statevector(eig_states[:, k]))
     return fidelities
+
+
+def get_1qp_mat(ham: SparsePauliOp, sparse: bool):
+    mat = ham.to_matrix(sparse=sparse)
+    n = int(np.log2(mat.shape[0]))
+    sl = [int(2**x) for x in range(n)]
+    return mat[np.ix_(sl, sl)]

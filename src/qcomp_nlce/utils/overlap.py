@@ -15,11 +15,11 @@ def hadamard_test_circuit(
     controlled_gate: Gate, real_part: bool = True
 ) -> QuantumCircuit:
     n_qubits = controlled_gate.num_qubits
-    hadam_circuit = QuantumCircuit(n_qubits + 1)
+    hadam_circuit = QuantumCircuit(n_qubits)
     if not real_part:
         hadam_circuit.s(0)
     hadam_circuit.h(0)
-    hadam_circuit.append(controlled_gate, range(n_qubits + 1))
+    hadam_circuit.append(controlled_gate, range(n_qubits))
     hadam_circuit.h(0)
     if not real_part:
         hadam_circuit.s(0)
@@ -91,11 +91,20 @@ def measure_matrix_element(
 ) -> complex:
     x_inds = index_bits(x, circuit.num_qubits, right_to_left=True)
     y_inds = index_bits(y, circuit.num_qubits, right_to_left=True)
+
+    # initial state
+    circ_in = QuantumCircuit(circuit.num_qubits)
+    for ind_x in x_inds:
+        circ_in.x(ind_x)
+    circ_in = circ_in.compose(circuit)
+    # X.compose(Y) append the Y after X
     circ_out = QuantumCircuit(circuit.num_qubits)
+    # x is left bra and y right ket
+    # if add x to balance both so that it becomes a diagonal value
     for ind_x, ind_y in zip(x_inds, y_inds):
         if ind_x != ind_y:
             circ_out.x(ind_x)
-    circ_out = circuit.compose(circ_out, range(circuit.num_qubits))
+    circ_out = circ_in.compose(circ_out, range(circuit.num_qubits))
     re_part = hadamard_test(circ_out, parameters, backend, n_shots, real_part=True)
     im_part = hadamard_test(circ_out, parameters, backend, n_shots, real_part=False)
 

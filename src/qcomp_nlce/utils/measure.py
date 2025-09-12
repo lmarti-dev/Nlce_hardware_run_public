@@ -31,10 +31,12 @@ def get_counts_from_job(job: Union[RuntimeJob, PrimitiveJob, MQPJob]) -> dict:
         counts = job.result()[0].data[key].get_counts()
     elif isinstance(job, PrimitiveJob):
         res = job.result()
-        qd = res.quasi_dists[0]
-        n_shots = res.metadata[0]["shots"]
-
-        counts = {k: int(qd[k] * n_shots) for k in qd.keys()}
+        try:
+            qd = res.quasi_dists[0]
+            n_shots = res.metadata[0]["shots"]
+            counts = {k: int(qd[k] * n_shots) for k in qd.keys()}
+        except AttributeError:
+            counts = res[0].data.meas.get_counts()
     elif isinstance(job, MQPJob):
         counts = job.result().get_counts()
     else:

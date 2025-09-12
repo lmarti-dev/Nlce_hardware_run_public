@@ -168,3 +168,11 @@ def get_token(which: Literal["IBM", "LRZ"]):
     ).read()
 
     return token
+
+
+def encode_sampler_result(job):
+    res = job.result()
+    if isinstance(res, SamplerResult):
+        return sampler_result_to_json(res)
+    else:
+        return res
