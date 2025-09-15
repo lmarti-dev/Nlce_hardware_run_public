@@ -1,7 +1,7 @@
 from qiskit import QuantumCircuit
 import numpy as np
 from qcomp_nlce.utils import (
-    get_1qp_mat,
+    circuit_matrix_elements,
     measure_matrix_elements,
     get_appropriate_fake_backend,
     get_backend,
@@ -17,42 +17,48 @@ def measure_1qp_elements(
     provider: str = "IBM",
     n_shots: int = 1e3,
     run_on_hardware: bool = False,
-    get_true_values: bool = True,
 ) -> np.ndarray:
     n_qubits = circuit.num_qubits
-    if get_true_values:
-        true_comp_vals = get_1qp_mat(circuit)
-
     comp_states = hamming_weight_states(n_qubits, 1)
+    true_comp_vals = circuit_matrix_elements(circuit, comp_states)
+
+    sv_comp_vals = measure_matrix_elements(
+        circuit, comp_states, circuit.parameters, "statevector", n_shots
+    )
+    sv_fidelity = np.trace(np.abs(true_comp_vals - sv_comp_vals))
+    print(f"Statevector {sv_fidelity:.5e}")
+
     backend_name = "AQT" if provider == "LRZ" else "IBM"
     fake_backend = get_appropriate_fake_backend(circuit.num_qubits, which=backend_name)
     fake_comp_vals = measure_matrix_elements(
         circuit, comp_states, circuit.parameters, fake_backend, n_shots
     )
+    fake_fidelity = np.trace(np.abs(true_comp_vals - fake_comp_vals))
+    print(f"Fake Backend ({fake_backend.name}) {fake_fidelity:.5e}")
 
     if run_on_hardware:
         real_backend = get_backend(circuit.num_qubits, backend_name)
         real_comp_vals = measure_matrix_elements(
             circuit, comp_states, circuit.parameters, real_backend, n_shots
         )
-    if get_true_values:
-        fake_fidelity = np.trace(np.abs(true_comp_vals - fake_comp_vals))
-        print(f"Fake Backend ({fake_backend.name}) {fake_fidelity:.5e}  ")
-        if run_on_hardware:
-            real_fidelity = np.trace(np.abs(true_comp_vals - real_comp_vals))
-            print(f"RealBackend ({real_backend.name}) {real_fidelity:.5e}")
+
+    if run_on_hardware:
+        real_fidelity = np.trace(np.abs(true_comp_vals - real_comp_vals))
+        print(f"RealBackend ({real_backend.name}) {real_fidelity:.5e}")
+
+    ...
 
 
 def measure_sweep_1qp():
-    n_qubits = 3
+    n_qubits = 6
     ham_j, ham_h = TFIM(n_qubits, 1, 1, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
     min_gap = get_min_gap(hamiltonian)
     # the most important thing is to have enough steps!!!
     # the total time can be low-ish
 
-    total_time = 0.2 / (min_gap**2)
-    n_steps = 1 * hamiltonian.num_qubits
+    total_time = 1 / (min_gap**2)
+    n_steps = 5 * hamiltonian.num_qubits
     mult = 1
 
     circuit = get_tfim_sweep_circuit(
@@ -62,9 +68,7 @@ def measure_sweep_1qp():
         n_steps=int(mult * n_steps),
     )
 
-    measure_1qp_elements(
-        circuit,
-    )
+    measure_1qp_elements(circuit, n_shots=100000)
 
 
 if __name__ == "__main__":

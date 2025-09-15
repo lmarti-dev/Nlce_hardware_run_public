@@ -31,7 +31,7 @@ def prep_1qp(circuit: QuantumCircuit, qnum: int) -> QuantumCircuit:
 if __name__ == "__main__":
     n_qubits = 10
 
-    ham_j, ham_h = TFIM(n_qubits, 1, 1, periodic=False, split_parts=True)
+    ham_j, ham_h = TFIM(n_qubits, 1, 0.4, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
     min_gap = get_min_gap(hamiltonian)
     # the most important thing is to have enough steps!!!
@@ -62,9 +62,10 @@ if __name__ == "__main__":
 
     for n in range(n_qubits):
         ax.plot(range(2**n_qubits), results[:, n], label=f"{n}")
-        print(f"{n}: {len(np.where(results[:, n]>1e-1)[0])}")
+        out_comps = np.where(results[:, n] > 1e-1)[0]
+        print(f"{n}: {out_comps}", len(out_comps))
     ax.legend()
     ax.set_yscale("log")
-    ax.set_ylim([1e-2, 1])
+    ax.set_ylim([1e-1, 1])
 
-    plt.show()
+    # plt.show()

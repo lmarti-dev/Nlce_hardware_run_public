@@ -16,7 +16,7 @@ def sample_counts_circuit(
 ):
     if backend == "statevector":
         sampler = StatevectorSampler(seed=0)
-        job = sampler.run([circuit], shots=n_shots)
+        job = sampler.run([circuit], shots=int(n_shots))
     else:
         job = backend_sample(
             backend=backend, circuit=circuit, parameters=None, n_shots=n_shots

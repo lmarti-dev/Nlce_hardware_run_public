@@ -16,14 +16,13 @@ def hadamard_test_circuit(
 ) -> QuantumCircuit:
     n_qubits = controlled_gate.num_qubits
     hadam_circuit = QuantumCircuit(n_qubits)
+    hadam_circuit.h(0)
     if not real_part:
         hadam_circuit.s(0)
-    hadam_circuit.h(0)
     hadam_circuit.append(controlled_gate, range(n_qubits))
     hadam_circuit.h(0)
-    if not real_part:
-        hadam_circuit.s(0)
-
+    hadam_circuit.add_register(ClassicalRegister(1, name="meas"))
+    hadam_circuit.measure(0, 0)
     return hadam_circuit
 
 
@@ -73,8 +72,7 @@ def hadamard_test(
 
     controlled_gate = to_controlled_gate(circuit, parameters)
     hadam_circuit = hadamard_test_circuit(controlled_gate, real_part)
-    hadam_circuit.add_register(ClassicalRegister(1, name="meas"))
-    hadam_circuit.measure(0, 0)
+
     counts = sample_counts_circuit(hadam_circuit, backend, n_shots)
     p0 = counts["0"] / n_shots
     p1 = counts["1"] / n_shots
@@ -89,21 +87,20 @@ def measure_matrix_element(
     backend: BACKEND_ALIAS,
     n_shots: int,
 ) -> complex:
+
+    # compute <x|U|y> with the hadamard test
     x_inds = index_bits(x, circuit.num_qubits, right_to_left=True)
     y_inds = index_bits(y, circuit.num_qubits, right_to_left=True)
-
     # initial state
     circ_in = QuantumCircuit(circuit.num_qubits)
-    for ind_x in x_inds:
-        circ_in.x(ind_x)
+    for ind_y in y_inds:
+        circ_in.x(ind_y)
     circ_in = circ_in.compose(circuit)
-    # X.compose(Y) append the Y after X
+    # U1.compose(U2) gives U2 U1 |psi>
     circ_out = QuantumCircuit(circuit.num_qubits)
     # x is left bra and y right ket
-    # if add x to balance both so that it becomes a diagonal value
-    for ind_x, ind_y in zip(x_inds, y_inds):
-        if ind_x != ind_y:
-            circ_out.x(ind_x)
+    for ind_x in x_inds:
+        circ_out.x(ind_x)
     circ_out = circ_in.compose(circ_out, range(circuit.num_qubits))
     re_part = hadamard_test(circ_out, parameters, backend, n_shots, real_part=True)
     im_part = hadamard_test(circ_out, parameters, backend, n_shots, real_part=False)
@@ -124,4 +121,5 @@ def measure_matrix_elements(
             out[ind_x, ind_y] = measure_matrix_element(
                 circuit, x, y, parameters, backend, n_shots
             )
+            print(ind_x, ind_y, end="\r")
     return out

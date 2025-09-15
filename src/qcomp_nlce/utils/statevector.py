@@ -79,6 +79,13 @@ def get_circuit_energy(
         )
 
 
+def statevector_sample(circuit: QuantumCircuit, n_shots: int):
+    sampler = StatevectorSampler(seed=0)
+    job = sampler.run([circuit], shots=n_shots)
+    counts = job.result()[0].data.meas.get_counts()
+    return counts
+
+
 def statevector_sample_unique(
     circuit: QuantumCircuit,
     n_shots: int,
