@@ -18,7 +18,7 @@ def hadamard_test_circuit(
     hadam_circuit = QuantumCircuit(n_qubits)
     hadam_circuit.h(0)
     if not real_part:
-        hadam_circuit.s(0)
+        hadam_circuit.sdg(0)
     hadam_circuit.append(controlled_gate, range(n_qubits))
     hadam_circuit.h(0)
     hadam_circuit.add_register(ClassicalRegister(1, name="meas"))

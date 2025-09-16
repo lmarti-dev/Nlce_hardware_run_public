@@ -50,7 +50,9 @@ def measure_1qp_elements(
 
 
 def measure_sweep_1qp():
-    n_qubits = 6
+    n_qubits = 4
+    n_shots = 1000
+    print(f"Expected trace error {(2**n_qubits)/np.sqrt(n_shots):.4e}")
     ham_j, ham_h = TFIM(n_qubits, 1, 1, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
     min_gap = get_min_gap(hamiltonian)
@@ -68,7 +70,7 @@ def measure_sweep_1qp():
         n_steps=int(mult * n_steps),
     )
 
-    measure_1qp_elements(circuit, n_shots=100000)
+    measure_1qp_elements(circuit, n_shots=n_shots)
 
 
 if __name__ == "__main__":
