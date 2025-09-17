@@ -50,7 +50,7 @@ def measure_1qp_elements(
 
 
 def measure_sweep_1qp():
-    n_qubits = 4
+    n_qubits = 10
     n_shots = 1000
     print(f"Expected trace error {(2**n_qubits)/np.sqrt(n_shots):.4e}")
     ham_j, ham_h = TFIM(n_qubits, 1, 1, periodic=False, split_parts=True)
@@ -69,6 +69,9 @@ def measure_sweep_1qp():
         total_time=(mult * total_time),
         n_steps=int(mult * n_steps),
     )
+
+    print(f"Depth: {circuit.depth()}")
+    quit()
 
     measure_1qp_elements(circuit, n_shots=n_shots)
 
