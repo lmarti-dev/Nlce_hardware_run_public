@@ -9,34 +9,55 @@ from mqp.qiskit_provider.job import MQPJob
 import numpy as np
 
 
+def sample_circuit(
+    circuit: QuantumCircuit,
+    parameters: np.ndarray,
+    backend: str | FakeBackendV2 | IBMBackend = "statevector",
+    n_shots: int = 1000,
+) -> PrimitiveJob:
+    if backend == "statevector":
+        sampler = StatevectorSampler(seed=0)
+        if isinstance(circuit, QuantumCircuit):
+            ctr = [circuit]
+        else:
+            ctr = circuit
+        job = sampler.run(ctr, shots=int(n_shots))
+    else:
+        job = backend_sample(
+            backend=backend, circuit=circuit, parameters=parameters, n_shots=n_shots
+        )
+    return job
+
+
 def sample_counts_circuit(
     circuit: QuantumCircuit,
+    parameters: np.ndarray,
     backend: str | FakeBackendV2 | IBMBackend = "statevector",
     n_shots: int = 1000,
 ):
-    if backend == "statevector":
-        sampler = StatevectorSampler(seed=0)
-        job = sampler.run([circuit], shots=int(n_shots))
-    else:
-        job = backend_sample(
-            backend=backend, circuit=circuit, parameters=None, n_shots=n_shots
-        )
+    job = sample_circuit(circuit, parameters, backend, n_shots)
     counts = get_counts_from_job(job)
     return counts
 
 
-def get_counts_from_job(job: Union[RuntimeJob, PrimitiveJob, MQPJob]) -> dict:
+def get_counts_from_res(res) -> dict:
+    return res.get_counts()
+
+
+def get_counts_from_job(
+    job: Union[RuntimeJob, PrimitiveJob, MQPJob], ind: int = 0
+) -> dict:
     if isinstance(job, RuntimeJob):
-        key = list(job.result()[0].data.keys())[0]
-        counts = job.result()[0].data[key].get_counts()
+        key = list(job.result()[ind].data.keys())[0]
+        counts = job.result()[ind].data[key].get_counts()
     elif isinstance(job, PrimitiveJob):
         res = job.result()
         try:
-            qd = res.quasi_dists[0]
-            n_shots = res.metadata[0]["shots"]
+            qd = res.quasi_dists[ind]
+            n_shots = res.metadata[ind]["shots"]
             counts = {k: int(qd[k] * n_shots) for k in qd.keys()}
         except AttributeError:
-            counts = res[0].data.meas.get_counts()
+            counts = res[ind].data.meas.get_counts()
     elif isinstance(job, MQPJob):
         counts = job.result().get_counts()
     else:

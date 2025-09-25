@@ -2,7 +2,8 @@ from qiskit.quantum_info import SparsePauliOp, Statevector
 from qiskit import QuantumCircuit
 import numpy as np
 import time
-
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 
 from qcomp_nlce.utils import (
     get_tfim_sweep_circuit,
@@ -29,6 +30,17 @@ def get_1qp_mat(circuit: QuantumCircuit):
     return mat[np.ix_(sl, sl)]
 
 
+def plot_eigvecs_map(eig_vecs: np.ndarray):
+    fig, ax = plt.subplots()
+    _n = eig_vecs.shape[0]
+    y, x = np.meshgrid(range(_n), range(_n))
+
+    pcm0 = ax.pcolormesh(y, x, np.abs(eig_vecs), norm=LogNorm())
+    fig.colorbar(pcm0, ax=ax, extend="max")
+
+    plt.show()
+
+
 if __name__ == "__main__":
     n_qubits = 10
 
@@ -51,10 +63,14 @@ if __name__ == "__main__":
 
     eig_vals, eig_vecs = diagonalize_ham(hamiltonian)
 
+    plot_eigvecs_map(eig_vecs)
+
     results = np.zeros((2**n_qubits, n_qubits))
 
     u_matrix = circuit_to_matrix(circuit)
 
     u_1qp = get_1qp_mat(u_matrix)
+
+    plot_eigvecs_map(u_matrix)
 
     print(u_1qp)

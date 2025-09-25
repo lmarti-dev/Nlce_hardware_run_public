@@ -16,6 +16,7 @@ from qiskit_ibm_runtime.fake_provider import (
 from typing import Literal, Union
 
 from qiskit.primitives.base.sampler_result import SamplerResult
+from qiskit.circuit.parametertable import ParameterView
 from qiskit_aqt_provider import AQTProvider
 from qiskit_aqt_provider.primitives import AQTSampler
 from qiskit_aqt_provider.aqt_resource import AQTResource
@@ -94,7 +95,7 @@ def get_appropriate_fake_backend(
 
 def backend_sample(
     backend,
-    circuit: QuantumCircuit,
+    circuit,
     parameters: np.ndarray,
     n_shots: int,
 ) -> RuntimeJob:
@@ -103,15 +104,29 @@ def backend_sample(
 
         pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
         isa_circuit = pm.run(circuit)
-        if parameters is None:
-            payload = isa_circuit
+        if parameters is None or parameters == ParameterView([]):
+            if isinstance(isa_circuit, QuantumCircuit):
+                payload = [isa_circuit]
+            else:
+                payload = isa_circuit
         else:
-            payload = (
-                isa_circuit,
-                isa_circuit_param_dict(isa_circuit, circuit, parameters),
-            )
+            if isinstance(isa_circuit, QuantumCircuit):
+                payload = [
+                    (
+                        isa_circuit,
+                        isa_circuit_param_dict(isa_circuit, circuit, parameters),
+                    )
+                ]
+            else:
+                payload = (
+                    (
+                        x,
+                        isa_circuit_param_dict(x, y, parameters),
+                    )
+                    for x, y in zip(isa_circuit, circuit)
+                )
         job = sampler.run(
-            [payload],
+            payload,
             shots=int(n_shots),
         )
 

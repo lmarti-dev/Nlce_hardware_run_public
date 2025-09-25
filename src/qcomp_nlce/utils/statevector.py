@@ -25,7 +25,9 @@ def estimate_observables(
 
 
 def optimize_circuit(
-    circuit: QuantumCircuit, hamiltonian: SparsePauliOp, cost: callable = None
+    circuit: QuantumCircuit,
+    hamiltonian: SparsePauliOp,
+    cost: callable[np.ndarray, float] = None,
 ) -> list:
     energy_values = []
     xks = []

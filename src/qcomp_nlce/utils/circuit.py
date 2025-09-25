@@ -3,6 +3,7 @@ from qiskit.circuit.gate import Gate
 from qiskit.quantum_info import Operator
 import numpy as np
 from qcomp_nlce.utils.hamiltonian import from_bitstring
+from typing import Union
 
 
 def apply_parameters(circuit: QuantumCircuit, parameters: np.ndarray) -> QuantumCircuit:
@@ -19,7 +20,9 @@ def to_controlled_gate(circuit: QuantumCircuit, parameters: np.ndarray) -> Gate:
     return gate
 
 
-def parameters_dict(circuit: QuantumCircuit, parameters: np.ndarray) -> dict:
+def parameters_dict(
+    circuit: Union[QuantumCircuit, list[QuantumCircuit]], parameters: np.ndarray
+) -> dict:
     if circuit.parameters is None or parameters is None:
         return {}
     return {k: v for k, v in zip(circuit.parameters, parameters)}

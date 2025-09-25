@@ -2,7 +2,11 @@ from qiskit import QuantumCircuit, ClassicalRegister
 import numpy as np
 from qiskit_ibm_runtime import IBMBackend
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
-from qcomp_nlce.utils.measure import sample_counts_circuit
+from qcomp_nlce.utils.measure import (
+    sample_counts_circuit,
+    sample_circuit,
+    get_counts_from_job,
+)
 from qcomp_nlce.utils.hamiltonian import index_bits
 from qcomp_nlce.utils.circuit import to_controlled_gate, apply_parameters
 from qiskit.circuit.gate import Gate
@@ -12,8 +16,9 @@ BACKEND_ALIAS = str | FakeBackendV2 | IBMBackend
 
 # computes the real part of overlap between psi and circuit(psi)
 def hadamard_test_circuit(
-    controlled_gate: Gate, real_part: bool = True
+    circuit: QuantumCircuit, parameters: np.ndarray, real_part: bool = True
 ) -> QuantumCircuit:
+    controlled_gate = to_controlled_gate(circuit, parameters)
     n_qubits = controlled_gate.num_qubits
     hadam_circuit = QuantumCircuit(n_qubits)
     hadam_circuit.h(0)
@@ -69,24 +74,51 @@ def hadamard_test(
     n_shots: int = 1000,
     real_part: bool = True,
 ):
-
-    controlled_gate = to_controlled_gate(circuit, parameters)
-    hadam_circuit = hadamard_test_circuit(controlled_gate, real_part)
-
+    hadam_circuit = hadamard_test_circuit(circuit, parameters, real_part)
     counts = sample_counts_circuit(hadam_circuit, backend, n_shots)
+    return hadam_diff(counts, n_shots)
+
+
+def measure_matrix_elements_merge_circuits(
+    circuit: QuantumCircuit,
+    comp_states: list[str],
+    parameters: np.ndarray,
+    backend: BACKEND_ALIAS,
+    n_shots: int,
+):
+    circs = []
+    for state_x in comp_states:
+        for state_y in comp_states:
+            re_circ, im_circ = measure_matrix_element_circuits(
+                circuit=circuit, x=state_x, y=state_y, parameters=parameters
+            )
+            circs.append(re_circ)
+            circs.append(im_circ)
+
+    jobs = sample_circuit(circs, parameters, backend, n_shots)
+    n_elems = len(comp_states) ** 2
+    out = []
+    for ind in range(0, 2 * n_elems - 1, 2):
+        re_counts = get_counts_from_job(jobs, ind)
+        im_counts = get_counts_from_job(jobs, ind + 1)
+        v = hadam_diff(re_counts, n_shots) + 1j * hadam_diff(im_counts, n_shots)
+        out.append(v)
+
+    return np.reshape(out, shape=(len(comp_states), len(comp_states)))
+
+
+def hadam_diff(counts: dict, n_shots) -> float:
     p0 = counts["0"] / n_shots
     p1 = counts["1"] / n_shots
     return p0 - p1
 
 
-def measure_matrix_element(
+def measure_matrix_element_circuits(
     circuit: QuantumCircuit,
     x: str,
     y: str,
     parameters: np.ndarray,
-    backend: BACKEND_ALIAS,
-    n_shots: int,
-) -> complex:
+) -> tuple[QuantumCircuit, QuantumCircuit]:
 
     # compute <x|U|y> with the hadamard test
     x_inds = index_bits(x, circuit.num_qubits, right_to_left=True)
@@ -102,10 +134,28 @@ def measure_matrix_element(
     for ind_x in x_inds:
         circ_out.x(ind_x)
     circ_out = circ_in.compose(circ_out, range(circuit.num_qubits))
-    re_part = hadamard_test(circ_out, parameters, backend, n_shots, real_part=True)
-    im_part = hadamard_test(circ_out, parameters, backend, n_shots, real_part=False)
+    re_circ = hadamard_test_circuit(circ_out, parameters, real_part=True)
+    im_circ = hadamard_test_circuit(circ_out, parameters, real_part=False)
+    return re_circ, im_circ
 
-    return re_part + 1j * im_part
+
+def measure_matrix_element(
+    circuit: QuantumCircuit,
+    x: str,
+    y: str,
+    parameters: np.ndarray,
+    backend: BACKEND_ALIAS,
+    n_shots: int,
+) -> complex:
+    re_circ, im_circ = measure_matrix_element_circuits(circuit, x, y, parameters)
+
+    vals = []
+    for tmp_circ in (re_circ, im_circ):
+        counts = sample_counts_circuit(tmp_circ, parameters, backend, n_shots)
+        v = hadam_diff(counts, n_shots)
+        vals.append(v)
+
+    return vals[0] + 1j * vals[1]
 
 
 def measure_matrix_elements(
