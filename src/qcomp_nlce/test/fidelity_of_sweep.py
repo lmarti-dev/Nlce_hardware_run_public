@@ -4,11 +4,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-from qcomp_nlce.utils import (
-    get_tfim_sweep_circuit,
-    TFIM,
-    get_min_gap,
-)
+from qcomp_nlce.utils import get_tfim_sweep_circuit, TFIM, get_min_gap
 
 
 def diagonalize_ham(ham: SparsePauliOp):
@@ -29,9 +25,9 @@ def prep_1qp(circuit: QuantumCircuit, qnum: int) -> QuantumCircuit:
 
 
 if __name__ == "__main__":
-    n_qubits = 10
+    n_qubits = 8
 
-    ham_j, ham_h = TFIM(n_qubits, 1, 0.4, periodic=False, split_parts=True)
+    ham_j, ham_h = TFIM(n_qubits, 1, 1, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
     min_gap = get_min_gap(hamiltonian)
     # the most important thing is to have enough steps!!!
@@ -39,7 +35,7 @@ if __name__ == "__main__":
 
     total_time = 1 / (min_gap**2)
     n_steps = 10 * hamiltonian.num_qubits
-    mult = 1
+    mult = 5
 
     circuit = get_tfim_sweep_circuit(
         ham_h,
@@ -47,6 +43,8 @@ if __name__ == "__main__":
         total_time=(mult * total_time),
         n_steps=int(mult * n_steps),
     )
+
+    print(f"Depth: {circuit.depth()}, 2+q: {circuit.num_nonlocal_gates()}")
 
     eig_vals, eig_vecs = diagonalize_ham(hamiltonian)
 
@@ -62,10 +60,10 @@ if __name__ == "__main__":
 
     for n in range(n_qubits):
         ax.plot(range(2**n_qubits), results[:, n], label=f"{n}")
-        out_comps = np.where(results[:, n] > 1e-1)[0]
-        print(f"{n}: {out_comps}", len(out_comps))
+        out_comps = np.sort(np.argsort(-results[:, n])[:n_qubits])
+        print(f"{n}: {out_comps}", len(out_comps), sum(results[out_comps, n] ** 2))
     ax.legend()
     ax.set_yscale("log")
     ax.set_ylim([1e-1, 1])
 
-    # plt.show()
+    plt.show()

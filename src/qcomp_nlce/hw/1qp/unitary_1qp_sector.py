@@ -72,7 +72,7 @@ def measure_sweep_1qp():
         n_steps=int(mult * n_steps),
     )
 
-    print(f"Depth: {circuit.depth()}")
+    print(f"sweep depth: {circuit.depth()}")
 
     measure_1qp_elements(circuit, n_shots=n_shots)
 

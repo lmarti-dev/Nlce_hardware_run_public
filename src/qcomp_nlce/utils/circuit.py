@@ -11,7 +11,9 @@ def apply_parameters(circuit: QuantumCircuit, parameters: np.ndarray) -> Quantum
     if parameters is not None:
         param_dict = {k: v for k, v in zip(circuit.parameters, parameters)}
         options["parameter_map"] = param_dict
-    return circuit.assign_parameters(param_dict)
+        return circuit.assign_parameters(param_dict)
+    else:
+        return circuit
 
 
 def to_controlled_gate(circuit: QuantumCircuit, parameters: np.ndarray) -> Gate:

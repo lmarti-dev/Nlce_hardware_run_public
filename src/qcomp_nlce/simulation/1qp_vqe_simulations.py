@@ -7,10 +7,8 @@ from qcomp_nlce.utils import (
     TFIM,
     optimize_circuit,
     save_optimized_vqe,
+    estimate_observable_1qp_initial_state,
 )
-
-
-def cost(xk: np.ndarray) -> float: ...
 
 
 if __name__ == "__main__":
@@ -19,12 +17,21 @@ if __name__ == "__main__":
 
     for n_qubits in (9, 10):
         for J in (0.8, 0.9, 1):
+            print(f"{n_qubits} qubits, J/h={J}")
             periodic = False
             h = 1
             hamiltonian = TFIM(n_qubits, h, J, periodic=periodic)
             n_layers = int(np.ceil(hamiltonian.num_qubits / 2))
 
             circuit = get_hva_vqe(hamiltonian, n_layers=n_layers, unique_weights=True)
+
+            def cost(xk: np.ndarray) -> float:
+                a_mat = estimate_observable_1qp_initial_state(circuit, xk, hamiltonian)
+                b_mat = estimate_observable_1qp_initial_state(
+                    circuit, xk, hamiltonian**2
+                )
+                return np.abs(np.trace(b_mat) - np.sum(np.abs(a_mat) ** 2))
+
             # circuit = get_custom_vqe(4, n_layers=2)
             ground_energy = get_ground_energy(hamiltonian)
 

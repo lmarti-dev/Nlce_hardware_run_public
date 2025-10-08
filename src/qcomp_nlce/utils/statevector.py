@@ -4,6 +4,8 @@ from qiskit.primitives import StatevectorEstimator, StatevectorSampler
 from qiskit.quantum_info import SparsePauliOp, Statevector, partial_trace
 from scipy.optimize import minimize
 from itertools import combinations
+from collections.abc import Callable
+from qcomp_nlce.utils.circuit import apply_parameters
 
 
 def estimate_observables(
@@ -27,7 +29,7 @@ def estimate_observables(
 def optimize_circuit(
     circuit: QuantumCircuit,
     hamiltonian: SparsePauliOp,
-    cost: callable[np.ndarray, float] = None,
+    cost: Callable[[np.ndarray], float] = None,
 ) -> list:
     energy_values = []
     xks = []
@@ -122,3 +124,26 @@ def hamming_weight_states(n_qubits: int, hamming_weight: int) -> list[str]:
             state[c] = "1"
         states.append(state)
     return states
+
+
+def estimate_observable_1qp_initial_state(
+    circuit: QuantumCircuit, parameters: np.ndarray, observable: SparsePauliOp
+) -> np.ndarray:
+    n_qubits = circuit.num_qubits
+
+    out = np.zeros((n_qubits, n_qubits))
+
+    for ind_y in range(n_qubits):
+        for ind_x in range(n_qubits):
+            # initial state
+            circ_in = QuantumCircuit(circuit.num_qubits)
+            circ_in.x(ind_y)
+            circ_in = circ_in.compose(circuit)
+            # U1.compose(U2) gives U2 U1 |psi>
+            circ_out = QuantumCircuit(circuit.num_qubits)
+            # x is left bra and y right ket
+            circ_out.x(ind_x)
+            circ_out = circ_in.compose(circ_out, range(circuit.num_qubits))
+            sv = Statevector(apply_parameters(circuit, parameters))
+            out[ind_x, ind_y] = np.real(sv.expectation_value(observable))
+    return out
