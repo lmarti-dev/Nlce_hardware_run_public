@@ -13,9 +13,9 @@ from qcomp_nlce.utils import (
 
 if __name__ == "__main__":
 
-    dry_run = True
+    dry_run = False
 
-    for n_qubits in (9, 10):
+    for n_qubits in (4, 5):
         for J in (0.8, 0.9, 1):
             print(f"{n_qubits} qubits, J/h={J}")
             periodic = False
@@ -41,7 +41,7 @@ if __name__ == "__main__":
             print(f"final cost is {np.abs(cost_values[-1])}")
 
             save_optimized_vqe(
-                f"1qp/vqe/{uuid4()}",
+                f"1qp_small/vqe/{uuid4()}",
                 hamiltonian,
                 circuit,
                 params,

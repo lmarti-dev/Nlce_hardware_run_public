@@ -73,9 +73,7 @@ def get_appropriate_fake_backend(
 ) -> Union[FakeBackendV2, AQTResource]:
 
     if which == "IBM":
-        if n_qubits <= 5:
-            return FakeManilaV2()
-        elif n_qubits <= 7:
+        if n_qubits <= 7:
             return FakeJakartaV2()
         elif n_qubits <= 14:
             return FakeMelbourneV2()
@@ -93,6 +91,16 @@ def get_appropriate_fake_backend(
         raise ValueError(f"Expected a provider got: {which}")
 
 
+def show_circ_depth(isa_circ: list | QuantumCircuit):
+    if isinstance(isa_circ, QuantumCircuit):
+        print("Circuit depth is {isa_circ.depth()}")
+    elif isinstance(isa_circ, list):
+        mean_depth = np.mean([c.depth() for c in isa_circ])
+        print(f"Mean circuit depth ({len(isa_circ)}): {mean_depth}")
+    else:
+        print(f"circ is neither QuantumCircuit nor list, but: {type(isa_circ)}")
+
+
 def backend_sample(
     backend,
     circuit,
@@ -104,6 +112,7 @@ def backend_sample(
 
         pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
         isa_circuit = pm.run(circuit)
+        show_circ_depth(isa_circuit)
         if parameters is None or parameters == ParameterView([]):
             if isinstance(isa_circuit, QuantumCircuit):
                 payload = [isa_circuit]

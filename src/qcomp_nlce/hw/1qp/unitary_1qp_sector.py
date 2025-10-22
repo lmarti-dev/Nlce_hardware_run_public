@@ -10,7 +10,13 @@ from qcomp_nlce.utils import (
     hamming_weight_states,
     get_tfim_sweep_circuit,
     measure_matrix_elements_merge_circuits,
+    load_optimized_vqe,
+    apply_parameters,
 )
+import os
+from pathlib import Path
+
+HOME = Path(__file__).parent
 
 
 def measure_1qp_elements(
@@ -51,9 +57,8 @@ def measure_1qp_elements(
         print(f"RealBackend ({real_backend.name}) {real_fidelity:.5e}")
 
 
-def measure_sweep_1qp():
+def measure_sweep_1qp(n_shots=10000):
     n_qubits = 4
-    n_shots = 1000000
     print(f"Expected trace error {(2**n_qubits)/np.sqrt(n_shots):.4e}")
     ham_j, ham_h = TFIM(n_qubits, 1, 1, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
@@ -62,7 +67,7 @@ def measure_sweep_1qp():
     # the total time can be low-ish
 
     total_time = 1 / (min_gap**2)
-    n_steps = 5 * hamiltonian.num_qubits
+    n_steps = 1 * hamiltonian.num_qubits
     mult = 1
 
     circuit = get_tfim_sweep_circuit(
@@ -77,5 +82,19 @@ def measure_sweep_1qp():
     measure_1qp_elements(circuit, n_shots=n_shots)
 
 
+def measure_vqe_1qp(n_shots: int = 10000):
+    dirpath = Path(HOME, "../../res_sim/1qp_small/vqe/")
+    for dirname in os.listdir(dirpath):
+        hamiltonian, circuit, weights, ground_energy = load_optimized_vqe(
+            Path(dirpath, dirname)
+        )
+        circuit_with_params = apply_parameters(circuit, weights[-1])
+        measure_1qp_elements(circuit_with_params, n_shots=n_shots)
+
+
 if __name__ == "__main__":
-    measure_sweep_1qp()
+    n_shots = int(1e5)
+    print("=== Sweep ===")
+    measure_sweep_1qp(n_shots)
+    print("=== VQE ===")
+    measure_vqe_1qp(n_shots)

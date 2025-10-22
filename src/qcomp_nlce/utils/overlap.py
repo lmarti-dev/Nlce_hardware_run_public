@@ -95,8 +95,6 @@ def measure_matrix_elements_merge_circuits(
             circs.append(re_circ)
             circs.append(im_circ)
 
-    mean_depth = np.mean([c.depth() for c in circs])
-    print(f"Mean hadamard test circuit depth: {mean_depth}")
     jobs = sample_circuit(circs, parameters, backend, n_shots)
     n_elems = len(comp_states) ** 2
     out = []
