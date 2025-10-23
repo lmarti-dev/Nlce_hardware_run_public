@@ -36,9 +36,13 @@ def measure_1qp_elements(
     mme_func = measure_matrix_elements_merge_circuits
 
     n_qubits = circuit.num_qubits
-    print(f"Minimal noiseless trace error {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
+    print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
     comp_states = hamming_weight_states(n_qubits, 1)
     true_comp_vals = circuit_matrix_elements(circuit, comp_states)
+
+    # the matrix you get otherwise is indexed backwards wrt to what you get
+    # from the circuit-to-matrix qiskit function
+    true_comp_vals = true_comp_vals[::-1, ::-1]
 
     sv_comp_vals = mme_func(
         circuit, comp_states, circuit.parameters, "statevector", n_shots
@@ -59,8 +63,6 @@ def measure_1qp_elements(
         real_comp_vals = mme_func(
             circuit, comp_states, circuit.parameters, real_backend, n_shots
         )
-
-    if run_on_hardware:
         real_fidelity = trace_dist(true_comp_vals, real_comp_vals)
         print(f"RealBackend ({real_backend.name}) {real_fidelity:.5e}")
 
@@ -102,7 +104,8 @@ def measure_vqe_1qp(n_shots: int = 10000):
 
 
 if __name__ == "__main__":
-    n_shots = int(1e6)
+    n_shots = int(1e7)
+    print(f"n_shots: {n_shots}")
     print("=== Sweep ===")
     measure_sweep_1qp(n_shots)
     print("=== VQE ===")
