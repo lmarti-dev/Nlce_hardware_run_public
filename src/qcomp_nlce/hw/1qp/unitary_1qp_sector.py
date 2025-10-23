@@ -12,11 +12,18 @@ from qcomp_nlce.utils import (
     measure_matrix_elements_merge_circuits,
     load_optimized_vqe,
     apply_parameters,
+    get_tfim_ratio,
 )
 import os
 from pathlib import Path
 
 HOME = Path(__file__).parent
+
+
+def trace_dist(u1: np.ndarray, u2: np.ndarray) -> float:
+    diff = u1 - u2
+    out = np.sqrt(diff.T.conj() @ diff)
+    return 0.5 * np.real(np.trace(out))
 
 
 def measure_1qp_elements(
@@ -29,13 +36,14 @@ def measure_1qp_elements(
     mme_func = measure_matrix_elements_merge_circuits
 
     n_qubits = circuit.num_qubits
+    print(f"Minimal noiseless trace error {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
     comp_states = hamming_weight_states(n_qubits, 1)
     true_comp_vals = circuit_matrix_elements(circuit, comp_states)
 
     sv_comp_vals = mme_func(
         circuit, comp_states, circuit.parameters, "statevector", n_shots
     )
-    sv_fidelity = np.trace(np.abs(true_comp_vals - sv_comp_vals))
+    sv_fidelity = trace_dist(true_comp_vals, sv_comp_vals)
     print(f"Statevector {sv_fidelity:.5e}")
 
     backend_name = "AQT" if provider == "LRZ" else "IBM"
@@ -43,7 +51,7 @@ def measure_1qp_elements(
     fake_comp_vals = mme_func(
         circuit, comp_states, circuit.parameters, fake_backend, n_shots
     )
-    fake_fidelity = np.trace(np.abs(true_comp_vals - fake_comp_vals))
+    fake_fidelity = trace_dist(true_comp_vals, fake_comp_vals)
     print(f"Fake Backend ({fake_backend.name}) {fake_fidelity:.5e}")
 
     if run_on_hardware:
@@ -53,13 +61,12 @@ def measure_1qp_elements(
         )
 
     if run_on_hardware:
-        real_fidelity = np.trace(np.abs(true_comp_vals - real_comp_vals))
+        real_fidelity = trace_dist(true_comp_vals, real_comp_vals)
         print(f"RealBackend ({real_backend.name}) {real_fidelity:.5e}")
 
 
 def measure_sweep_1qp(n_shots=10000):
     n_qubits = 4
-    print(f"Expected trace error {(2**n_qubits)/np.sqrt(n_shots):.4e}")
     ham_j, ham_h = TFIM(n_qubits, 1, 1, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
     min_gap = get_min_gap(hamiltonian)
@@ -77,6 +84,7 @@ def measure_sweep_1qp(n_shots=10000):
         n_steps=int(mult * n_steps),
     )
 
+    print(f"{hamiltonian.num_qubits} qubits, J/h {get_tfim_ratio(hamiltonian)}")
     print(f"sweep depth: {circuit.depth()}")
 
     measure_1qp_elements(circuit, n_shots=n_shots)
@@ -88,12 +96,13 @@ def measure_vqe_1qp(n_shots: int = 10000):
         hamiltonian, circuit, weights, ground_energy = load_optimized_vqe(
             Path(dirpath, dirname)
         )
+        print(f"{hamiltonian.num_qubits} qubits, J/h {get_tfim_ratio(hamiltonian)}")
         circuit_with_params = apply_parameters(circuit, weights[-1])
         measure_1qp_elements(circuit_with_params, n_shots=n_shots)
 
 
 if __name__ == "__main__":
-    n_shots = int(1e5)
+    n_shots = int(1e6)
     print("=== Sweep ===")
     measure_sweep_1qp(n_shots)
     print("=== VQE ===")
