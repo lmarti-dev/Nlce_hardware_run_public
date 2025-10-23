@@ -33,7 +33,7 @@ def measure_1qp_elements(
     run_on_hardware: bool = False,
 ) -> np.ndarray:
 
-    mme_func = measure_matrix_elements_merge_circuits
+    mme_func = measure_matrix_elements
 
     n_qubits = circuit.num_qubits
     print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
@@ -104,7 +104,7 @@ def measure_vqe_1qp(n_shots: int = 10000):
 
 
 if __name__ == "__main__":
-    n_shots = int(1e7)
+    n_shots = int(1e5)
     print(f"n_shots: {n_shots}")
     print("=== Sweep ===")
     measure_sweep_1qp(n_shots)

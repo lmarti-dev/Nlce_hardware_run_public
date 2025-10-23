@@ -4,6 +4,26 @@ from qiskit.quantum_info import Operator
 import numpy as np
 from qcomp_nlce.utils.hamiltonian import from_bitstring
 from typing import Union
+from qiskit.circuit import CircuitInstruction
+
+
+def circuit_instruction_to_circuit(ci: type[CircuitInstruction] | list, qubits=None):
+    if isinstance(ci, list):
+        if qubits is None:
+            qregs = [c.qubits[0]._register for c in ci]
+            m = np.argmax([r.size for r in qregs])
+            qubits = qregs[m]
+        circ = QuantumCircuit(qubits)
+        for ci_inst in ci:
+            inds = [q._index for q in ci_inst.qubits]
+            circ.append(ci_inst.operation, inds)
+    else:
+        if qubits is None:
+            qubits = ci.qubits[0]._register
+        circ = QuantumCircuit(qubits)
+        inds = [q._index for q in ci.qubits]
+        circ.append(ci.operation, inds)
+    return circ
 
 
 def apply_parameters(circuit: QuantumCircuit, parameters: np.ndarray) -> QuantumCircuit:
