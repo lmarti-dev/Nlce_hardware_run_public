@@ -38,6 +38,7 @@ def iterative_hadamard_test_circuits(
             circuit_instruction_to_circuit(circuit[x]), None
         )
         hadam_circuit.append(controlled_gate, range(circuit.num_qubits + 1))
+
         hadam_circuit.h(0)
         hadam_circuit.add_register(ClassicalRegister(1, name="meas"))
         hadam_circuit.measure(0, 0)
@@ -68,9 +69,16 @@ def iterative_hadamard_test(
         im_counts = get_counts_from_job(jobs, ind + half_len)
         gl = hadam_diff(re_counts, n_shots) + 1j * hadam_diff(im_counts, n_shots)
         gs.append(gl)
-    up = gs[1::2]
-    down = gs[0::2]
-    return np.prod(up) / np.conj(np.prod(down))
+
+    if len(gs) == 1:
+        return gs[0]
+    elif len(gs) > 1:
+        final_g = gs[1] / np.conj(gs[0])
+    if len(gs) > 2:
+        for g in range(2, len(gs)):
+            temp_g = final_g
+            final_g = gs[g] / np.conj(temp_g)
+    return final_g
 
 
 # computes the real part of overlap between psi and circuit(psi)
@@ -167,7 +175,11 @@ def measure_matrix_elements_merge_circuits(
 
 
 def hadam_diff(counts: dict, n_shots) -> float:
+    if "0" not in counts.keys():
+        return -1.0
     p0 = counts["0"] / n_shots
+    if "1" not in counts.keys():
+        return 1.0
     p1 = counts["1"] / n_shots
     return p0 - p1
 

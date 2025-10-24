@@ -39,6 +39,7 @@ def measure_1qp_elements(
     print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
     comp_states = hamming_weight_states(n_qubits, 1)
     true_comp_vals = circuit_matrix_elements(circuit, comp_states)
+    print(true_comp_vals)
 
     # the matrix you get otherwise is indexed backwards wrt to what you get
     # from the circuit-to-matrix qiskit function
@@ -99,7 +100,7 @@ def measure_vqe_1qp(n_shots: int = 10000):
             Path(dirpath, dirname)
         )
         print(f"{hamiltonian.num_qubits} qubits, J/h {get_tfim_ratio(hamiltonian)}")
-        circuit_with_params = apply_parameters(circuit, weights[-1])
+        circuit_with_params = apply_parameters(circuit, weights[0])
         measure_1qp_elements(circuit_with_params, n_shots=n_shots)
 
 
@@ -107,6 +108,6 @@ if __name__ == "__main__":
     n_shots = int(1e5)
     print(f"n_shots: {n_shots}")
     print("=== Sweep ===")
-    measure_sweep_1qp(n_shots)
+    # measure_sweep_1qp(n_shots)
     print("=== VQE ===")
     measure_vqe_1qp(n_shots)

@@ -59,7 +59,7 @@ def get_counts_from_job(
         except AttributeError:
             counts = res[ind].data.meas.get_counts()
     elif isinstance(job, MQPJob):
-        counts = job.result().get_counts()
+        counts = job.result().get_counts(ind)
     else:
         raise ValueError(f"Unexpected job type: type {type(job)}")
     return counts

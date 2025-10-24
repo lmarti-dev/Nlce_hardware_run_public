@@ -26,12 +26,21 @@ def circuit_instruction_to_circuit(ci: type[CircuitInstruction] | list, qubits=N
     return circ
 
 
+def remove_null_param_gates(circuit: QuantumCircuit) -> QuantumCircuit:
+    c_out = QuantumCircuit(circuit.qubits, circuit.clbits)
+    for ci in circuit:
+        if len(ci.params) == 0 or not np.all([np.isclose(p, 0.0) for p in ci.params]):
+            tcirc = circuit_instruction_to_circuit(ci)
+            c_out.compose(tcirc, tcirc.qubits, inplace=True)
+    return c_out
+
+
 def apply_parameters(circuit: QuantumCircuit, parameters: np.ndarray) -> QuantumCircuit:
     options = {}
     if parameters is not None:
-        param_dict = {k: v for k, v in zip(circuit.parameters, parameters)}
+        param_dict = parameters_dict(circuit, parameters)
         options["parameter_map"] = param_dict
-        return circuit.assign_parameters(param_dict)
+        return remove_null_param_gates(circuit.assign_parameters(param_dict))
     else:
         return circuit
 

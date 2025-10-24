@@ -93,10 +93,12 @@ def get_appropriate_fake_backend(
 
 def show_circ_depth(isa_circ: list | QuantumCircuit):
     if isinstance(isa_circ, QuantumCircuit):
-        print("Circuit depth is {isa_circ.depth()}")
+        print(f"Circuit depth is {isa_circ.depth()}")
     elif isinstance(isa_circ, list):
-        mean_depth = np.mean([c.depth() for c in isa_circ])
-        print(f"Mean circuit depth ({len(isa_circ)}): {mean_depth}")
+        depths = [c.depth() for c in isa_circ]
+        mean_depth = np.mean(depths)
+        max_depth = np.max(depths)
+        print(f"Mean circuit depth ({len(isa_circ)}): {mean_depth}, max: {max_depth}")
     else:
         print(f"circ is neither QuantumCircuit nor list, but: {type(isa_circ)}")
 
