@@ -31,7 +31,6 @@ def get_minimize_1qp_subspace_energy(
 
     return cost
 
-
 def get_minimize_variance(
     hamiltonian: SparsePauliOp, circuit: QuantumCircuit
 ) -> callable:
@@ -43,3 +42,4 @@ def get_minimize_variance(
         ) - iterate_over_1_qp(hamiltonian=ham_squared, circuit=circuit, xk=xk, pow=2)
 
     return cost
+# Correct bug: currently it's H^2-H^2

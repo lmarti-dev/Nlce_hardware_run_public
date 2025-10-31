@@ -10,6 +10,7 @@ from qcomp_nlce.utils import (
     estimate_observable_1qp_initial_state,
 )
 
+#Ground state energy of TFIM using VQE with HVA
 
 if __name__ == "__main__":
 
