@@ -4,11 +4,11 @@ from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import EstimatorV2, RuntimeJob, SamplerV2
+
 import io
 
 from qiskit_ibm_runtime.fake_provider import (
-    FakeJakartaV2,
-    FakeManilaV2,
+    FakeLagosV2,
     FakeWashingtonV2,
     FakeMelbourneV2,
     FakeKolkataV2,
@@ -18,14 +18,20 @@ from typing import Literal, Union
 from qiskit.primitives.base.sampler_result import SamplerResult
 from qiskit.circuit.parametertable import ParameterView
 from qiskit_aqt_provider import AQTProvider
-from qiskit_aqt_provider.primitives import AQTSampler
+from qiskit_aqt_provider.primitives import AQTSampler, AQTEstimator
 from qiskit_aqt_provider.aqt_resource import AQTResource
 from mqp.qiskit_provider import MQPProvider, MQPBackend
 
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
 
-from qcomp_nlce.utils.circuit import isa_circuit_param_dict, parameters_dict
+from qcomp_nlce.utils.circuit import (
+    isa_circuit_param_dict,
+    parameters_dict,
+    parameters_exist,
+)
 from qiskit_ibm_runtime import QiskitRuntimeService, IBMBackend
+
+BACKEND_ALIAS = str | FakeBackendV2 | IBMBackend | MQPBackend
 
 
 def get_aqt_backend(n_qubits: int) -> MQPBackend:
@@ -74,7 +80,7 @@ def get_appropriate_fake_backend(
 
     if which == "IBM":
         if n_qubits <= 7:
-            return FakeJakartaV2()
+            return FakeLagosV2()
         elif n_qubits <= 14:
             return FakeMelbourneV2()
         elif n_qubits <= 27:
@@ -103,6 +109,59 @@ def show_circ_depth(isa_circ: list | QuantumCircuit):
         print(f"circ is neither QuantumCircuit nor list, but: {type(isa_circ)}")
 
 
+def circuits_to_payload(
+    backend,
+    circuit: Union[QuantumCircuit, list[QuantumCircuit]],
+    parameters: np.ndarray,
+    observables: Union[list[SparsePauliOp], SparsePauliOp],
+    which: str = "v2",
+) -> list[tuple[QuantumCircuit, dict]]:
+    pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
+    isa_circuit = pm.run(circuit)
+    show_circ_depth(isa_circuit)
+    isa_observables = None
+    if observables is not None:
+        layout = isa_circuit.layout
+        if isinstance(observables, list):
+            isa_observables = [o.apply_layout(layout) for o in observables]
+        else:
+            isa_observables = observables.apply_layout(layout)
+    if which == "v1":
+        payload = [[], [], []]
+        # assume that for each circuit you want to measure each parameters
+        if isinstance(isa_circuit, QuantumCircuit):
+            isa_circuit = [isa_circuit]
+        if isinstance(isa_observables, SparsePauliOp):
+            isa_observables = [isa_observables]
+        for c in isa_circuit:
+            for o in isa_observables:
+                payload[0].append(c)
+                payload[1].append(o)
+                if parameters_exist(parameters):
+                    payload[2].append(parameters)
+        return payload
+
+    elif which == "v2":
+
+        if isinstance(isa_circuit, QuantumCircuit):
+            payload = [isa_circuit]
+        else:
+            payload = isa_circuit
+
+        for idx in range(len(payload)):
+            toadd = []
+            if isa_observables is not None:
+                toadd.append(isa_observables)
+            if not (parameters is None or parameters == ParameterView([])):
+                isa_params = isa_circuit_param_dict(
+                    isa_circuit[idx], circuit[idx], parameters
+                )
+                toadd.append(isa_params)
+            payload[idx] = (payload[idx], *toadd)
+
+    return payload
+
+
 def backend_sample(
     backend,
     circuit,
@@ -112,30 +171,7 @@ def backend_sample(
     if isinstance(backend, (IBMBackend, FakeBackendV2)):
         sampler = SamplerV2(mode=backend)
 
-        pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
-        isa_circuit = pm.run(circuit)
-        show_circ_depth(isa_circuit)
-        if parameters is None or parameters == ParameterView([]):
-            if isinstance(isa_circuit, QuantumCircuit):
-                payload = [isa_circuit]
-            else:
-                payload = isa_circuit
-        else:
-            if isinstance(isa_circuit, QuantumCircuit):
-                payload = [
-                    (
-                        isa_circuit,
-                        isa_circuit_param_dict(isa_circuit, circuit, parameters),
-                    )
-                ]
-            else:
-                payload = (
-                    (
-                        x,
-                        isa_circuit_param_dict(x, y, parameters),
-                    )
-                    for x, y in zip(isa_circuit, circuit)
-                )
+        payload = circuits_to_payload(backend, circuit, parameters, None)
         job = sampler.run(
             payload,
             shots=int(n_shots),
@@ -154,28 +190,37 @@ def backend_sample(
 
 
 def backend_estimate(
-    backend,
-    hamiltonian: SparsePauliOp,
-    circuit: QuantumCircuit,
+    backend: BACKEND_ALIAS,
+    observables: Union[SparsePauliOp, list[SparsePauliOp]],
+    circuit: Union[QuantumCircuit | list[QuantumCircuit]],
     parameters: np.ndarray,
     n_shots: int,
 ) -> RuntimeJob:
-    estimator = EstimatorV2(backend, options={"resilience_level": 2})
 
-    pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
-    isa_circuit = pm.run(circuit)
-    layout = isa_circuit.layout
-    isa_observables = hamiltonian.apply_layout(layout)
-    job = estimator.run(
-        [
-            (
-                isa_circuit,
-                isa_observables,
-                isa_circuit_param_dict(isa_circuit, circuit, parameters),
-            )
-        ],
-        precision=1 / np.sqrt(n_shots),
-    )
+    if isinstance(backend, AQTResource):
+        estimator = AQTEstimator(backend)
+        (circuit, observables, parameters) = circuits_to_payload(
+            backend, circuit, parameters, observables, which="v1"
+        )
+        # lose yourself in the moment, the music
+        # the moment you own it you never let it go (oh)
+        # you only get 2000 shots
+        kwargs = {
+            "circuits": circuit,
+            "observables": observables,
+            "shots": min(n_shots, 2000),
+        }
+        if parameters != []:
+            kwargs.update({"parameters": parameters})
+
+        job = estimator.run(**kwargs)
+    else:
+        estimator = EstimatorV2(backend, options={"resilience_level": 2})
+        payload = circuits_to_payload(backend, circuit, parameters, observables)
+        job = estimator.run(
+            payload,
+            precision=1 / np.sqrt(n_shots),
+        )
     return job
 
 

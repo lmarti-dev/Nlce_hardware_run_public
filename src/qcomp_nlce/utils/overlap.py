@@ -1,50 +1,131 @@
 from qiskit import QuantumCircuit, ClassicalRegister
+from qiskit.quantum_info import SparsePauliOp
 import numpy as np
 from qiskit_ibm_runtime import IBMBackend
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
+from qiskit.primitives.base.estimator_result import EstimatorResult
 from qcomp_nlce.utils.measure import (
     sample_counts_circuit,
     sample_circuit,
+    estimate_circuit,
     get_counts_from_job,
 )
-from qcomp_nlce.utils.hamiltonian import index_bits
+from qcomp_nlce.utils.hamiltonian import index_bits, projector_ham
 from qcomp_nlce.utils.circuit import (
     to_controlled_gate,
     apply_parameters,
     circuit_instruction_to_circuit,
 )
-from qiskit.circuit.gate import Gate
 
 BACKEND_ALIAS = str | FakeBackendV2 | IBMBackend
 
 
+def custom_idx_groups_of_n(total_len: int, group_size: int = 2):
+    return [
+        list(range(x, min(x + group_size, total_len)))
+        for x in range(0, total_len, group_size)
+    ]
+
+
 def iterative_hadamard_test_circuits(
-    circuit: QuantumCircuit, parameters: np.ndarray, real_part: bool = True
+    circuit: QuantumCircuit,
+    parameters: np.ndarray,
+    real_part: bool = True,
+    custom_idx: list[list[int]] = None,
 ) -> list[QuantumCircuit]:
     circuit = apply_parameters(circuit, parameters)
     circuits = []
-    for x in range(0, len(circuit)):
+    if custom_idx is None:
+        custom_idx = [[x] for x in range(0, len(circuit))]
+    for x in range(len(custom_idx)):
         hadam_circuit = QuantumCircuit(circuit.num_qubits + 1)
         hadam_circuit.h(0)
-        if not real_part:
+        if False == real_part:
             hadam_circuit.sdg(0)
-
-        circuit_stueckchen = circuit[:x]
+        stuekchen = [g for l in custom_idx[:x] for g in l]
+        circuit_stueckchen = [circuit[c] for c in stuekchen]
         if len(circuit_stueckchen):
             c_temp = circuit_instruction_to_circuit(circuit_stueckchen)
             hadam_circuit.append(c_temp, range(1, hadam_circuit.num_qubits))
 
-        controlled_gate = to_controlled_gate(
-            circuit_instruction_to_circuit(circuit[x]), None
-        )
-        hadam_circuit.append(controlled_gate, range(circuit.num_qubits + 1))
+        for _gate in custom_idx[x]:
+            controlled_gate = to_controlled_gate(circuit[_gate], None)
+            hadam_circuit.append(controlled_gate, range(circuit.num_qubits + 1))
 
-        hadam_circuit.h(0)
-        hadam_circuit.add_register(ClassicalRegister(1, name="meas"))
-        hadam_circuit.measure(0, 0)
+        if real_part != "estimator":
+            hadam_circuit.h(0)
+            creg = ClassicalRegister(hadam_circuit.num_qubits, name="meas")
+            hadam_circuit.add_register(creg)
+            # we need to project the whole state back in ket(0)bra(0),
+            # so we measure all the qubits of the state
+            # because our initial state is ket(0) luckily
+            for q in range(hadam_circuit.num_qubits):
+                hadam_circuit.measure(q, q)
 
         circuits.append(hadam_circuit)
     return circuits
+
+
+def iterative_hadamard_test_estimator(
+    circuit: QuantumCircuit,
+    parameters: np.ndarray,
+    n_shots: int,
+    backend: BACKEND_ALIAS = "statevector",
+    custom_idx: list[list[int]] = None,
+):
+    # !!! This only works for initial state ket(0)
+
+    custom_idx = custom_idx_groups_of_n(len([c for c in circuit]), 1)
+    circuits = iterative_hadamard_test_circuits(
+        circuit=circuit,
+        parameters=parameters,
+        real_part="estimator",
+        custom_idx=custom_idx,
+    )
+
+    hams = [
+        projector_ham(circuit.num_qubits) ^ SparsePauliOp("I"),
+        projector_ham(circuit.num_qubits) ^ SparsePauliOp("X"),
+        projector_ham(circuit.num_qubits) ^ SparsePauliOp("Y"),
+        projector_ham(circuit.num_qubits) ^ SparsePauliOp("Z"),
+    ]
+    jobs = estimate_circuit(
+        backend=backend,
+        observables=hams,
+        circuit=circuits,
+        parameters=None,
+        n_shots=n_shots,
+    )
+
+    # gs = Re(g_l g*_l-1) + 1j * Im(g_l g*_l-1)
+    gs = np.array([x.data.evs[1] + 1j * x.data.evs[2] for x in jobs.result()])
+
+    # I-Z = 1/2 (g**2_l-1 + g**2_l) - 1/2 (g**2_l-1 - g**2_l) = g**2_l
+    g_abs = np.array(
+        [np.sqrt(np.abs(x.data.evs[0] - x.data.evs[3])) for x in jobs.result()]
+    )
+    # g_abs is the absolute value of g_l = <psi|U_1...U_l-1 U_l|psi>
+    # g_m1 computes g_l-1 so that we get twice the results per shot.
+    # g_m1[0] == 0.707 always if custom_inds = [[0],[1], etc]!
+    # I+Z = 1/2 (g**2_l-1 + g**2_l) +  1/2 (g**2_l-1 - g**2_l) = g**2_l-1
+    g_m1 = np.array(
+        [np.sqrt(np.abs(x.data.evs[0] + x.data.evs[3])) for x in jobs.result()]
+    )
+
+    better_g_abs = gs[:-1] + g_m1[1:] / 2
+    print(f"|g_s|**2={g_abs**2}")
+
+    if np.any(np.isclose(g_abs, 0)):
+        raise ValueError(f"g_abs has null values, algorithm will fail: g_abs={g_abs}")
+
+    if len(gs) == 1:
+        final_g = gs[0]
+    elif len(gs) % 2 == 0:
+        final_g = np.prod(gs[1::2]) / np.prod(np.conj(gs[0::2]))
+    elif len(gs) % 2 == 1:
+        final_g = np.prod(gs[0::2]) / np.prod(np.conj(gs[1::2]))
+
+    return final_g
 
 
 def iterative_hadamard_test(
@@ -52,32 +133,51 @@ def iterative_hadamard_test(
     parameters: np.ndarray,
     n_shots: int,
     backend: BACKEND_ALIAS = "statevector",
+    custom_idx: list[list[int]] = None,
 ) -> float:
+
+    # !!! This only works for initial state ket(0)
     circuits_re = iterative_hadamard_test_circuits(
-        circuit=circuit, parameters=parameters, real_part=True
+        circuit=circuit, parameters=parameters, real_part=True, custom_idx=custom_idx
     )
     circuits_im = iterative_hadamard_test_circuits(
-        circuit=circuit, parameters=parameters, real_part=False
+        circuit=circuit, parameters=parameters, real_part=False, custom_idx=custom_idx
     )
     circuits = [*circuits_re, *circuits_im]
     half_len = len(circuits_re)
 
     jobs = sample_circuit(circuits, parameters, backend, n_shots)
     gs = []
+    # the first qubit is the last in the bitstring
+    keys = {
+        "p0": "0" * (circuit.num_qubits) + "0",
+        "p1": "0" * (circuit.num_qubits) + "1",
+    }
     for ind in range(0, half_len):
         re_counts = get_counts_from_job(jobs, ind)
         im_counts = get_counts_from_job(jobs, ind + half_len)
-        gl = hadam_diff(re_counts, n_shots) + 1j * hadam_diff(im_counts, n_shots)
+        gl = hadam_diff(re_counts, keys=keys) + 1j * hadam_diff(im_counts, keys=keys)
         gs.append(gl)
 
+    gs = np.array(gs)
+
+    if np.any(np.isclose(gs, 0.0)):
+        # the zeros cancel out
+        if np.sum(np.isclose(gs[::2], 0.0)) == np.sum(np.isclose(gs[1::2], 0.0)):
+            gs[(np.isclose(gs, 0.0))] = 1.0
+        else:
+            # technically, there also could be a mistake somewhere,
+            # but fuck this
+            return 0.0
+
     if len(gs) == 1:
-        return gs[0]
-    elif len(gs) > 1:
-        final_g = gs[1] / np.conj(gs[0])
-    if len(gs) > 2:
-        for g in range(2, len(gs)):
-            temp_g = final_g
-            final_g = gs[g] / np.conj(temp_g)
+        final_g = gs[0]
+    elif len(gs) % 2 == 0:
+        final_g = np.prod(gs[1::2]) / np.prod(np.conj(gs[0::2]))
+    elif len(gs) % 2 == 1:
+        final_g = np.prod(gs[0::2]) / np.prod(np.conj(gs[1::2]))
+
+    # assert np.isclose(np.abs(final_g), 1.0)
     return final_g
 
 
@@ -85,16 +185,20 @@ def iterative_hadamard_test(
 def hadamard_test_circuit(
     circuit: QuantumCircuit, parameters: np.ndarray, real_part: bool = True
 ) -> QuantumCircuit:
-    controlled_gate = to_controlled_gate(circuit, parameters)
-    n_qubits = controlled_gate.num_qubits
+
+    n_qubits = circuit.num_qubits + 1
     hadam_circuit = QuantumCircuit(n_qubits)
     hadam_circuit.h(0)
-    if not real_part:
+    if False == real_part:
         hadam_circuit.sdg(0)
-    hadam_circuit.append(controlled_gate, range(n_qubits))
-    hadam_circuit.h(0)
-    hadam_circuit.add_register(ClassicalRegister(1, name="meas"))
-    hadam_circuit.measure(0, 0)
+
+    for ci in circuit:
+        controlled_gate = to_controlled_gate(ci, parameters)
+        hadam_circuit.append(controlled_gate, range(n_qubits))
+    if real_part != "estimator":
+        hadam_circuit.h(0)
+        hadam_circuit.add_register(ClassicalRegister(1, name="meas"))
+        hadam_circuit.measure(0, 0)
     return hadam_circuit
 
 
@@ -153,6 +257,7 @@ def measure_matrix_elements_merge_circuits(
     backend: BACKEND_ALIAS,
     n_shots: int,
 ):
+
     circs: list[QuantumCircuit] = []
     for state_x in comp_states:
         for state_y in comp_states:
@@ -165,6 +270,7 @@ def measure_matrix_elements_merge_circuits(
     jobs = sample_circuit(circs, parameters, backend, n_shots)
     n_elems = len(comp_states) ** 2
     out = []
+
     for ind in range(0, 2 * n_elems - 1, 2):
         re_counts = get_counts_from_job(jobs, ind)
         im_counts = get_counts_from_job(jobs, ind + 1)
@@ -174,13 +280,23 @@ def measure_matrix_elements_merge_circuits(
     return np.reshape(out, shape=(len(comp_states), len(comp_states)))
 
 
-def hadam_diff(counts: dict, n_shots) -> float:
-    if "0" not in counts.keys():
+def hadam_diff(
+    counts: dict, n_shots: int = None, keys: dict[str, str] = {"p0": "0", "p1": "1"}
+) -> float:
+
+    if n_shots is None:
+        # my brain
+        n_shots = np.sum([counts[k] for k in keys.values() if k in counts.keys()])
+
+    # 0 overlap
+    if n_shots == 0:
+        return 0
+    if keys["p0"] not in counts.keys():
         return -1.0
-    p0 = counts["0"] / n_shots
-    if "1" not in counts.keys():
+    p0 = counts[keys["p0"]] / n_shots
+    if keys["p1"] not in counts.keys():
         return 1.0
-    p1 = counts["1"] / n_shots
+    p1 = counts[keys["p1"]] / n_shots
     return p0 - p1
 
 
@@ -217,6 +333,16 @@ def measure_matrix_element_circuits(
     return re_circ, im_circ
 
 
+def get_hadam_estimator(res: EstimatorResult):
+    # qiskit developers competing with python developers to see who can make the most breaking changes with a version chanege
+    # anyway, here's wonderwall
+
+    try:
+        return res[0].data.evs[0] + 1j * res[0].data.evs[1]
+    except Exception:
+        return res.values[0] + 1j * res.values[1]
+
+
 def measure_matrix_element(
     circuit: QuantumCircuit,
     x: str,
@@ -225,6 +351,7 @@ def measure_matrix_element(
     backend: BACKEND_ALIAS,
     n_shots: int,
     which="iterative",
+    custom_idx: list[list[int]] = None,
 ) -> complex:
 
     if which == "full":
@@ -235,11 +362,40 @@ def measure_matrix_element(
             counts = sample_counts_circuit(tmp_circ, parameters, backend, n_shots)
             v = hadam_diff(counts, n_shots)
             vals.append(v)
+        ol = vals[0] + 1j * vals[1]
+        return ol
+    elif which == "estimator":
+        circ_out = circuit_with_init(circuit, x, y)
+        n_qubits = circuit.num_qubits
+        hadam_circ = hadamard_test_circuit(
+            circ_out, parameters=parameters, real_part="estimator"
+        )
+        hams = [
+            SparsePauliOp(n_qubits * "I" + "X"),
+            SparsePauliOp(n_qubits * "I" + "Y"),
+        ]
 
-        return vals[0] + 1j * vals[1]
+        job = estimate_circuit(
+            backend=backend,
+            observables=hams,
+            circuit=hadam_circ,
+            parameters=None,
+            n_shots=n_shots,
+        )
+
+        res = job.result()
+        return get_hadam_estimator(res)
+
     elif which == "iterative":
         circ_out = circuit_with_init(circuit, x, y)
-        return iterative_hadamard_test(circ_out, parameters, n_shots, backend)
+
+        ol = iterative_hadamard_test_estimator(
+            circ_out, parameters, n_shots, backend, custom_idx=custom_idx
+        )
+        return ol
+
+    else:
+        raise ValueError(f"Expected full, estimator, or iterative, got {which}")
 
 
 def measure_matrix_elements(
@@ -248,12 +404,21 @@ def measure_matrix_elements(
     parameters: np.ndarray,
     backend: BACKEND_ALIAS,
     n_shots: int,
+    which: str = "iterative",
+    custom_idx: list[list[int]] = None,
 ) -> np.ndarray:
     out = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
     for ind_x, x in enumerate(comp_states):
         for ind_y, y in enumerate(comp_states):
             out[ind_x, ind_y] = measure_matrix_element(
-                circuit, x, y, parameters, backend, n_shots, "iterative"
+                circuit,
+                x,
+                y,
+                parameters,
+                backend,
+                n_shots,
+                which,
+                custom_idx=custom_idx,
             )
             print(ind_x, ind_y, end="\r")
     return out

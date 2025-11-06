@@ -4,7 +4,7 @@ from qcomp_nlce.utils import (
     backend_sample,
     subspace_diagonalize,
     get_unique_bitstrings,
-    estimate_observables,
+    sv_estimate_observables,
     load_optimized_vqe,
     load_sweep,
     get_appropriate_fake_backend,
@@ -61,7 +61,7 @@ def get_expectations_from_sources(
         unique_bitstrings=fake_unique_bitstring, ham=hamiltonian
     )
 
-    statevector_energy = estimate_observables(
+    statevector_energy = sv_estimate_observables(
         circuit=circuit, observables=[hamiltonian], param_sweep=parameters
     ).data.evs[0]
 

@@ -36,6 +36,14 @@ def to_bitstring(ind: int, n_qubits: int, right_to_left: bool = False) -> str:
     return b
 
 
+def projector_ham(n_qubits: int, normalize: bool = True) -> SparsePauliOp:
+    y = SparsePauliOp("I") + SparsePauliOp("Z")
+    x = y
+    for n in range(n_qubits - 1):
+        x = x ^ y
+    return x * (2 ** (-n_qubits))
+
+
 def index_bits(
     a: Union[str, int], n_qubits: int = None, ones=True, right_to_left: bool = False
 ) -> list:

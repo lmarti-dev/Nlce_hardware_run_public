@@ -8,7 +8,7 @@ from collections.abc import Callable
 from qcomp_nlce.utils.circuit import apply_parameters
 
 
-def estimate_observables(
+def sv_estimate_observables(
     circuit: QuantumCircuit, observables: list[SparsePauliOp], param_sweep: np.ndarray
 ):
     estimator = StatevectorEstimator()
@@ -43,7 +43,7 @@ def optimize_circuit(
     if cost is None:
 
         def cost(xk: np.ndarray):
-            result = estimate_observables(
+            result = sv_estimate_observables(
                 circuit=circuit, observables=[hamiltonian], param_sweep=xk
             )
             return result.data.evs[0]
@@ -55,7 +55,7 @@ def optimize_circuit(
             p[ind] += np.pi / 2
             m = x.copy()
             m[ind] -= np.pi / 2
-            res = estimate_observables(
+            res = sv_estimate_observables(
                 circuit=circuit, observables=[hamiltonian], param_sweep=[p, m]
             )
             out[ind] = 0.5 * (res.data.evs[1] - res.data.evs[0])
@@ -75,7 +75,7 @@ def get_circuit_energy(
     hamiltonian: SparsePauliOp, circuit: QuantumCircuit, use_estimator: bool = False
 ):
     if use_estimator:
-        return estimate_observables(circuit, [hamiltonian], None).data.evs[0]
+        return sv_estimate_observables(circuit, [hamiltonian], None).data.evs[0]
     else:
         return Statevector(circuit).expectation_value(
             hamiltonian,

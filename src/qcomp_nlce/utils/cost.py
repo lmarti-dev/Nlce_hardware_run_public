@@ -1,7 +1,7 @@
 from qiskit.quantum_info import SparsePauliOp
 from qiskit import QuantumCircuit
 import numpy as np
-from .statevector import estimate_observables
+from .statevector import sv_estimate_observables
 
 
 def iterate_over_1_qp(
@@ -15,7 +15,7 @@ def iterate_over_1_qp(
     for q in range(n_qubits):
         out = QuantumCircuit(n_qubits)
         out.x(q)
-        result = estimate_observables(
+        result = sv_estimate_observables(
             circuit=out.compose(circuit), observables=[hamiltonian], param_sweep=xk
         )
         energy += result.data.evs[0] ** pow

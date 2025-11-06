@@ -3,7 +3,7 @@ from qiskit_ibm_runtime import QiskitRuntimeService
 
 from qcomp_nlce.utils import (
     backend_estimate,
-    estimate_observables,
+    sv_estimate_observables,
     load_optimized_vqe,
     get_appropriate_fake_backend,
 )
@@ -30,14 +30,14 @@ def get_expectations_from_sources(
 
     job = backend_estimate(
         backend=fake_backend,
-        hamiltonian=hamiltonian,
+        observables=hamiltonian,
         parameters=parameters,
         circuit=circuit,
         n_shots=n_shots,
     )
     fake_backend_energy = job.result()[0].data.evs
 
-    statevector_energy = estimate_observables(
+    statevector_energy = sv_estimate_observables(
         circuit=circuit, observables=hamiltonian, param_sweep=parameters
     ).data.evs
 
@@ -50,7 +50,7 @@ def get_expectations_from_sources(
 
         real_job = backend_estimate(
             backend=real_backend,
-            hamiltonian=hamiltonian,
+            observables=hamiltonian,
             parameters=parameters,
             circuit=circuit,
             n_shots=n_shots,

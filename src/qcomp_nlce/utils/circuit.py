@@ -3,11 +3,22 @@ from qiskit.circuit.gate import Gate
 from qiskit.quantum_info import Operator
 import numpy as np
 from qcomp_nlce.utils.hamiltonian import from_bitstring
-from typing import Union
+from typing import Union, Literal
 from qiskit.circuit import CircuitInstruction
+from qiskit.circuit.parametertable import ParameterView
 
 
-def circuit_instruction_to_circuit(ci: type[CircuitInstruction] | list, qubits=None):
+def parameters_exist(parameters) -> bool:
+    x = (
+        (parameters is None)
+        or (isinstance(parameters, ParameterView) and parameters == ParameterView([]))
+        or (len(parameters) == 0)
+    )
+    return not x
+
+
+# despite the warning CircuitInstruction as a type hint is correct.
+def circuit_instruction_to_circuit(ci: CircuitInstruction | list, qubits=None):
     if isinstance(ci, list):
         if qubits is None:
             qregs = [c.qubits[0]._register for c in ci]
@@ -37,7 +48,7 @@ def remove_null_param_gates(circuit: QuantumCircuit) -> QuantumCircuit:
 
 def apply_parameters(circuit: QuantumCircuit, parameters: np.ndarray) -> QuantumCircuit:
     options = {}
-    if parameters is not None:
+    if parameters_exist(parameters):
         param_dict = parameters_dict(circuit, parameters)
         options["parameter_map"] = param_dict
         return remove_null_param_gates(circuit.assign_parameters(param_dict))
@@ -45,16 +56,81 @@ def apply_parameters(circuit: QuantumCircuit, parameters: np.ndarray) -> Quantum
         return circuit
 
 
-def to_controlled_gate(circuit: QuantumCircuit, parameters: np.ndarray) -> Gate:
-    circuit = apply_parameters(circuit, parameters)
-    gate = circuit.to_gate().control(1)
+def rotate_in_basis(
+    circuit: QuantumCircuit,
+    qubit: int,
+    which: Literal["X", "Y", "Z", "I"],
+    dag: bool = False,
+) -> QuantumCircuit:
+    if which == "X":
+        circuit.h(qubit)
+    elif which == "Y":
+        if not dag:
+            circuit.s(qubit)
+            circuit.h(qubit)
+        else:
+            circuit.h(qubit)
+            circuit.s(qubit)
+    elif which == "Z" or which == "I":
+        pass
+    return circuit
+
+
+def to_controlled_gate(
+    circuit: Union[QuantumCircuit | CircuitInstruction],
+    parameters: np.ndarray,
+    handcraft: bool = True,
+) -> Gate:
+    if isinstance(circuit, QuantumCircuit):
+        circuit = apply_parameters(circuit, parameters)
+        gate = circuit.to_gate().control(1)
+    elif isinstance(circuit, CircuitInstruction):
+        if circuit.operation.name == "PauliEvolution" and handcraft:
+            # homemade artisan controlled pauli evolution
+            n_qubits = len(circuit.qubits) + 1
+            op = circuit.operation
+            time = op.time
+            pauli = op.operator.paulis[0]
+            coeff = op.operator.coeffs[0]
+            cx_inds = [idx for idx in range(len(pauli)) if str(pauli[idx]) != "I"]
+            c_out = QuantumCircuit(n_qubits)
+
+            # rotate
+            for q in range(1, n_qubits):
+                c_out = rotate_in_basis(c_out, q, str(pauli[q - 1]))
+
+            # cxs
+            for q in range(len(cx_inds) - 1):
+                c_out.cx(1 + cx_inds[q], 1 + cx_inds[q + 1])
+
+            # rz what a waste of time to find that missing 2 factor
+            c_out.crz(2 * time * np.real(coeff), 0, max(cx_inds) + 1)
+
+            # cxs
+            cx_inds = cx_inds[::-1]
+            for q in range(len(cx_inds) - 1):
+                c_out.cx(1 + cx_inds[q + 1], 1 + cx_inds[q])
+
+            # rotate back
+            for q in range(1, n_qubits):
+                c_out = rotate_in_basis(c_out, q, str(pauli[q - 1]), dag=True)
+            gate = c_out.to_gate(label=f"c-exp(-it {pauli})")
+        else:
+            try:
+                opdef = circuit.operation._definition.name
+            except Exception:
+                opdef = circuit.operation.name
+            circuit = circuit_instruction_to_circuit(circuit)
+            circuit = apply_parameters(circuit, parameters)
+            gate = circuit.to_gate(label=opdef).control(1)
+
     return gate
 
 
 def parameters_dict(
     circuit: Union[QuantumCircuit, list[QuantumCircuit]], parameters: np.ndarray
 ) -> dict:
-    if circuit.parameters is None or parameters is None:
+    if not parameters_exist(circuit.parameters) or not parameters_exist(parameters):
         return {}
     return {k: v for k, v in zip(circuit.parameters, parameters)}
 

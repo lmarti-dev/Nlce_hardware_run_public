@@ -34,35 +34,56 @@ def measure_1qp_elements(
 ) -> np.ndarray:
 
     mme_func = measure_matrix_elements
+    which = "iterative"
 
     n_qubits = circuit.num_qubits
     print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
     comp_states = hamming_weight_states(n_qubits, 1)
     true_comp_vals = circuit_matrix_elements(circuit, comp_states)
-    print(true_comp_vals)
 
     # the matrix you get otherwise is indexed backwards wrt to what you get
     # from the circuit-to-matrix qiskit function
     true_comp_vals = true_comp_vals[::-1, ::-1]
-
+    print(np.round(true_comp_vals, 3))
     sv_comp_vals = mme_func(
-        circuit, comp_states, circuit.parameters, "statevector", n_shots
+        circuit,
+        comp_states,
+        circuit.parameters,
+        "statevector",
+        n_shots,
+        custom_idx=None,
+        which=which,
     )
     sv_fidelity = trace_dist(true_comp_vals, sv_comp_vals)
     print(f"Statevector {sv_fidelity:.5e}")
 
+    print(np.round(sv_comp_vals, 3))
+
     backend_name = "AQT" if provider == "LRZ" else "IBM"
     fake_backend = get_appropriate_fake_backend(circuit.num_qubits, which=backend_name)
     fake_comp_vals = mme_func(
-        circuit, comp_states, circuit.parameters, fake_backend, n_shots
+        circuit,
+        comp_states,
+        circuit.parameters,
+        fake_backend,
+        n_shots,
+        custom_idx=None,
+        which=which,
     )
+    print(np.round(fake_comp_vals, 3))
     fake_fidelity = trace_dist(true_comp_vals, fake_comp_vals)
     print(f"Fake Backend ({fake_backend.name}) {fake_fidelity:.5e}")
 
     if run_on_hardware:
         real_backend = get_backend(circuit.num_qubits, backend_name)
         real_comp_vals = mme_func(
-            circuit, comp_states, circuit.parameters, real_backend, n_shots
+            circuit,
+            comp_states,
+            circuit.parameters,
+            real_backend,
+            n_shots,
+            custom_idx=None,
+            which=which,
         )
         real_fidelity = trace_dist(true_comp_vals, real_comp_vals)
         print(f"RealBackend ({real_backend.name}) {real_fidelity:.5e}")
@@ -100,12 +121,24 @@ def measure_vqe_1qp(n_shots: int = 10000):
             Path(dirpath, dirname)
         )
         print(f"{hamiltonian.num_qubits} qubits, J/h {get_tfim_ratio(hamiltonian)}")
-        circuit_with_params = apply_parameters(circuit, weights[0])
+        circuit_with_params = apply_parameters(circuit, weights[-1])
+
         measure_1qp_elements(circuit_with_params, n_shots=n_shots)
 
 
+def measure_1qp_test(n_shots: int = 1000):
+    c = QuantumCircuit(1)
+    c.h(0)
+    measure_1qp_elements(c, n_shots=n_shots)
+
+
 if __name__ == "__main__":
-    n_shots = int(1e5)
+    # 1e9 shots is too much for fake backend, causing:
+    # ERROR: [Experiment 0] bad allocation [Experiment 1] bad allocation , ERROR: bad allocation' qiskit
+    # full Hadamard test for 4 qubits at 1e7 shots is GARBAGE on IBM fakebackend
+    # real backends should be worse
+    n_shots = int(1e8)
+    # measure_1qp_test(n_shots)
     print(f"n_shots: {n_shots}")
     print("=== Sweep ===")
     # measure_sweep_1qp(n_shots)
