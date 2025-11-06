@@ -147,3 +147,4 @@ def estimate_observable_1qp_initial_state(
             sv = Statevector(apply_parameters(circuit, parameters))
             out[ind_x, ind_y] = np.real(sv.expectation_value(observable))
     return out
+ # line 147, circuit needs to be replaced with circ_out

@@ -10,7 +10,7 @@ def pfeuty_energy(J) -> float:
     pfeuty = -(4 * (h + J)) * (sp.ellipe(m)) * (1 / (2 * np.pi))
     return pfeuty
 
-
+# NLCE eembedding for 1D TFIM which needs only two clusters of sizes N and N-1
 def nlce_energy(A, B):
     energy = []
     for i, j in zip(A, B):
