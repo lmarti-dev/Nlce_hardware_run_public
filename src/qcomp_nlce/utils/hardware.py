@@ -5,6 +5,14 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import EstimatorV2, RuntimeJob, SamplerV2
 
+try:
+    from iqm.qiskit_iqm.fake_backends.fake_garnet import IQMFakeGarnet
+    from iqm.qiskit_iqm.fake_backends.fake_aphrodite import IQMFakeAphrodite
+    from iqm.qiskit_iqm.fake_backends.fake_adonis import IQMFakeAdonis
+except ModuleNotFoundError:
+    pass
+
+
 import io
 
 from qiskit_ibm_runtime.fake_provider import (
@@ -75,7 +83,7 @@ def get_backend(
 
 
 def get_appropriate_fake_backend(
-    n_qubits: int, which: Literal["IBM", "AQT"]
+    n_qubits: int, which: Literal["IBM", "AQT", "IQM"]
 ) -> Union[FakeBackendV2, AQTResource]:
 
     if which == "IBM":
@@ -93,18 +101,31 @@ def get_appropriate_fake_backend(
         return AQTProvider("ANY_TOKEN_WORKS_FOR_OFFLINE_SIM").get_backend(
             "offline_simulator_noise"
         )
+    elif which == "IQM":
+        if n_qubits <= 5:
+            return IQMFakeAdonis()
+        elif n_qubits <= 20:
+            return IQMFakeGarnet()
+        else:
+            return IQMFakeAphrodite()
     else:
         raise ValueError(f"Expected a provider got: {which}")
 
 
 def show_circ_depth(isa_circ: list | QuantumCircuit):
-    if isinstance(isa_circ, QuantumCircuit):
+    if isinstance(isa_circ, list):
+        if len(isa_circ) == 1:
+            print(f"Circuit depth is {isa_circ[0].depth()}")
+        else:
+            depths = [c.depth() for c in isa_circ]
+            mean_depth = np.mean(depths)
+            max_depth = np.max(depths)
+            print(
+                f"Mean circuit depth ({len(isa_circ)}): {mean_depth}, max: {max_depth}"
+            )
+
+    elif isinstance(isa_circ, QuantumCircuit):
         print(f"Circuit depth is {isa_circ.depth()}")
-    elif isinstance(isa_circ, list):
-        depths = [c.depth() for c in isa_circ]
-        mean_depth = np.mean(depths)
-        max_depth = np.max(depths)
-        print(f"Mean circuit depth ({len(isa_circ)}): {mean_depth}, max: {max_depth}")
     else:
         print(f"circ is neither QuantumCircuit nor list, but: {type(isa_circ)}")
 
@@ -116,48 +137,45 @@ def circuits_to_payload(
     observables: Union[list[SparsePauliOp], SparsePauliOp],
     which: str = "v2",
 ) -> list[tuple[QuantumCircuit, dict]]:
+    if isinstance(circuit, QuantumCircuit):
+        circuit = [circuit]
     pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
     isa_circuit = pm.run(circuit)
     show_circ_depth(isa_circuit)
-    isa_observables = None
-    if observables is not None:
-        layout = isa_circuit.layout
-        if isinstance(observables, list):
-            isa_observables = [o.apply_layout(layout) for o in observables]
-        else:
-            isa_observables = observables.apply_layout(layout)
     if which == "v1":
         payload = [[], [], []]
         # assume that for each circuit you want to measure each parameters
         if isinstance(isa_circuit, QuantumCircuit):
             isa_circuit = [isa_circuit]
-        if isinstance(isa_observables, SparsePauliOp):
-            isa_observables = [isa_observables]
+        if isinstance(observables, SparsePauliOp):
+            observables = [observables]
         for c in isa_circuit:
-            for o in isa_observables:
+            for o in observables:
                 payload[0].append(c)
-                payload[1].append(o)
+                isa_o = o.apply_layout(c.layout)
+                payload[1].append(isa_o)
                 if parameters_exist(parameters):
                     payload[2].append(parameters)
         return payload
 
     elif which == "v2":
+        payload = []
 
         if isinstance(isa_circuit, QuantumCircuit):
-            payload = [isa_circuit]
-        else:
-            payload = isa_circuit
+            isa_circuit = [isa_circuit]
 
-        for idx in range(len(payload)):
+        for idx in range(len(isa_circuit)):
             toadd = []
-            if isa_observables is not None:
-                toadd.append(isa_observables)
-            if not (parameters is None or parameters == ParameterView([])):
+            if observables is not None:
+                toadd.append(
+                    [o.apply_layout(isa_circuit[idx].layout) for o in observables]
+                )
+            if parameters_exist(parameters):
                 isa_params = isa_circuit_param_dict(
                     isa_circuit[idx], circuit[idx], parameters
                 )
                 toadd.append(isa_params)
-            payload[idx] = (payload[idx], *toadd)
+            payload.append((isa_circuit[idx], *toadd))
 
     return payload
 

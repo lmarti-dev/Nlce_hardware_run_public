@@ -55,6 +55,8 @@ def get_tfim_sweep_circuit(
         synth_fn = LieTrotter()
     elif synthesis == "suzuki":
         synth_fn = SuzukiTrotter()
+    elif synthesis is None:
+        synth_fn = lambda x: x
     circuit = QuantumCircuit((ham_0 + ham_1).num_qubits)
     for n in range(n_steps):
         alpha = sf(n / (n_steps - 1))

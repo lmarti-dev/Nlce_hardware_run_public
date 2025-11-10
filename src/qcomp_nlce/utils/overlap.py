@@ -32,6 +32,7 @@ def iterative_hadamard_test_circuits(
     parameters: np.ndarray,
     real_part: bool = True,
     custom_idx: list[list[int]] = None,
+    handcraft: bool = True,
 ) -> list[QuantumCircuit]:
     circuit = apply_parameters(circuit, parameters)
     circuits = []
@@ -49,7 +50,7 @@ def iterative_hadamard_test_circuits(
             hadam_circuit.append(c_temp, range(1, hadam_circuit.num_qubits))
 
         for _gate in custom_idx[x]:
-            controlled_gate = to_controlled_gate(circuit[_gate], None)
+            controlled_gate = to_controlled_gate(circuit[_gate], None, handcraft)
             hadam_circuit.append(controlled_gate, range(circuit.num_qubits + 1))
 
         if real_part != "estimator":
@@ -72,15 +73,16 @@ def iterative_hadamard_test_estimator(
     n_shots: int,
     backend: BACKEND_ALIAS = "statevector",
     custom_idx: list[list[int]] = None,
+    handcraft: bool = True,
 ):
     # !!! This only works for initial state ket(0)
 
-    custom_idx = custom_idx_groups_of_n(len([c for c in circuit]), 1)
     circuits = iterative_hadamard_test_circuits(
         circuit=circuit,
         parameters=parameters,
         real_part="estimator",
         custom_idx=custom_idx,
+        handcraft=handcraft,
     )
 
     hams = [
@@ -134,14 +136,23 @@ def iterative_hadamard_test(
     n_shots: int,
     backend: BACKEND_ALIAS = "statevector",
     custom_idx: list[list[int]] = None,
+    handcraft: bool = True,
 ) -> float:
 
     # !!! This only works for initial state ket(0)
     circuits_re = iterative_hadamard_test_circuits(
-        circuit=circuit, parameters=parameters, real_part=True, custom_idx=custom_idx
+        circuit=circuit,
+        parameters=parameters,
+        real_part=True,
+        custom_idx=custom_idx,
+        handcraft=handcraft,
     )
     circuits_im = iterative_hadamard_test_circuits(
-        circuit=circuit, parameters=parameters, real_part=False, custom_idx=custom_idx
+        circuit=circuit,
+        parameters=parameters,
+        real_part=False,
+        custom_idx=custom_idx,
+        handcraft=handcraft,
     )
     circuits = [*circuits_re, *circuits_im]
     half_len = len(circuits_re)
@@ -183,7 +194,10 @@ def iterative_hadamard_test(
 
 # computes the real part of overlap between psi and circuit(psi)
 def hadamard_test_circuit(
-    circuit: QuantumCircuit, parameters: np.ndarray, real_part: bool = True
+    circuit: QuantumCircuit,
+    parameters: np.ndarray,
+    real_part: bool = True,
+    handcraft: bool = True,
 ) -> QuantumCircuit:
 
     n_qubits = circuit.num_qubits + 1
@@ -193,7 +207,7 @@ def hadamard_test_circuit(
         hadam_circuit.sdg(0)
 
     for ci in circuit:
-        controlled_gate = to_controlled_gate(ci, parameters)
+        controlled_gate = to_controlled_gate(ci, parameters, handcraft)
         hadam_circuit.append(controlled_gate, range(n_qubits))
     if real_part != "estimator":
         hadam_circuit.h(0)
@@ -256,13 +270,18 @@ def measure_matrix_elements_merge_circuits(
     parameters: np.ndarray,
     backend: BACKEND_ALIAS,
     n_shots: int,
+    handcraft: bool = True,
 ):
 
     circs: list[QuantumCircuit] = []
     for state_x in comp_states:
         for state_y in comp_states:
             re_circ, im_circ = measure_matrix_element_circuits(
-                circuit=circuit, x=state_x, y=state_y, parameters=parameters
+                circuit=circuit,
+                x=state_x,
+                y=state_y,
+                parameters=parameters,
+                handcraft=handcraft,
             )
             circs.append(re_circ)
             circs.append(im_circ)
@@ -325,11 +344,15 @@ def measure_matrix_element_circuits(
     x: str,
     y: str,
     parameters: np.ndarray,
+    handcraft: bool = True,
 ) -> tuple[QuantumCircuit, QuantumCircuit]:
-
     circ_out = circuit_with_init(circuit, x, y)
-    re_circ = hadamard_test_circuit(circ_out, parameters, real_part=True)
-    im_circ = hadamard_test_circuit(circ_out, parameters, real_part=False)
+    re_circ = hadamard_test_circuit(
+        circ_out, parameters, real_part=True, handcraft=handcraft
+    )
+    im_circ = hadamard_test_circuit(
+        circ_out, parameters, real_part=False, handcraft=handcraft
+    )
     return re_circ, im_circ
 
 
@@ -352,10 +375,17 @@ def measure_matrix_element(
     n_shots: int,
     which="iterative",
     custom_idx: list[list[int]] = None,
+    handcraft: bool = True,
 ) -> complex:
 
     if which == "full":
-        re_circ, im_circ = measure_matrix_element_circuits(circuit, x, y, parameters)
+        circ_out = circuit_with_init(circuit, x, y)
+        re_circ = hadamard_test_circuit(
+            circ_out, parameters, real_part=True, handcraft=handcraft
+        )
+        im_circ = hadamard_test_circuit(
+            circ_out, parameters, real_part=False, handcraft=handcraft
+        )
 
         vals = []
         for tmp_circ in (re_circ, im_circ):
@@ -366,9 +396,11 @@ def measure_matrix_element(
         return ol
     elif which == "estimator":
         circ_out = circuit_with_init(circuit, x, y)
+        if custom_idx is None:
+            custom_idx = custom_idx_groups_of_n(len([c for c in circ_out]), 1)
         n_qubits = circuit.num_qubits
         hadam_circ = hadamard_test_circuit(
-            circ_out, parameters=parameters, real_part="estimator"
+            circ_out, parameters=parameters, real_part="estimator", handcraft=handcraft
         )
         hams = [
             SparsePauliOp(n_qubits * "I" + "X"),
@@ -390,7 +422,12 @@ def measure_matrix_element(
         circ_out = circuit_with_init(circuit, x, y)
 
         ol = iterative_hadamard_test_estimator(
-            circ_out, parameters, n_shots, backend, custom_idx=custom_idx
+            circ_out,
+            parameters,
+            n_shots,
+            backend,
+            custom_idx=custom_idx,
+            handcraft=handcraft,
         )
         return ol
 
@@ -406,6 +443,7 @@ def measure_matrix_elements(
     n_shots: int,
     which: str = "iterative",
     custom_idx: list[list[int]] = None,
+    handcraft: bool = True,
 ) -> np.ndarray:
     out = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
     for ind_x, x in enumerate(comp_states):
@@ -419,6 +457,7 @@ def measure_matrix_elements(
                 n_shots,
                 which,
                 custom_idx=custom_idx,
+                handcraft=handcraft,
             )
             print(ind_x, ind_y, end="\r")
     return out

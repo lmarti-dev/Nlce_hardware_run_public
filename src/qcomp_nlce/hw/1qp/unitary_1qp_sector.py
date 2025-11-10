@@ -126,19 +126,12 @@ def measure_vqe_1qp(n_shots: int = 10000):
         measure_1qp_elements(circuit_with_params, n_shots=n_shots)
 
 
-def measure_1qp_test(n_shots: int = 1000):
-    c = QuantumCircuit(1)
-    c.h(0)
-    measure_1qp_elements(c, n_shots=n_shots)
-
-
 if __name__ == "__main__":
     # 1e9 shots is too much for fake backend, causing:
     # ERROR: [Experiment 0] bad allocation [Experiment 1] bad allocation , ERROR: bad allocation' qiskit
     # full Hadamard test for 4 qubits at 1e7 shots is GARBAGE on IBM fakebackend
     # real backends should be worse
     n_shots = int(1e8)
-    # measure_1qp_test(n_shots)
     print(f"n_shots: {n_shots}")
     print("=== Sweep ===")
     # measure_sweep_1qp(n_shots)

@@ -144,7 +144,9 @@ def estimate_observable_1qp_initial_state(
             # x is left bra and y right ket
             circ_out.x(ind_x)
             circ_out = circ_in.compose(circ_out, range(circuit.num_qubits))
-            sv = Statevector(apply_parameters(circuit, parameters))
+            sv = Statevector(apply_parameters(circ_out, parameters))
             out[ind_x, ind_y] = np.real(sv.expectation_value(observable))
     return out
- # line 147, circuit needs to be replaced with circ_out
+
+
+# line 147, circuit needs to be replaced with circ_out
