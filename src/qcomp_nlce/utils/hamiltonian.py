@@ -36,12 +36,20 @@ def to_bitstring(ind: int, n_qubits: int, right_to_left: bool = False) -> str:
     return b
 
 
-def projector_ham(n_qubits: int, normalize: bool = True) -> SparsePauliOp:
-    y = SparsePauliOp("I") + SparsePauliOp("Z")
-    x = y
-    for n in range(n_qubits - 1):
+def projector_ham(
+    n_qubits: int, normalize: bool = True, bitstring: str = None
+) -> SparsePauliOp:
+    if bitstring is None:
+        bitstring = "0" * n_qubits
+    x = SparsePauliOp("I") + (-1) ** (int(bitstring[0])) * SparsePauliOp("Z")
+    for n in range(1, n_qubits):
+        y = SparsePauliOp("I") + (-1) ** (int(bitstring[n])) * SparsePauliOp("Z")
         x = x ^ y
-    return x * (2 ** (-n_qubits))
+
+    cst = 1
+    if normalize:
+        cst = 2 ** (-n_qubits)
+    return x * cst
 
 
 def index_bits(

@@ -9,7 +9,6 @@ from qcomp_nlce.utils import (
     TFIM,
     hamming_weight_states,
     get_tfim_sweep_circuit,
-    measure_matrix_elements_merge_circuits,
     load_optimized_vqe,
     apply_parameters,
     get_tfim_ratio,
@@ -34,7 +33,7 @@ def measure_1qp_elements(
 ) -> np.ndarray:
 
     mme_func = measure_matrix_elements
-    which = "iterative"
+    which = "projecto-estimo"
 
     n_qubits = circuit.num_qubits
     print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")

@@ -2,7 +2,7 @@ from qiskit import QuantumCircuit
 from qiskit.circuit.gate import Gate
 from qiskit.quantum_info import Operator
 import numpy as np
-from qcomp_nlce.utils.hamiltonian import from_bitstring
+from qcomp_nlce.utils.hamiltonian import from_bitstring, hamming_weight, index_bits
 from typing import Union, Literal
 from qiskit.circuit import CircuitInstruction
 from qiskit.circuit.parametertable import ParameterView
@@ -153,3 +153,78 @@ def circuit_matrix_elements(circuit: QuantumCircuit, states: list[str]) -> np.nd
         for state in states
     ]
     return mat[np.ix_(sl, sl)]
+
+
+def prep_circ_superpos(x: str, y: str, which: Literal["+", "-", "+i", "-i"]):
+    if hamming_weight(x) == 1 and hamming_weight(y) == 1:
+        return prep_circ_1qp_superpos(x, y, which)
+    else:
+        if y == x:
+            c = QuantumCircuit(len(x))
+            x_inds = index_bits(x, len(x), right_to_left=True)
+            for x_ind in x_inds:
+                c.x(x_ind)
+        else:
+            if (
+                max(hamming_weight(x), hamming_weight(y)) == len(x)
+                and min(hamming_weight(x), hamming_weight(y)) == 0
+            ):
+                c = QuantumCircuit(len(x))
+                if which == "+":
+                    c.h(0)
+                    for ind in range(1, len(x)):
+                        c.cx(0, ind)
+                elif which == "-":
+                    c.x(0)
+                    c.h(0)
+                    for ind in range(1, len(x)):
+                        c.cx(0, ind)
+                elif which == "+i":
+                    c.h(0)
+                    c.s(0)
+                    for ind in range(1, len(x)):
+                        c.cx(0, ind)
+                elif which == "-i":
+                    c.x(0)
+                    c.h(0)
+                    c.s(0)
+                    for ind in range(1, len(x)):
+                        c.cx(0, ind)
+            else:
+                raise NotImplementedError()
+
+    return c
+
+
+def prep_circ_1qp_superpos(
+    x: str, y: str, which: Literal["+", "-", "+i", "-i"]
+) -> QuantumCircuit:
+    assert hamming_weight(x) == 1
+    assert hamming_weight(y) == 1
+    assert len(x) == len(y)
+    c = QuantumCircuit(len(x))
+    x_ind = index_bits(x)[0]
+    y_ind = index_bits(y)[0]
+    if which == "+":
+        c.h(x_ind)
+        c.cx(x_ind, y_ind)
+        c.x(x_ind)
+    elif which == "-":
+        c.x(x_ind)
+        c.h(x_ind)
+        c.cx(x_ind, y_ind)
+        c.x(x_ind)
+    elif which == "+i":
+        c.h(x_ind)
+        c.s(x_ind)
+        c.cx(x_ind, y_ind)
+        c.x(x_ind)
+    elif which == "-i":
+        c.x(x_ind)
+        c.h(x_ind)
+        c.s(x_ind)
+        c.cx(x_ind, y_ind)
+        c.x(x_ind)
+    else:
+        raise ValueError(f"Incorrect which: {which}")
+    return c

@@ -15,6 +15,7 @@ from qcomp_nlce.utils.circuit import (
     to_controlled_gate,
     apply_parameters,
     circuit_instruction_to_circuit,
+    prep_circ_superpos,
 )
 
 BACKEND_ALIAS = str | FakeBackendV2 | IBMBackend
@@ -85,12 +86,14 @@ def iterative_hadamard_test_estimator(
         handcraft=handcraft,
     )
 
+    proj = projector_ham(circuit.num_qubits)
     hams = [
-        projector_ham(circuit.num_qubits) ^ SparsePauliOp("I"),
-        projector_ham(circuit.num_qubits) ^ SparsePauliOp("X"),
-        projector_ham(circuit.num_qubits) ^ SparsePauliOp("Y"),
-        projector_ham(circuit.num_qubits) ^ SparsePauliOp("Z"),
+        proj ^ SparsePauliOp("I"),
+        proj ^ SparsePauliOp("X"),
+        proj ^ SparsePauliOp("Y"),
+        proj ^ SparsePauliOp("Z"),
     ]
+
     jobs = estimate_circuit(
         backend=backend,
         observables=hams,
@@ -116,6 +119,193 @@ def iterative_hadamard_test_estimator(
 
     better_g_abs = gs[:-1] + g_m1[1:] / 2
     print(f"|g_s|**2={g_abs**2}")
+
+    if np.any(np.isclose(g_abs, 0)):
+        raise ValueError(f"g_abs has null values, algorithm will fail: g_abs={g_abs}")
+
+    if len(gs) == 1:
+        final_g = gs[0]
+    elif len(gs) % 2 == 0:
+        final_g = np.prod(gs[1::2]) / np.prod(np.conj(gs[0::2]))
+    elif len(gs) % 2 == 1:
+        final_g = np.prod(gs[0::2]) / np.prod(np.conj(gs[1::2]))
+
+    return final_g
+
+
+def iterative_hadamard_test_off_diag(
+    circuit: QuantumCircuit,
+    parameters: np.ndarray,
+    n_shots: int,
+    x: str,
+    y: str,
+    backend: BACKEND_ALIAS = "statevector",
+    custom_idx: list[list[int]] = None,
+    handcraft: bool = True,
+):
+
+    if x == y:
+        return (
+            iterative_hadamard_test_projecto_estimo(
+                circuit, parameters, n_shots, x, y, backend, custom_idx, handcraft
+            ),
+            0,
+        )
+
+    # prepare
+    # a = ket(x + iy)
+    # b = ket(x - iy)
+    # u = ket(x + y)
+    # v = ket(x - y)
+
+    # then
+    # alpha = ia - i(u+v)/2
+    # beta  = (u-v)/2
+    # alpha+beta = 2 <k|U|j>
+    # beta - alpha  = 2<j|U|k>
+
+    d = {"+": 0 + 0j, "-": 0 + 0j, "+i": 0 + 0j, "-i": 0 + 0j}
+
+    circuits = iterative_hadamard_test_circuits(
+        circuit=circuit,
+        parameters=parameters,
+        real_part="estimator",
+        custom_idx=custom_idx,
+        handcraft=handcraft,
+    )
+
+    proj = projector_ham(circuit.num_qubits)
+    hams = [
+        proj ^ SparsePauliOp("I"),
+        proj ^ SparsePauliOp("X"),
+        proj ^ SparsePauliOp("Y"),
+        proj ^ SparsePauliOp("Z"),
+    ]
+    for k in d:
+        prep = prep_circ_superpos(x, y, k)
+
+        out_circs = []
+
+        for circ in circuits:
+            prep_dag = prep.inverse()
+            out = QuantumCircuit(circ.num_qubits)
+            out.compose(prep, range(1, circ.num_qubits), inplace=True)
+            out.compose(circ, range(circ.num_qubits), inplace=True)
+            out.compose(prep_dag, range(1, circ.num_qubits), inplace=True)
+            out_circs.append(out)
+
+        jobs = estimate_circuit(
+            backend=backend,
+            observables=hams,
+            circuit=out_circs,
+            parameters=None,
+            n_shots=n_shots,
+        )
+
+        # gs = Re(g_l g*_l-1) + 1j * Im(g_l g*_l-1)
+        gs = np.array([x.data.evs[1] + 1j * x.data.evs[2] for x in jobs.result()])
+
+        # I-Z = 1/2 (g**2_l-1 + g**2_l) - 1/2 (g**2_l-1 - g**2_l) = g**2_l
+        g_abs = np.array(
+            [np.sqrt(np.abs(x.data.evs[0] - x.data.evs[3])) for x in jobs.result()]
+        )
+        # g_abs is the absolute value of g_l = <psi|U_1...U_l-1 U_l|psi>
+        # g_m1 computes g_l-1 so that we get twice the results per shot.
+        # I+Z = 1/2 (g**2_l-1 + g**2_l) +  1/2 (g**2_l-1 - g**2_l) = g**2_l-1
+        g_m1 = np.array(
+            [np.sqrt(np.abs(x.data.evs[0] + x.data.evs[3])) for x in jobs.result()]
+        )
+
+        better_g_abs = gs[:-1] + g_m1[1:] / 2
+        print(f"({y,x} min|g_s|**2={np.min(g_abs**2)}")
+
+        if np.any(np.isclose(g_abs, 0)):
+            raise ValueError(
+                f"g_abs has null values, algorithm will fail: g_abs={g_abs}"
+            )
+
+        if len(gs) == 1:
+            final_g = gs[0]
+        elif len(gs) % 2 == 0:
+            final_g = np.prod(gs[1::2]) / np.prod(np.conj(gs[0::2]))
+        elif len(gs) % 2 == 1:
+            final_g = np.prod(gs[0::2]) / np.prod(np.conj(gs[1::2]))
+        d[k] = final_g
+
+    alpha = 1j * (d["+i"] - (d["+"] + d["-"]) / 2)
+    beta = (d["+"] - d["-"]) / 2
+
+    jUk = beta - alpha
+    kUj = alpha + beta
+
+    return jUk, kUj
+
+
+def iterative_hadamard_test_projecto_estimo(
+    circuit: QuantumCircuit,
+    parameters: np.ndarray,
+    n_shots: int,
+    x: str,
+    y: str,
+    backend: BACKEND_ALIAS = "statevector",
+    custom_idx: list[list[int]] = None,
+    handcraft: bool = True,
+):
+
+    # this one computes <x|U|y> without doing the x(j) in the iterative hadamard
+    # which avoids some of the 0 overlap issue
+    # but it's more annyoing
+    # well, this was stupid. g0 = 0 so this method cannot in fact work for non-diagonal terms.
+    # but it should work for diagonal terms though. Useless. Ack!
+
+    circuits = iterative_hadamard_test_circuits(
+        circuit=circuit,
+        parameters=parameters,
+        real_part="estimator",
+        custom_idx=custom_idx,
+        handcraft=handcraft,
+    )
+
+    ket = y
+    bra = x
+    init = QuantumCircuit(circuit.num_qubits + 1)
+    ket_inds = index_bits(ket + "0", circuit.num_qubits + 1, right_to_left=True)
+    for ket_ind in ket_inds:
+        init.x(ket_ind)
+    for idx in range(len(circuits)):
+        circuits[idx] = init.compose(circuits[idx], inplace=False)
+
+    proj = projector_ham(circuit.num_qubits, bitstring=bra)
+    hams = [
+        proj ^ SparsePauliOp("I"),
+        proj ^ SparsePauliOp("X"),
+        proj ^ SparsePauliOp("Y"),
+        proj ^ SparsePauliOp("Z"),
+    ]
+    jobs = estimate_circuit(
+        backend=backend,
+        observables=hams,
+        circuit=circuits,
+        parameters=None,
+        n_shots=n_shots,
+    )
+
+    # gs = Re(g_l g*_l-1) + 1j * Im(g_l g*_l-1)
+    gs = np.array([x.data.evs[1] + 1j * x.data.evs[2] for x in jobs.result()])
+
+    # I-Z = 1/2 (g**2_l-1 + g**2_l) - 1/2 (g**2_l-1 - g**2_l) = g**2_l
+    g_abs = np.array(
+        [np.sqrt(np.abs(x.data.evs[0] - x.data.evs[3])) for x in jobs.result()]
+    )
+    # g_abs is the absolute value of g_l = <psi|U_1...U_l-1 U_l|psi>
+    # g_m1 computes g_l-1 so that we get twice the results per shot.
+    # I+Z = 1/2 (g**2_l-1 + g**2_l) +  1/2 (g**2_l-1 - g**2_l) = g**2_l-1
+    g_m1 = np.array(
+        [np.sqrt(np.abs(x.data.evs[0] + x.data.evs[3])) for x in jobs.result()]
+    )
+
+    better_g_abs = gs[:-1] + g_m1[1:] / 2
+    print(f"({y,x} min|g_s|**2={np.min(g_abs**2)}")
 
     if np.any(np.isclose(g_abs, 0)):
         raise ValueError(f"g_abs has null values, algorithm will fail: g_abs={g_abs}")
@@ -378,7 +568,23 @@ def measure_matrix_element(
     handcraft: bool = True,
 ) -> complex:
 
-    if which == "full":
+    # This computes <x|U|y>
+
+    if which == "projecto-estimo":
+
+        ol = iterative_hadamard_test_projecto_estimo(
+            circuit,
+            parameters,
+            n_shots,
+            x,
+            y,
+            backend,
+            custom_idx=custom_idx,
+            handcraft=handcraft,
+        )
+        return ol
+
+    elif which == "full":
         circ_out = circuit_with_init(circuit, x, y)
         re_circ = hadamard_test_circuit(
             circ_out, parameters, real_part=True, handcraft=handcraft
