@@ -122,7 +122,7 @@ def hamming_weight_states(n_qubits: int, hamming_weight: int) -> list[str]:
         state = ["0"] * n_qubits
         for c in comp:
             state[c] = "1"
-        states.append(state)
+        states.append("".join(state))
     return states
 
 

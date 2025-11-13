@@ -12,6 +12,7 @@ from qcomp_nlce.utils import (
     load_optimized_vqe,
     apply_parameters,
     get_tfim_ratio,
+    custom_idx_groups_of_n,
 )
 import os
 from pathlib import Path
@@ -33,7 +34,7 @@ def measure_1qp_elements(
 ) -> np.ndarray:
 
     mme_func = measure_matrix_elements
-    which = "projecto-estimo"
+    which = "off-diag"
 
     n_qubits = circuit.num_qubits
     print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
@@ -43,19 +44,21 @@ def measure_1qp_elements(
     # the matrix you get otherwise is indexed backwards wrt to what you get
     # from the circuit-to-matrix qiskit function
     true_comp_vals = true_comp_vals[::-1, ::-1]
-    print(np.round(true_comp_vals, 3))
+
+    custom_idx = custom_idx_groups_of_n(len(circuit), len(circuit))
     sv_comp_vals = mme_func(
         circuit,
         comp_states,
         circuit.parameters,
         "statevector",
         n_shots,
-        custom_idx=None,
+        custom_idx=custom_idx,
         which=which,
     )
     sv_fidelity = trace_dist(true_comp_vals, sv_comp_vals)
     print(f"Statevector {sv_fidelity:.5e}")
 
+    print(np.round(true_comp_vals, 3))
     print(np.round(sv_comp_vals, 3))
 
     backend_name = "AQT" if provider == "LRZ" else "IBM"
@@ -66,7 +69,7 @@ def measure_1qp_elements(
         circuit.parameters,
         fake_backend,
         n_shots,
-        custom_idx=None,
+        custom_idx=custom_idx,
         which=which,
     )
     print(np.round(fake_comp_vals, 3))
