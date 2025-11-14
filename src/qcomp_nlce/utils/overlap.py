@@ -16,6 +16,7 @@ from qcomp_nlce.utils.circuit import (
     apply_parameters,
     circuit_instruction_to_circuit,
     prep_circ_superpos,
+    from_bitstring,
 )
 
 BACKEND_ALIAS = str | FakeBackendV2 | IBMBackend
@@ -118,7 +119,7 @@ def iterative_hadamard_test_estimator(
     )
 
     better_g_abs = gs[:-1] + g_m1[1:] / 2
-    print(f"|g_s|**2={g_abs**2}")
+    # print(f"|g_s|**2={g_abs**2}")
 
     if np.any(np.isclose(g_abs, 0)):
         raise ValueError(f"g_abs has null values, algorithm will fail: g_abs={g_abs}")
@@ -217,7 +218,7 @@ def iterative_hadamard_test_off_diag(
         )
 
         better_g_abs = gs[:-1] + g_m1[1:] / 2
-        print(f"({y,x} {k} min|g_s|**2={np.min(g_abs**2)}")
+        # print(f"({y,x} {k} min|g_s|**2={np.min(g_abs**2)}", end="\r")
 
         if np.any(np.isclose(g_abs, 0)):
             raise ValueError(
@@ -305,7 +306,7 @@ def iterative_hadamard_test_projecto_estimo(
     )
 
     better_g_abs = gs[:-1] + g_m1[1:] / 2
-    print(f"({y,x} min|g_s|**2={np.min(g_abs**2)}")
+    # print(f"({y,x} min|g_s|**2={np.min(g_abs**2)}", end="\r")
 
     if np.any(np.isclose(g_abs, 0)):
         raise ValueError(f"g_abs has null values, algorithm will fail: g_abs={g_abs}")
@@ -682,10 +683,12 @@ def measure_matrix_elements(
                     custom_idx=custom_idx,
                     handcraft=handcraft,
                 )
-                print(ind_x, ind_y, end="\r")
+                # print(f"{ind_x} - {ind_y}: {out[ind_x,ind_y]:.4f}", end="\r")
     elif which == "off-diag":
+        diag = []
         for ind_x, x in enumerate(comp_states):
             for ind_y, y in enumerate(comp_states[ind_x:]):
+                ind_y = ind_x + ind_y
                 jUk, kUj = measure_matrix_element(
                     circuit,
                     x,
@@ -698,10 +701,11 @@ def measure_matrix_elements(
                     handcraft=handcraft,
                 )
                 if ind_x == ind_y:
-                    out[ind_x, ind_y] = jUk
+                    diag.append(jUk)
                 else:
                     out[ind_x, ind_y] = jUk
                     out[ind_y, ind_x] = kUj
-                print(f"{ind_x} - {ind_y}: {jUk:.3f}, {kUj:.3f}", end="\r")
-
+                # print(f"{ind_x} - {ind_y}: {jUk:.3f}, {kUj:.3f}", end="\r")
+        # somehow indices are all messy
+        out = out[::-1, ::-1] + np.diag(diag)
     return out

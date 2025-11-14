@@ -45,7 +45,7 @@ def measure_1qp_elements(
     # from the circuit-to-matrix qiskit function
     true_comp_vals = true_comp_vals[::-1, ::-1]
 
-    custom_idx = custom_idx_groups_of_n(len(circuit), len(circuit))
+    custom_idx = custom_idx_groups_of_n(len(circuit), 2)
     sv_comp_vals = mme_func(
         circuit,
         comp_states,
@@ -133,9 +133,9 @@ if __name__ == "__main__":
     # ERROR: [Experiment 0] bad allocation [Experiment 1] bad allocation , ERROR: bad allocation' qiskit
     # full Hadamard test for 4 qubits at 1e7 shots is GARBAGE on IBM fakebackend
     # real backends should be worse
-    n_shots = int(1e8)
+    n_shots = int(1e6)
     print(f"n_shots: {n_shots}")
     print("=== Sweep ===")
-    # measure_sweep_1qp(n_shots)
+    measure_sweep_1qp(n_shots)
     print("=== VQE ===")
     measure_vqe_1qp(n_shots)
