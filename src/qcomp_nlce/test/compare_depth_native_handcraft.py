@@ -114,7 +114,7 @@ def measure_vqe_1qp(n_shots: int = 10000):
 
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
-    n_shots = int(1e6)
+    n_shots = int(1e9)
     print(f"n_shots: {n_shots}")
     print("=== Sweep ===")
     measure_sweep_1qp(n_shots)
