@@ -1,3 +1,4 @@
+from collections import defaultdict
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
@@ -33,9 +34,17 @@ def get_hva_vqe(
     if unique_weights:
         circuit = QuantumCircuit(hamiltonian.num_qubits)
         for layer in range(n_layers):
+            param_counts = defaultdict(int)
             for term in hamiltonian:
                 p = term.paulis[0]
-                param = Parameter(f"l{layer}_{pretty_pauli_str(p)}")
+                pauli_label = pretty_pauli_str(p) or "I"
+                suffix = param_counts[pauli_label]
+                param_counts[pauli_label] += 1
+                if suffix:
+                    param_name = f"l{layer}_{pauli_label}_{suffix}"
+                else:
+                    param_name = f"l{layer}_{pauli_label}"
+                param = Parameter(param_name)
                 circuit.append(PauliEvolutionGate(term, time=param), range(len(p)))
 
     else:

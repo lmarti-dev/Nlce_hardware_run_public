@@ -9,10 +9,12 @@ from qcomp_nlce.utils import (
     save_optimized_vqe,
 )
 
-dry_run = True
-
-for n_qubits in (9, 10):
-    for J in (0.8, 0.9, 1):
+dry_run = False
+J_range = np.linspace(0.0, 1.0, 10)
+print(J_range)
+# J_range = [0.5,1]
+for n_qubits in (5, 6):
+    for J in J_range:
         periodic = False
         h = 1
         hamiltonian = TFIM(n_qubits, h, J, periodic=periodic)
