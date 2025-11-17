@@ -709,3 +709,9 @@ def measure_matrix_elements(
         # somehow indices are all messy
         out = out[::-1, ::-1] + np.diag(diag)
     return out
+
+
+def trace_dist(u1: np.ndarray, u2: np.ndarray) -> float:
+    diff = u1 - u2
+    out = np.sqrt(diff.T.conj() @ diff)
+    return 0.5 * np.real(np.trace(out))

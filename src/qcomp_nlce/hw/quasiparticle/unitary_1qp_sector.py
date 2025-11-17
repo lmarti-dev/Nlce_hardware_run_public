@@ -13,22 +13,19 @@ from qcomp_nlce.utils import (
     apply_parameters,
     get_tfim_ratio,
     custom_idx_groups_of_n,
+    trace_dist,
 )
 import os
 from pathlib import Path
 
+from data_manager import ExperimentDataManager
+
 HOME = Path(__file__).parent
-
-
-def trace_dist(u1: np.ndarray, u2: np.ndarray) -> float:
-    diff = u1 - u2
-    out = np.sqrt(diff.T.conj() @ diff)
-    return 0.5 * np.real(np.trace(out))
 
 
 def measure_1qp_elements(
     circuit: QuantumCircuit,
-    provider: str = "IBM",
+    backend_name: str = "IBM",
     n_shots: int = 1e3,
     run_on_hardware: bool = False,
 ) -> np.ndarray:
@@ -55,13 +52,12 @@ def measure_1qp_elements(
         custom_idx=custom_idx,
         which=which,
     )
-    sv_fidelity = trace_dist(true_comp_vals, sv_comp_vals)
-    print(f"Statevector {sv_fidelity:.5e}")
+    sv_trace_dist = trace_dist(true_comp_vals, sv_comp_vals)
+    print(f"Statevector {sv_trace_dist:.5e}")
 
     print(np.round(true_comp_vals, 3))
     print(np.round(sv_comp_vals, 3))
 
-    backend_name = "AQT" if provider == "LRZ" else "IBM"
     fake_backend = get_appropriate_fake_backend(circuit.num_qubits, which=backend_name)
     fake_comp_vals = mme_func(
         circuit,
@@ -73,9 +69,10 @@ def measure_1qp_elements(
         which=which,
     )
     print(np.round(fake_comp_vals, 3))
-    fake_fidelity = trace_dist(true_comp_vals, fake_comp_vals)
-    print(f"Fake Backend ({fake_backend.name}) {fake_fidelity:.5e}")
+    fake_trace_dist = trace_dist(true_comp_vals, fake_comp_vals)
+    print(f"Fake Backend ({fake_backend.name}) {fake_trace_dist:.5e}")
 
+    real_comp_vals = None
     if run_on_hardware:
         real_backend = get_backend(circuit.num_qubits, backend_name)
         real_comp_vals = mme_func(
@@ -87,8 +84,29 @@ def measure_1qp_elements(
             custom_idx=None,
             which=which,
         )
-        real_fidelity = trace_dist(true_comp_vals, real_comp_vals)
-        print(f"RealBackend ({real_backend.name}) {real_fidelity:.5e}")
+        real_trace_dist = trace_dist(true_comp_vals, real_comp_vals)
+        print(f"RealBackend ({real_backend.name}) {real_trace_dist:.5e}")
+
+        var_dict = {
+            "fake_backend": {
+                "name": fake_backend.name,
+                "trace_dist": fake_trace_dist,
+                "values": fake_comp_vals,
+            },
+            "statevector": {
+                "trace_dist": sv_trace_dist,
+                "values": sv_comp_vals,
+            },
+            "system": {"n_qubits": circuit.num_qubits, "values": true_comp_vals},
+        }
+    if run_on_hardware:
+        var_dict["real_backend"] = {
+            "name": real_backend.name,
+            "trace_dist": real_trace_dist,
+            "values": real_backend,
+        }
+
+    return var_dict
 
 
 def measure_sweep_1qp(n_shots=10000):
@@ -113,7 +131,8 @@ def measure_sweep_1qp(n_shots=10000):
     print(f"{hamiltonian.num_qubits} qubits, J/h {get_tfim_ratio(hamiltonian)}")
     print(f"sweep depth: {circuit.depth()}")
 
-    measure_1qp_elements(circuit, n_shots=n_shots)
+    d = measure_1qp_elements(circuit, n_shots=n_shots)
+    return d
 
 
 def measure_vqe_1qp(n_shots: int = 10000):
@@ -133,9 +152,13 @@ if __name__ == "__main__":
     # ERROR: [Experiment 0] bad allocation [Experiment 1] bad allocation , ERROR: bad allocation' qiskit
     # full Hadamard test for 4 qubits at 1e7 shots is GARBAGE on IBM fakebackend
     # real backends should be worse
-    n_shots = int(1e6)
+
+    dry_run = True
+    edm = ExperimentDataManager("1qp_sector_vqe_sweep_hw", dry_run=dry_run)
+
+    n_shots = int(1e5)
     print(f"n_shots: {n_shots}")
     print("=== Sweep ===")
-    measure_sweep_1qp(n_shots)
+    # measure_sweep_1qp(n_shots)
     print("=== VQE ===")
     measure_vqe_1qp(n_shots)

@@ -72,12 +72,14 @@ def get_ibm_backend(n_qubits: int) -> IBMBackend:
 
 
 def get_backend(
-    n_qubits: int, which: Literal["IBM", "AQT"]
+    n_qubits: int, which: Literal["IBM", "AQT", "IQM"]
 ) -> Union[IBMBackend, MQPBackend]:
     if which == "IBM":
         return get_ibm_backend(n_qubits)
     elif which == "AQT":
         return get_aqt_backend(n_qubits)
+    elif which == "IQM":
+        raise NotImplementedError("I'll get to it")
     else:
         raise ValueError(f"Requested invalid backend: {which}")
 
