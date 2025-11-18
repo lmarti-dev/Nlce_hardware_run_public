@@ -138,12 +138,14 @@ def circuits_to_payload(
     parameters: np.ndarray,
     observables: Union[list[SparsePauliOp], SparsePauliOp],
     which: str = "v2",
+    verbose: bool = False,
 ) -> list[tuple[QuantumCircuit, dict]]:
     if isinstance(circuit, QuantumCircuit):
         circuit = [circuit]
     pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
     isa_circuit = pm.run(circuit)
-    show_circ_depth(isa_circuit)
+    if verbose:
+        show_circ_depth(isa_circuit)
     if which == "v1":
         payload = [[], [], []]
         # assume that for each circuit you want to measure each parameters
@@ -235,7 +237,10 @@ def backend_estimate(
 
         job = estimator.run(**kwargs)
     else:
-        estimator = EstimatorV2(backend, options={"resilience_level": 2})
+        options = {}
+        if not isinstance(backend, FakeBackendV2):
+            options.update({"resilience_level": 2})
+        estimator = EstimatorV2(backend, options=options)
         payload = circuits_to_payload(backend, circuit, parameters, observables)
         job = estimator.run(
             payload,

@@ -6,6 +6,8 @@ from scipy.optimize import minimize
 from itertools import combinations
 from collections.abc import Callable
 from qcomp_nlce.utils.circuit import apply_parameters
+from qcomp_nlce.utils.hamiltonian import from_bitstring
+from typing import Literal
 
 
 def sv_estimate_observables(
@@ -115,7 +117,16 @@ def statevector_sample_unique(
     return res
 
 
-def hamming_weight_states(n_qubits: int, hamming_weight: int) -> list[str]:
+def sort_bitstrings(bitstrings: list[str], right_to_left: bool = True) -> list[str]:
+    def key(s: str) -> int:
+        return from_bitstring(s, len(s), right_to_left)
+
+    return sorted(bitstrings, key=key)
+
+
+def hamming_weight_states(
+    n_qubits: int, hamming_weight: int, sort: Literal["none", "rtl", "ltr"] = "rtl"
+) -> list[str]:
     comps = combinations(range(n_qubits), hamming_weight)
     states = []
     for comp in comps:
@@ -123,6 +134,8 @@ def hamming_weight_states(n_qubits: int, hamming_weight: int) -> list[str]:
         for c in comp:
             state[c] = "1"
         states.append("".join(state))
+    if sort != "none":
+        return sort_bitstrings(states, sort == "rtl")
     return states
 
 

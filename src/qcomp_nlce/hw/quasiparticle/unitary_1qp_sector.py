@@ -28,6 +28,7 @@ def measure_1qp_elements(
     backend_name: str = "IBM",
     n_shots: int = 1e3,
     run_on_hardware: bool = False,
+    group_size: int = None,
 ) -> np.ndarray:
 
     mme_func = measure_matrix_elements
@@ -42,7 +43,9 @@ def measure_1qp_elements(
     # from the circuit-to-matrix qiskit function
     true_comp_vals = true_comp_vals[::-1, ::-1]
 
-    custom_idx = custom_idx_groups_of_n(len(circuit), 2)
+    if group_size is None:
+        group_size = len(circuit)
+    custom_idx = custom_idx_groups_of_n(len(circuit), group_size)
     sv_comp_vals = mme_func(
         circuit,
         comp_states,
@@ -81,7 +84,7 @@ def measure_1qp_elements(
             circuit.parameters,
             real_backend,
             n_shots,
-            custom_idx=None,
+            custom_idx=custom_idx,
             which=which,
         )
         real_trace_dist = trace_dist(true_comp_vals, real_comp_vals)

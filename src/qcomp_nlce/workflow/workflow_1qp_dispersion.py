@@ -3,7 +3,9 @@ from qcomp_nlce.hw.gs.subspace_sampling_hw import (
     measure_ground_state_energy_subspace_sampling,
 )
 
-from qcomp_nlce.hw.quasiparticle.unitary_1qp_expectation import measure_1qp_expectations
+from Nlce_hardware_run.src.qcomp_nlce.hw.quasiparticle.hamiltonian_1qp_expectation import (
+    measure_1qp_expectations,
+)
 
 from qcomp_nlce.utils import (
     load_optimized_vqe,
