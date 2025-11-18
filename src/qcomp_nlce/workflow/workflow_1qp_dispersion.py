@@ -21,16 +21,73 @@ from qcomp_nlce.utils.effective_hamiltonian import H_effective
 from pathlib import Path
 from qiskit.quantum_info import SparsePauliOp
 from qiskit import QuantumCircuit
-from typing import Literal
+from typing import Literal, get_args
+from data_manager import ExperimentDataManager
+
+BACKEND_TYPES = Literal["statevector", "fake_backend", "real_backend"]
+
+
+def dispersion_all_backends(dict_l: dict, dict_s: dict):
+    disp = {}
+    for which in get_args(BACKEND_TYPES):
+        H_eff_Nb = dict_l["heff"][which]
+        H_eff_Ns = dict_s["heff"][which]
+
+        disp[which] = dispersion_1d_thermodynamic(k, N, H_eff_Nb, H_eff_Ns)
+    return disp
 
 
 def vqe_dispersion(
+    gs_dirname_l: Path,
+    elem_dirname_l: Path,
+    gs_dirname_s: Path,
+    elem_dirname_s: Path,
+    run_on_hardware: bool,
+    backend_name: str,
+    n_shots: int,
+):
+    dict_l = vqe_heff(
+        gs_dirname_l,
+        elem_dirname_l,
+        run_on_hardware,
+        backend_name,
+        n_shots,
+    )
+    dict_s = vqe_heff(
+        gs_dirname_s,
+        elem_dirname_s,
+        run_on_hardware,
+        backend_name,
+        n_shots,
+    )
+
+    return dict_l, dict_s, dispersion_all_backends(dict_l, dict_s)
+
+
+def sweep_dispersion(
+    n_qubits_max: int,
+    J: float,
+    mult: float,
+    run_on_hardware: bool,
+    backend_name: str,
+    n_shots: int,
+):
+    dict_l = sweep_heff(n_qubits_max, J, mult, run_on_hardware, backend_name, n_shots)
+    dict_s = sweep_heff(
+        n_qubits_max - 1, J, mult, run_on_hardware, backend_name, n_shots
+    )
+
+    return dispersion_all_backends(dict_l, dict_s)
+
+
+def vqe_heff(
     gs_dirname: Path,
     elem_dirname: Path,
     run_on_hardware: bool,
     backend_name: str,
     n_shots: int,
-):
+) -> dict:
+
     hamiltonian, elem_circuit, elem_weights, ground_energy = load_optimized_vqe(
         elem_dirname
     )
@@ -39,7 +96,7 @@ def vqe_dispersion(
     gs_circuit = apply_parameters(gs_circuit, gs_weights[-1])
     assert hamiltonian == hamiltonian
 
-    get_dispersion(
+    return get_heff_values(
         gs_circuit,
         elem_circuit,
         hamiltonian,
@@ -50,7 +107,7 @@ def vqe_dispersion(
     )
 
 
-def sweep_dispersion(
+def sweep_heff(
     n_qubits: int,
     J: float,
     mult: float,
@@ -73,7 +130,7 @@ def sweep_dispersion(
         n_steps=int(mult * n_steps),
     )
     ground_energy = get_ground_energy(hamiltonian)
-    get_dispersion(
+    return get_heff_values(
         circuit,
         circuit,
         hamiltonian,
@@ -84,11 +141,11 @@ def sweep_dispersion(
     )
 
 
-def dispersion_backend_type(
+def heff_backend_type(
     eld: dict,
     gsd: dict,
     exd: dict,
-    which: Literal["statevector", "fake_backend", "real_backend"],
+    which: BACKEND_TYPES,
 ):
     overlap = eld[which]["values"]
     one_qp_expectation = exd[which]["values"]
@@ -96,11 +153,10 @@ def dispersion_backend_type(
 
     heff = H_effective(gs_expectation, one_qp_expectation, overlap)
 
-    disp = dispersion_1d_thermodynamic()
-    return disp
+    return heff
 
 
-def get_dispersion(
+def get_heff_values(
     gs_circuit: QuantumCircuit,
     elem_circuit: QuantumCircuit,
     hamiltonian: SparsePauliOp,
@@ -121,7 +177,42 @@ def get_dispersion(
         elem_circuit, backend_name, n_shots, run_on_hardware, n_shots
     )
 
+    heff = {}
+    for which in get_args(BACKEND_TYPES):
+        heff[which] = heff_backend_type(
+            elements_dict, ground_state_dict, expectations_dict, which
+        )
+
+    return {
+        "eld": elements_dict,
+        "gsd": ground_state_dict,
+        "exd": expectations_dict,
+        "heff": heff,
+    }
+
 
 if __name__ == "__main__":
 
-    ...
+    n_qubits_max = 9
+    J = 1
+    mult = 1
+    run_on_hardware = False
+    backend_name = "IBM"
+    n_shots = int(1e5)
+    gs_dirname_l = ""
+    elem_dirname_l = ""
+    gs_dirname_s = ""
+    elem_dirname_s = ""
+
+    edm = ExperimentDataManager("workflow")
+
+    sweep_dispersion(n_qubits_max, J, mult, run_on_hardware, backend_name, n_shots)
+    vqe_dispersion(
+        gs_dirname_l,
+        elem_dirname_l,
+        gs_dirname_s,
+        elem_dirname_s,
+        run_on_hardware,
+        backend_name,
+        n_shots,
+    )

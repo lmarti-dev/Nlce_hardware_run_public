@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def cluster_dispersion(N, H_effective, k):
+def cluster_dispersion(N, H_effective, k) -> float:
     mat_el = []
     for i in range(N):
         for j in range(N):
@@ -10,7 +10,7 @@ def cluster_dispersion(N, H_effective, k):
             # Append the result to the "big" array
             mat_el.append(func)
 
-    return sum(mat_el)
+    return np.sum(mat_el)
 
 
 def dispersion_1d_thermodynamic(k, N, H_eff_Nb, H_eff_Ns):
