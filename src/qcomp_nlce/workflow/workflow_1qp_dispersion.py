@@ -193,7 +193,7 @@ def get_heff_values(
 
 if __name__ == "__main__":
 
-    n_qubits_max = 9
+    n_qubits_max = 10
     J = 1
     mult = 1
     run_on_hardware = False

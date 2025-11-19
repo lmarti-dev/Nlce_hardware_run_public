@@ -1,4 +1,5 @@
 import numpy as np
+from qiskit.quantum_info import SparsePauliOp
 
 
 # def Expectation(Hamiltonian, states):
@@ -53,3 +54,15 @@ def H_effective(
     H_effective = B.conj().T @ one_qp_expectation @ B - np.eye(N) * gs_expectation
 
     return H_effective
+
+
+def exact_effective_hamiltonian(hamiltonian: SparsePauliOp):
+    eig_vals, eig_states = np.linalg.eigh(hamiltonian.to_matrix(False))
+    gs = eig_states[:, 0]
+
+    n_qubits = hamiltonian.num_qubits
+    overlap = np.eye(n_qubits)
+    gs_expectation = eig_vals[0]
+    one_qp_expectation = np.diag(eig_vals[1 : n_qubits + 1])
+
+    heff = H_effective(gs_expectation, one_qp_expectation, overlap)
