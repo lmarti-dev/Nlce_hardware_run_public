@@ -17,19 +17,18 @@ import numpy as np
 #     return H_effective
 
 
-# def H_effective_pcat(hamiltonian, ind_1, gs_unitary, one_qp_unitary):
+# def H_effective_pcat(hamiltonian, ind_1, gs_unitary, one_qp_unitary,overlap,  gs_expectation, one_qp_expectation):
 
-#     gs_estimate = Expectation(hamiltonian, gs_unitary)
-#     H_HVA = Expectation(hamiltonian, one_qp_unitary)
-#     one_qp_states = one_qp_unitary[ind_1, :]
+#     N = one_qp_expectation.shape[0]
+#     one_qp_states = overlap
 #     Help_matrix = (gs_unitary/gs_unitary[0,0] * one_qp_states[0:0, :]) 
 
 #     A = one_qp_states - Help_matrix 
 #     A = A[ind_1, :]
 #     S_B = A
-#     B = S_B.conj().T * (S_B * S_B.conj().T)^(-1/2)
+#     B = S_B.conj().conj().T @ (S_B @ S_B.conj().T)^(-1/2)
 
-#     H_effective = B.conj().T * H_HVA * B - (np.eye(len(ind_1)), len(ind_1), len(ind_1)) * gs_estimate
+#     H_effective = B.conj().T * one_qp_expectation * B - np.eye(N) @ gs_expectation
 
 #     return H_effective
 
@@ -46,6 +45,6 @@ def H_effective(gs_expectation, one_qp_expectation, overlap):
    B = overlap.conj().T @ np.linalg.inv(np.sqrtm(overlap_product))
 
    # Apply PCAT transformation (Eq. 47)
-   H_effective = B.conj().T @ one_qp_expectation @ B - np.eye(N) * gs_expectation
+   H_effective = B.conj().T @ one_qp_expectation @ B - np.eye(N) @ gs_expectation
 
    return H_effective
