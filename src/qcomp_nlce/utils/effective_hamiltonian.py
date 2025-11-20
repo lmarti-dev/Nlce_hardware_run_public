@@ -66,3 +66,4 @@ def exact_effective_hamiltonian(hamiltonian: SparsePauliOp):
     one_qp_expectation = np.diag(eig_vals[1 : n_qubits + 1])
 
     heff = H_effective(gs_expectation, one_qp_expectation, overlap)
+    return heff
