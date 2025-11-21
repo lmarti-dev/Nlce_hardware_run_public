@@ -20,6 +20,10 @@ from qcomp_nlce.utils.circuit import (
     circuit_to_matrix,
 )
 
+from qcomp_nlce.utils.hardware import isa_circ_depth
+
+from typing import Union
+
 BACKEND_ALIAS = str | FakeBackendV2 | IBMBackend
 
 
@@ -203,6 +207,13 @@ def iterative_hadamard_test_off_diag(
             parameters=None,
             n_shots=n_shots,
         )
+
+        if backend == "statevector":
+            isa_circs = [p[j].circuit for p in jobs._args for j in range(len(p))]
+        else:
+            isa_circs = [p.circuit for p in jobs.inputs["pubs"]]
+
+        isa_circ_depth(isa_circs, True)
 
         # gs = Re(g_l g*_l-1) + 1j * Im(g_l g*_l-1)
         gs = np.array([x.data.evs[1] + 1j * x.data.evs[2] for x in jobs.result()])
@@ -568,7 +579,7 @@ def measure_matrix_element(
     which="iterative",
     custom_idx: list[list[int]] = None,
     handcraft: bool = True,
-) -> complex:
+) -> Union[complex, tuple[complex, complex]]:
 
     # This computes <x|U|y>
 
@@ -684,7 +695,7 @@ def measure_matrix_elements(
                     custom_idx=custom_idx,
                     handcraft=handcraft,
                 )
-                # print(f"{ind_x} - {ind_y}: {out[ind_x,ind_y]:.4f}", end="\r")
+                print(f"{ind_x} - {ind_y}: {out[ind_x,ind_y]:.4f}")
     elif which == "off-diag":
         diag = []
         for ind_x, x in enumerate(comp_states):
@@ -706,7 +717,7 @@ def measure_matrix_elements(
                 else:
                     out[ind_x, ind_y] = jUk
                     out[ind_y, ind_x] = kUj
-                # print(f"{ind_x} - {ind_y}: {jUk:.3f}, {kUj:.3f}", end="\r")
+                print(f"{ind_x} - {ind_y}: {jUk:.3f}, {kUj:.3f}")
         # somehow indices are all messy
         out = out[::-1, ::-1] + np.diag(diag)
     return out

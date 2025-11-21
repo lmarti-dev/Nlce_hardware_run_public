@@ -114,22 +114,30 @@ def get_appropriate_fake_backend(
         raise ValueError(f"Expected a provider got: {which}")
 
 
-def show_circ_depth(isa_circ: list | QuantumCircuit):
+def isa_circ_depth(isa_circ: list | QuantumCircuit, verbose: bool = False):
     if isinstance(isa_circ, list):
         if len(isa_circ) == 1:
-            print(f"Circuit depth is {isa_circ[0].depth()}")
+            depths = [isa_circ[0].depth()]
+            if verbose:
+                print(f"Circuit depth is {isa_circ[0].depth()}")
         else:
             depths = [c.depth() for c in isa_circ]
             mean_depth = np.mean(depths)
             max_depth = np.max(depths)
-            print(
-                f"Mean circuit depth ({len(isa_circ)}): {mean_depth}, max: {max_depth}"
-            )
+            if verbose:
+                print(
+                    f"Mean circuit depth ({len(isa_circ)}): {mean_depth}, max: {max_depth}"
+                )
 
     elif isinstance(isa_circ, QuantumCircuit):
-        print(f"Circuit depth is {isa_circ.depth()}")
+        if verbose:
+            print(f"Circuit depth is {isa_circ.depth()}")
     else:
-        print(f"circ is neither QuantumCircuit nor list, but: {type(isa_circ)}")
+        raise ValueError(
+            f"circ is neither QuantumCircuit nor list, but: {type(isa_circ)}"
+        )
+
+    return depths
 
 
 def circuits_to_payload(
@@ -138,14 +146,11 @@ def circuits_to_payload(
     parameters: np.ndarray,
     observables: Union[list[SparsePauliOp], SparsePauliOp],
     which: str = "v2",
-    verbose: bool = False,
 ) -> list[tuple[QuantumCircuit, dict]]:
     if isinstance(circuit, QuantumCircuit):
         circuit = [circuit]
     pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
     isa_circuit = pm.run(circuit)
-    if verbose:
-        show_circ_depth(isa_circuit)
     if which == "v1":
         payload = [[], [], []]
         # assume that for each circuit you want to measure each parameters
@@ -238,6 +243,7 @@ def backend_estimate(
         job = estimator.run(**kwargs)
     else:
         options = {}
+        # avoid the warning when using a fakebackend
         if not isinstance(backend, FakeBackendV2):
             options.update({"resilience_level": 2})
         estimator = EstimatorV2(backend, options=options)

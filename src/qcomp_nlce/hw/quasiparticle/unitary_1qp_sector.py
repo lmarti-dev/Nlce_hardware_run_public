@@ -32,7 +32,7 @@ def measure_1qp_elements(
 ) -> np.ndarray:
 
     mme_func = measure_matrix_elements
-    which = "off-diag"
+    which = "full"
 
     n_qubits = circuit.num_qubits
     print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
@@ -113,7 +113,7 @@ def measure_1qp_elements(
 
 
 def measure_sweep_1qp(n_shots=10000):
-    n_qubits = 4
+    n_qubits = 5
     ham_j, ham_h = TFIM(n_qubits, 1, 1, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
     min_gap = get_min_gap(hamiltonian)
@@ -134,7 +134,7 @@ def measure_sweep_1qp(n_shots=10000):
     print(f"{hamiltonian.num_qubits} qubits, J/h {get_tfim_ratio(hamiltonian)}")
     print(f"sweep depth: {circuit.depth()}")
 
-    d = measure_1qp_elements(circuit, n_shots=n_shots)
+    d = measure_1qp_elements(circuit, n_shots=n_shots, group_size=1)
     return d
 
 
@@ -147,7 +147,7 @@ def measure_vqe_1qp(n_shots: int = 10000):
         print(f"{hamiltonian.num_qubits} qubits, J/h {get_tfim_ratio(hamiltonian)}")
         circuit_with_params = apply_parameters(circuit, weights[-1])
 
-        measure_1qp_elements(circuit_with_params, n_shots=n_shots)
+        measure_1qp_elements(circuit_with_params, n_shots=n_shots, group_size=2)
 
 
 if __name__ == "__main__":
@@ -159,9 +159,9 @@ if __name__ == "__main__":
     dry_run = True
     edm = ExperimentDataManager("1qp_sector_vqe_sweep_hw", dry_run=dry_run)
 
-    n_shots = int(1e5)
+    n_shots = int(1e2)
     print(f"n_shots: {n_shots}")
     print("=== Sweep ===")
-    # measure_sweep_1qp(n_shots)
+    measure_sweep_1qp(n_shots)
     print("=== VQE ===")
     measure_vqe_1qp(n_shots)
