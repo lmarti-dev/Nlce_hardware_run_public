@@ -1,14 +1,14 @@
 import numpy as np
 
 
-def cluster_dispersion(N, H_effective, k) -> float:
+def cluster_dispersion(N: int, H_effective: np.ndarray, k: float) -> float:
     mat_el = []
     for i in range(N):
         for j in range(N):
 
             # Calculate the phase factor exp(1im*k*(i-j)) and multiply with the matrix element
             # Here k is the momentum, and i, j are the site indices
-            func = H_effective[i, j] @ np.exp(1j @ k @ (i - j))
+            func = H_effective[i, j] * np.exp(1j * k * (i - j))
             # Append the result to the "big" array
             mat_el.append(func)
 
@@ -22,6 +22,7 @@ def cluster_dispersion(N, H_effective, k) -> float:
 # H_effective_Nb : H_effective for bigger cluster of two (N spins)
 # H_effective_Ns : H_effective for smaller cluster of two (N-1 spins)
 
+
 def dispersion_1d_thermodynamic(k, N, H_eff_Nb, H_eff_Ns):
 
     # Compute the difference between the sums of the "big" and "small" arrays
@@ -31,3 +32,7 @@ def dispersion_1d_thermodynamic(k, N, H_eff_Nb, H_eff_Ns):
 
     # Return the final computed value
     return func_w
+
+
+def exact_dispersion_1qp_1d(j: float, k: np.ndarray):
+    return 2 * np.sqrt(1 + j**2 - 2 * j * np.cos(k))
