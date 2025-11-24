@@ -1,6 +1,8 @@
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
+from scipy.linalg import sqrtm
 
+from qcomp_nlce.utils import hamming_weight_states, from_bitstring
 
 # def Expectation(Hamiltonian, states):
 #     return states.conj().T @ Hamiltonian @ states
@@ -47,7 +49,7 @@ def H_effective(
 
     # Compute V¹ = X̃†(X̃X̃†)^(-1/2) (Eq. 45)
     overlap_product = overlap @ overlap.conj().T
-    B = overlap.conj().T @ np.linalg.inv(np.sqrtm(overlap_product))
+    B = overlap.conj().T @ np.linalg.inv(sqrtm(overlap_product))
 
     # Apply PCAT transformation (Eq. 47)
     H_effective = B.conj().T @ one_qp_expectation @ B - np.eye(N) * gs_expectation
@@ -57,12 +59,19 @@ def H_effective(
 
 def exact_effective_hamiltonian(hamiltonian: SparsePauliOp):
     eig_vals, eig_states = np.linalg.eigh(hamiltonian.to_matrix(False))
-    gs = eig_states[:, 0]
 
     n_qubits = hamiltonian.num_qubits
-    overlap = np.eye(n_qubits)
+    comp_states = hamming_weight_states(n_qubits, 1)
+    sl = [
+        from_bitstring(state, n_qubits=n_qubits, right_to_left=True)
+        for state in comp_states
+    ]
+    el = list(range(1, n_qubits + 1))
+    overlap = eig_states[np.ix_(sl, el)]
     gs_expectation = eig_vals[0]
     one_qp_expectation = np.diag(eig_vals[1 : n_qubits + 1])
 
     heff = H_effective(gs_expectation, one_qp_expectation, overlap)
+    return heff
+
     return heff

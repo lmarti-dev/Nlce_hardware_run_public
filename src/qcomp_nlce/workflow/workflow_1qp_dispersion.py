@@ -16,7 +16,10 @@ from qcomp_nlce.utils import (
     get_ground_energy,
 )
 from qcomp_nlce.utils.dispersion import dispersion_1d_thermodynamic
-from qcomp_nlce.utils.effective_hamiltonian import H_effective
+from qcomp_nlce.utils.effective_hamiltonian import (
+    H_effective,
+    exact_effective_hamiltonian,
+)
 
 from pathlib import Path
 from qiskit.quantum_info import SparsePauliOp
@@ -189,6 +192,12 @@ def get_heff_values(
         "exd": expectations_dict,
         "heff": heff,
     }
+
+
+def ed_dispersion(hamiltonian_l: SparsePauliOp, hamiltonian_s: SparsePauliOp):
+    heff_l = exact_effective_hamiltonian(hamiltonian_l)
+    heff_s = exact_effective_hamiltonian(hamiltonian_s)
+    return dispersion_1d_thermodynamic(k, N, heff_l, heff_s)
 
 
 if __name__ == "__main__":

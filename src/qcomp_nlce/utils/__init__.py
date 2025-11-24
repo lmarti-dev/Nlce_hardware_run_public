@@ -9,3 +9,5 @@ from .nlce import *
 from .overlap import *
 from .measure import *
 from .circuit import *
+from .effective_hamiltonian import *
+from .dispersion import *

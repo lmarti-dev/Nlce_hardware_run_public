@@ -25,7 +25,7 @@ def cluster_dispersion(N, H_effective, k) -> float:
 def dispersion_1d_thermodynamic(k, N, H_eff_Nb, H_eff_Ns):
 
     # Compute the difference between the sums of the "big" and "small" arrays
-    func_w = (
+    func_w = np.array(
         cluster_dispersion(N, H_eff_Nb, k) - cluster_dispersion(N - 1, H_eff_Ns, k)
     ).real
 
