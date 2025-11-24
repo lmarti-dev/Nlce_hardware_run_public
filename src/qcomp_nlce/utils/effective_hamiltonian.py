@@ -1,4 +1,5 @@
 import numpy as np
+from qiskit.quantum_info import SparsePauliOp
 
 
 # def Expectation(Hamiltonian, states):
@@ -23,7 +24,7 @@ import numpy as np
 #     one_qp_states = overlap
 #     Help_matrix = (gs_unitary/gs_unitary[0,0] * one_qp_states[0:0, :]) 
 
-#     A = one_qp_states - Help_matrix 
+#     A = one_qp_states - Help_matrix
 #     A = A[ind_1, :]
 #     S_B = A
 #     B = S_B.conj().conj().T @ (S_B @ S_B.conj().T)^(-1/2)
@@ -33,18 +34,35 @@ import numpy as np
 #     return H_effective
 
 
+def H_effective(
+    gs_expectation: float, one_qp_expectation: np.ndarray, overlap: np.ndarray
+) -> np.ndarray:
+
+    # one qp expectation: <psi|U* H U |psi>
+    # overlap: <psi|U|psi>
+    #  gs expectation is ground state energy I assume?
+
+    # Get dimension from one_qp_expectation matrix
+    N = one_qp_expectation.shape[0]
+
+    # Compute V¹ = X̃†(X̃X̃†)^(-1/2) (Eq. 45)
+    overlap_product = overlap @ overlap.conj().T
+    B = overlap.conj().T @ np.linalg.inv(np.sqrtm(overlap_product))
+
+    # Apply PCAT transformation (Eq. 47)
+    H_effective = B.conj().T @ one_qp_expectation @ B - np.eye(N) * gs_expectation
+
+    return H_effective
 
 
-def H_effective(gs_expectation, one_qp_expectation, overlap):
-    
-   # Get dimension from one_qp_expectation matrix
-   N = one_qp_expectation.shape[0]
+def exact_effective_hamiltonian(hamiltonian: SparsePauliOp):
+    eig_vals, eig_states = np.linalg.eigh(hamiltonian.to_matrix(False))
+    gs = eig_states[:, 0]
 
-   # Compute V¹ = X̃†(X̃X̃†)^(-1/2) (Eq. 45)
-   overlap_product = overlap @ overlap.conj().T
-   B = overlap.conj().T @ np.linalg.inv(np.sqrtm(overlap_product))
+    n_qubits = hamiltonian.num_qubits
+    overlap = np.eye(n_qubits)
+    gs_expectation = eig_vals[0]
+    one_qp_expectation = np.diag(eig_vals[1 : n_qubits + 1])
 
-   # Apply PCAT transformation (Eq. 47)
-   H_effective = B.conj().T @ one_qp_expectation @ B - np.eye(N) @ gs_expectation
-
-   return H_effective
+    heff = H_effective(gs_expectation, one_qp_expectation, overlap)
+    return heff

@@ -9,9 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-RESULTS_ROOT = (
-    Path(__file__).resolve().parents[1] / "res_sim" / "early_comp" / "vqe"
-)
+RESULTS_ROOT = Path(__file__).resolve().parents[1] / "res_sim" / "early_comp" / "vqe"
 DEFAULT_OUTPUT = RESULTS_ROOT / "ground_state_energy_vs_J.png"
 DEFAULT_TABLE = RESULTS_ROOT / "ground_state_energy_vs_J.csv"
 

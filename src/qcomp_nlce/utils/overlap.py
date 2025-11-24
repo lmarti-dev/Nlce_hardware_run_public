@@ -17,6 +17,7 @@ from qcomp_nlce.utils.circuit import (
     circuit_instruction_to_circuit,
     prep_circ_superpos,
     from_bitstring,
+    circuit_to_matrix,
 )
 
 BACKEND_ALIAS = str | FakeBackendV2 | IBMBackend
@@ -709,3 +710,89 @@ def measure_matrix_elements(
         # somehow indices are all messy
         out = out[::-1, ::-1] + np.diag(diag)
     return out
+
+
+def trace_dist(u1: np.ndarray, u2: np.ndarray) -> float:
+    diff = u1 - u2
+    out = np.sqrt(diff.T.conj() @ diff)
+    return 0.5 * np.real(np.trace(out))
+
+
+def measure_hamiltonian_element(
+    hamiltonian: SparsePauliOp,
+    circuit: QuantumCircuit,
+    x: str,
+    y: str,
+    parameters: np.ndarray,
+    backend: BACKEND_ALIAS,
+    n_shots: int,
+):
+    if x == y:
+        circ_out = QuantumCircuit(circuit.num_qubits)
+        x_inds = index_bits(x, circuit.num_qubits, right_to_left=True)
+        for x_ind in x_inds:
+            circ_out.x(x_ind)
+        circ_out.compose(circuit, inplace=True)
+        job = estimate_circuit(circ_out, [hamiltonian], parameters, backend, n_shots)
+
+        res = job.result()
+
+        return res[0].data.evs
+
+    else:
+        d = ["+", "-", "+i", "-i"]
+        circs = []
+        for k in d:
+            circ_p = prep_circ_superpos(x, y, k)
+            circ_p.compose(circuit, inplace=True)
+            circs.append(circ_p)
+
+        job = estimate_circuit(circs, [hamiltonian], parameters, backend, n_shots)
+
+        res = job.result()
+
+        return (res[0].data.evs - res[1].data.evs) / 2 + 1j * (
+            res[2].data.evs - res[3].data.evs
+        ) / 2
+
+
+def measure_hamiltonian_elements(
+    hamiltonian: SparsePauliOp,
+    circuit: QuantumCircuit,
+    states: list[str],
+    parameters: np.ndarray,
+    backend: BACKEND_ALIAS,
+    n_shots: int,
+):
+
+    out = np.zeros((len(states), len(states)), dtype=complex)
+    diag_items = np.zeros((len(states), len(states)), dtype=complex)
+    for ind_x, x in enumerate(states):
+        for ind_y, y in enumerate(states[ind_x:]):
+            ind_y = ind_x + ind_y
+            val = measure_hamiltonian_element(
+                hamiltonian, circuit, x, y, parameters, backend, n_shots
+            )
+            if ind_x == ind_y:
+                diag_items[ind_x, ind_y] = val
+            else:
+                out[ind_x, ind_y] = val.conj()
+                out[ind_y, ind_x] = val
+    out += diag_items[::-1, ::-1]
+    return out
+
+
+def circ_ham_expectation_values(
+    hamiltonian: SparsePauliOp, circuit: QuantumCircuit, states: list[str]
+) -> np.ndarray:
+    # this returns the hamiltonian matrix for the 1 to n+1 first eigenstates
+    # this is for the 1qp thing mostly
+    out = np.zeros((len(states), len(states)), dtype=complex)
+    inds = []
+    for state in states:
+        inds.append(from_bitstring(state, hamiltonian.num_qubits, right_to_left=True))
+
+    umat = circuit_to_matrix(circuit)
+    mat = umat.T.conj() @ hamiltonian.to_matrix() @ umat
+
+    return mat[np.ix_(inds, inds)]
