@@ -29,7 +29,7 @@ def circuit_energy(hamiltonian: SparsePauliOp, circuit: QuantumCircuit):
     return sv.expectation_value(hamiltonian)
 
 
-def get_heff_sweep(n_qubits: int, mult: int, J: float = 0.8):
+def get_heff_sweep(n_qubits: int, mult: int, J: float):
     ham_j, ham_h = TFIM(n_qubits, 1, J, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
     min_gap = get_min_gap(hamiltonian)
@@ -68,7 +68,7 @@ def sweep_dispersion(n_qubits_max: int, mult: int, J: float, k: float = 0.0):
     return dispersion_1d_thermodynamic(k, n_qubits_max, heff_b, heff_s)
 
 
-def exact_dispersion(n_qubits_max: int, J: float = 0.8, k: float = 0.0):
+def exact_dispersion(n_qubits_max: int, J: float, k: float = 0.0):
     ham_l = TFIM(n_qubits_max, 1, J, periodic=False)
     ham_s = TFIM(n_qubits_max - 1, 1, J, periodic=False)
     heff_exact_l = exact_effective_hamiltonian(ham_l)
@@ -77,7 +77,7 @@ def exact_dispersion(n_qubits_max: int, J: float = 0.8, k: float = 0.0):
     return dispersion_1d_thermodynamic(k, n_qubits_max, heff_exact_l, heff_exact_s)
 
 
-def get_overlaps(mult: int, n_qubits: int, J: float = 0.8):
+def get_overlaps(mult: int, n_qubits: int, J: float):
     ham_j, ham_h = TFIM(n_qubits, 1, J, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
     min_gap = get_min_gap(hamiltonian)
@@ -192,7 +192,7 @@ def probe_dispersion_diff_scan_j(n_qubits_max):
     }
 
 
-def identity_heff(n_qubits: int, J: float = 0.8):
+def identity_heff(n_qubits: int, J: float):
     hamiltonian = TFIM(n_qubits, 1, J, periodic=False)
     comp_states = hamming_weight_states(n_qubits, 1)
     one_qp_expectations = circ_ham_expectation_values(
