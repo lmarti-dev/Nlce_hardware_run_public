@@ -96,7 +96,7 @@ def calculate_Ed(hamiltonian):
     
     return float(np.real(eigvals[0]))
 
-def H_effective_ed(hamiltonian, N, calculate_Ed):
+def H_effective_ed(hamiltonian, N):
     
 
     # make Hamiltonian a full dense matrix
