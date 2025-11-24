@@ -1,6 +1,8 @@
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
-from scipy.linalg import sqrtm
+from scipy.linalg import sqrtm, inv
+from scipy.sparse.linalg import eigsh
+
 
 from qcomp_nlce.utils import hamming_weight_states, from_bitstring
 
@@ -73,3 +75,64 @@ def exact_effective_hamiltonian(hamiltonian: SparsePauliOp):
 
     heff = H_effective(gs_expectation, one_qp_expectation, overlap)
     return heff
+
+
+
+
+def calculate_Ed(hamiltonian):
+    """
+    Compute the smallest real eigenvalue of the Hamiltonian,
+    equivalent to Julia eigs(... which=:SR).
+    """
+    # Convert to sparse matrix if needed
+    try:
+        # SciPy expects sparse matrix or ndarray
+        H = hamiltonian
+    except:
+        H = np.array(hamiltonian, dtype=complex)
+
+    # compute smallest eigenvalue (Hermitian)
+    eigvals, _ = eigsh(H, k=1, which='SA')  # SA = smallest algebraic
+    
+    return float(np.real(eigvals[0]))
+
+def H_effective_ed(hamiltonian, N):
+    
+
+    # make Hamiltonian a full dense matrix
+    whole_ham = np.array(hamiltonian, dtype=complex)
+    indices = np.array([2**j for j in range(N)], dtype=int)
+
+    # diagonalize to get eigenvalues and eigenvectors
+    # Julia's eigen(whole_ham) for Hermitian -> use eigh
+    eigenvalues, eigenvectors = np.linalg.eigh(whole_ham)
+
+    # calculate overlap of eigenvectors with unperturbed space of one spin flip
+    # eigenvectors[indices, :] -> rows corresponding to those basis states
+    # abs()^2 and sum over rows -> overlap for each eigenvector
+    overlaps = np.sum(np.abs(eigenvectors[indices, :])**2, axis=0)
+
+    # find the indices of the N largest values of this overlap
+    # equivalent to partialsortperm(..., rev=true)
+    # here we fully sort; if you want exactly the partial behavior, use argpartition.
+    indices_eigenvectors = np.argsort(overlaps)[-N:][::-1]
+
+    # project proper eigenstates into one spin-flip state basis
+    # A is N×N
+    A = eigenvectors[np.ix_(indices, indices_eigenvectors)]
+
+    # choose corresponding eigenvalues and put them on a diagonal matrix
+    B = np.diag(eigenvalues[indices_eigenvectors])
+
+    # calculate transformation
+    aa_dag = A @ A.conj().T
+    # matrix square root (not elementwise)
+    sq_rt = sqrtm(aa_dag)
+    T = A.conj().T @ inv(sq_rt)
+
+    # transform Hamiltonian into effective Hamiltonian; subtract GS energy
+    E0 = calculate_Ed(hamiltonian)
+    H_eff = T.conj().T @ B @ T - E0 * np.eye(N, dtype=complex)
+
+    return H_eff
+  
