@@ -77,9 +77,7 @@ def exact_effective_hamiltonian(hamiltonian: SparsePauliOp):
     return heff
 
 
-
-
-def calculate_Ed(hamiltonian):
+def calculate_Ed(hamiltonian: np.ndarray):
     """
     Compute the smallest real eigenvalue of the Hamiltonian,
     equivalent to Julia eigs(... which=:SR).
@@ -92,15 +90,17 @@ def calculate_Ed(hamiltonian):
         H = np.array(hamiltonian, dtype=complex)
 
     # compute smallest eigenvalue (Hermitian)
-    eigvals, _ = eigsh(H, k=1, which='SA')  # SA = smallest algebraic
-    
+    eigvals, _ = eigsh(H, k=1, which="SA")  # SA = smallest algebraic
+
     return float(np.real(eigvals[0]))
 
-def H_effective_ed(hamiltonian, N):
-    
 
+def H_effective_ed(hamiltonian: SparsePauliOp):
+
+    N = hamiltonian.num_qubits
     # make Hamiltonian a full dense matrix
-    whole_ham = np.array(hamiltonian, dtype=complex)
+
+    whole_ham = np.array(hamiltonian.to_matrix(False), dtype=complex)
     indices = np.array([2**j for j in range(N)], dtype=int)
 
     # diagonalize to get eigenvalues and eigenvectors
@@ -110,7 +110,7 @@ def H_effective_ed(hamiltonian, N):
     # calculate overlap of eigenvectors with unperturbed space of one spin flip
     # eigenvectors[indices, :] -> rows corresponding to those basis states
     # abs()^2 and sum over rows -> overlap for each eigenvector
-    overlaps = np.sum(np.abs(eigenvectors[indices, :])**2, axis=0)
+    overlaps = np.sum(np.abs(eigenvectors[indices, :]) ** 2, axis=0)
 
     # find the indices of the N largest values of this overlap
     # equivalent to partialsortperm(..., rev=true)
@@ -131,8 +131,7 @@ def H_effective_ed(hamiltonian, N):
     T = A.conj().T @ inv(sq_rt)
 
     # transform Hamiltonian into effective Hamiltonian; subtract GS energy
-    E0 = calculate_Ed(hamiltonian)
+    E0 = calculate_Ed(whole_ham)
     H_eff = T.conj().T @ B @ T - E0 * np.eye(N, dtype=complex)
 
     return H_eff
-  

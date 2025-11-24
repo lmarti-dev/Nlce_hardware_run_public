@@ -12,6 +12,7 @@ from qcomp_nlce.utils import (
     dispersion_1d_thermodynamic,
     from_bitstring,
     exact_dispersion_1qp_1d,
+    H_effective_ed,
 )
 
 
@@ -36,14 +37,17 @@ def get_heff_sweep(n_qubits: int, mult: int, J: float):
     # the most important thing is to have enough steps!!!
     # the total time can be low-ish
 
-    total_time = 1 / (min_gap**2)
-    n_steps = n_qubits * hamiltonian.num_qubits
+    total_time = mult / (min_gap**2)
+    n_steps = int(mult * n_qubits * hamiltonian.num_qubits)
+
+    # ensure at least two steps
+    n_steps = max(n_steps, 2)
 
     circuit = get_tfim_sweep_circuit(
         ham_h,
         ham_j + ham_h,
-        total_time=(mult * total_time),
-        n_steps=int(mult * n_steps),
+        total_time=total_time,
+        n_steps=n_steps,
     )
 
     print(
@@ -111,7 +115,7 @@ def probe_dispersion_diff_scan_k(n_qubits_max):
 
     J = 1.0
 
-    mults = np.linspace(1, 8, 3)
+    mults = np.linspace(0.1, 1, 5)
     ks = np.linspace(0, np.pi, 21)
 
     sweep_disps = np.zeros((len(ks), len(mults) + 1))
@@ -119,8 +123,8 @@ def probe_dispersion_diff_scan_k(n_qubits_max):
     ham_l = TFIM(n_qubits_max, 1, J, periodic=False)
     ham_s = TFIM(n_qubits_max - 1, 1, J, periodic=False)
 
-    heff_exact_l = exact_effective_hamiltonian(ham_l)
-    heff_exact_s = exact_effective_hamiltonian(ham_s)
+    heff_exact_l = H_effective_ed(ham_l)
+    heff_exact_s = H_effective_ed(ham_s)
 
     def exact_dd(k: np.ndarray):
         return [
@@ -250,9 +254,5 @@ def probe_ks():
 
 if __name__ == "__main__":
 
-    n_qubits = 4
-
-    fig, jobj = probe_dispersion_diff_scan_k(n_qubits)
-    plt.show()
-
+    probe_ks()
     # probe_ks()
