@@ -24,7 +24,7 @@ from qcomp_nlce.utils import hamming_weight_states, from_bitstring
 
 #     N = one_qp_expectation.shape[0]
 #     one_qp_states = overlap
-#     Help_matrix = (gs_unitary/gs_unitary[0,0] * one_qp_states[0:0, :]) 
+#     Help_matrix = (gs_unitary/gs_unitary[0,0] * one_qp_states[0:0, :])
 
 #     A = one_qp_states - Help_matrix
 #     A = A[ind_1, :]

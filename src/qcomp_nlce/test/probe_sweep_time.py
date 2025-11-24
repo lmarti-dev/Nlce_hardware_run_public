@@ -11,7 +11,12 @@ from qcomp_nlce.utils import (
     trace_dist,
     dispersion_1d_thermodynamic,
     from_bitstring,
+    exact_dispersion_1qp_1d,
 )
+
+
+from fauplotstyle import style
+from data_manager import ExperimentDataManager
 
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import Statevector, SparsePauliOp
@@ -41,7 +46,9 @@ def get_heff_sweep(n_qubits: int, mult: int, J: float = 0.8):
         n_steps=int(mult * n_steps),
     )
 
-    print(f"{hamiltonian.num_qubits} qubits, J/h {get_tfim_ratio(hamiltonian)}")
+    print(
+        f"{hamiltonian.num_qubits} qubits, J/h {get_tfim_ratio(hamiltonian)} mult: {mult}"
+    )
     print(f"sweep depth: {circuit.depth()}")
 
     comp_states = hamming_weight_states(n_qubits, 1)
@@ -54,20 +61,20 @@ def get_heff_sweep(n_qubits: int, mult: int, J: float = 0.8):
     return heff_sweep
 
 
-def sweep_dispersion(n_qubits_max: int, mult: int, J: float):
+def sweep_dispersion(n_qubits_max: int, mult: int, J: float, k: float = 0.0):
     heff_b = get_heff_sweep(n_qubits_max, mult, J)
     heff_s = get_heff_sweep(n_qubits_max - 1, mult, J)
 
-    return dispersion_1d_thermodynamic(0, n_qubits_max, heff_b, heff_s)
+    return dispersion_1d_thermodynamic(k, n_qubits_max, heff_b, heff_s)
 
 
-def exact_dispersion(n_qubits_max: int, J: float = 0.8):
+def exact_dispersion(n_qubits_max: int, J: float = 0.8, k: float = 0.0):
     ham_l = TFIM(n_qubits_max, 1, J, periodic=False)
     ham_s = TFIM(n_qubits_max - 1, 1, J, periodic=False)
     heff_exact_l = exact_effective_hamiltonian(ham_l)
     heff_exact_s = exact_effective_hamiltonian(ham_s)
 
-    return dispersion_1d_thermodynamic(0, n_qubits_max, heff_exact_l, heff_exact_s)
+    return dispersion_1d_thermodynamic(k, n_qubits_max, heff_exact_l, heff_exact_s)
 
 
 def get_overlaps(mult: int, n_qubits: int, J: float = 0.8):
@@ -100,14 +107,66 @@ def get_overlaps(mult: int, n_qubits: int, J: float = 0.8):
     return overlap_sweep, overlap_exact
 
 
-def probe_dispersion_diff():
+def probe_dispersion_diff_scan_k(n_qubits_max):
 
-    mults = np.linspace(1, 10, 3)
+    J = 1.0
+
+    mults = np.linspace(1, 8, 3)
+    ks = np.linspace(0, np.pi, 21)
+
+    sweep_disps = np.zeros((len(ks), len(mults) + 1))
+
+    ham_l = TFIM(n_qubits_max, 1, J, periodic=False)
+    ham_s = TFIM(n_qubits_max - 1, 1, J, periodic=False)
+
+    heff_exact_l = exact_effective_hamiltonian(ham_l)
+    heff_exact_s = exact_effective_hamiltonian(ham_s)
+
+    def exact_dd(k: np.ndarray):
+        return [
+            dispersion_1d_thermodynamic(_k, n_qubits_max, heff_exact_l, heff_exact_s)
+            for _k in k
+        ]
+
+    exact_disps = exact_dd(ks)
+    sweep_disps[:, 0] = [identity_dispersion(n_qubits_max, J, k) for k in ks]
+
+    for ind_m, mult in enumerate(mults):
+
+        heff_b = get_heff_sweep(n_qubits_max, mult, J)
+        heff_s = get_heff_sweep(n_qubits_max - 1, mult, J)
+
+        def sweep_dd(k: np.ndarray):
+            return [
+                dispersion_1d_thermodynamic(_k, n_qubits_max, heff_b, heff_s)
+                for _k in k
+            ]
+
+        sweep_disps[:, ind_m + 1] = sweep_dd(ks)
+
+    fig, ax = plt.subplots()
+    for m in range(sweep_disps.shape[1]):
+        ax.plot(ks, sweep_disps[:, m], label=f"m={[0,*mults][m]}")
+    ax.plot(ks, exact_disps, label="ED")
+    ax.plot(ks, exact_dispersion_1qp_1d(J, ks), label="Exact")
+    ax.legend()
+
+    return fig, {
+        "mults": mults,
+        "j": J,
+        "ks": ks,
+        "sweep_disps": sweep_disps,
+        "exact_disps": exact_disps,
+        "n_qubits": n_qubits_max,
+    }
+
+
+def probe_dispersion_diff_scan_j(n_qubits_max):
+
+    mults = np.linspace(1, 8, 3)
     js = np.linspace(0.6, 1.0, 10)
     sweep_disps = np.zeros((len(mults) + 1, len(js)))
     exact_disps = np.zeros((len(js),))
-
-    n_qubits_max = 10
 
     for ind_j, j in enumerate(js):
         ii = identity_dispersion(n_qubits_max, j)
@@ -123,7 +182,14 @@ def probe_dispersion_diff():
         ax.plot(js, sweep_disps[m, :], label=f"m={[0,*mults][m]}")
     ax.plot(js, exact_disps, label="ED")
     ax.legend()
-    plt.show()
+
+    return fig, {
+        "mults": mults,
+        "js": js,
+        "sweep_disps": sweep_disps,
+        "exact_disps": exact_disps,
+        "n_qubits": n_qubits_max,
+    }
 
 
 def identity_heff(n_qubits: int, J: float = 0.8):
@@ -137,10 +203,10 @@ def identity_heff(n_qubits: int, J: float = 0.8):
     return heff
 
 
-def identity_dispersion(n_qubits_max: int, J: float):
+def identity_dispersion(n_qubits_max: int, J: float, k: float = 0.0):
     heff_l = identity_heff(n_qubits_max, J)
     heff_s = identity_heff(n_qubits_max - 1, J)
-    return dispersion_1d_thermodynamic(0, n_qubits_max, heff_l, heff_s)
+    return dispersion_1d_thermodynamic(k, n_qubits_max, heff_l, heff_s)
 
 
 def probe_overlaps():
@@ -152,5 +218,41 @@ def probe_overlaps():
         print(trace_dist(overlap_exact, overlap_sweep))
 
 
+def probe_js():
+
+    style()
+    edm = ExperimentDataManager(
+        "probe_sweep_time_vs_ed", start_new_run=False, project="nlce", dry_run=False
+    )
+
+    for n_qubits in (3, 4, 5, 6, 7, 8):
+        edm.new_run()
+        fig, jobj = probe_dispersion_diff_scan_j(n_qubits)
+        edm.save_dict(jobj)
+        edm.save_figure(fig)
+
+
+def probe_ks():
+    style()
+    edm = ExperimentDataManager(
+        "probe_sweep_time_vs_ed_kxaxis",
+        start_new_run=False,
+        project="nlce",
+        dry_run=False,
+    )
+
+    for n_qubits in (3, 4, 5, 6, 7, 8):
+        edm.new_run()
+        fig, jobj = probe_dispersion_diff_scan_k(n_qubits)
+        edm.save_dict(jobj)
+        edm.save_figure(fig)
+
+
 if __name__ == "__main__":
-    probe_dispersion_diff()
+
+    n_qubits = 4
+
+    fig, jobj = probe_dispersion_diff_scan_k(n_qubits)
+    plt.show()
+
+    # probe_ks()
