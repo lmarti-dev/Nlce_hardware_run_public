@@ -74,4 +74,4 @@ def exact_effective_hamiltonian(hamiltonian: SparsePauliOp):
     heff = H_effective(gs_expectation, one_qp_expectation, overlap)
     return heff
 
-    return heff
+  
