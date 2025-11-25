@@ -32,6 +32,7 @@ def optimize_circuit(
     circuit: QuantumCircuit,
     hamiltonian: SparsePauliOp,
     cost: Callable[[np.ndarray], float] = None,
+    initial_params=None,
 ) -> list:
     energy_values = []
     xks = []
@@ -63,9 +64,12 @@ def optimize_circuit(
             out[ind] = 0.5 * (res.data.evs[1] - res.data.evs[0])
         return out
 
+    if initial_params is None:
+        initial_params = np.zeros((len(circuit.parameters)))
+
     minimize(
         fun=cost,
-        x0=np.zeros((len(circuit.parameters))),
+        x0=initial_params,
         method="COBYLA",
         callback=callback,
         bounds=circuit.num_parameters * [(0, np.pi)],

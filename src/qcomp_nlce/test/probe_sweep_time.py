@@ -1,5 +1,4 @@
 from qcomp_nlce.utils import (
-    exact_effective_hamiltonian,
     TFIM,
     get_min_gap,
     get_tfim_ratio,
@@ -30,7 +29,7 @@ def circuit_energy(hamiltonian: SparsePauliOp, circuit: QuantumCircuit):
     return sv.expectation_value(hamiltonian)
 
 
-def get_heff_sweep(n_qubits: int, mult: int, J: float):
+def get_heff_sweep(n_qubits: int, mult: int, J: float) -> np.ndarray:
     ham_j, ham_h = TFIM(n_qubits, 1, J, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
     min_gap = get_min_gap(hamiltonian)
@@ -38,7 +37,7 @@ def get_heff_sweep(n_qubits: int, mult: int, J: float):
     # the total time can be low-ish
 
     total_time = mult / (min_gap**2)
-    n_steps = int(mult * n_qubits * hamiltonian.num_qubits)
+    n_steps = int(mult * n_qubits**2)
 
     # ensure at least two steps
     n_steps = max(n_steps, 2)
@@ -69,16 +68,16 @@ def sweep_dispersion(n_qubits_max: int, mult: int, J: float, k: float = 0.0):
     heff_b = get_heff_sweep(n_qubits_max, mult, J)
     heff_s = get_heff_sweep(n_qubits_max - 1, mult, J)
 
-    return dispersion_1d_thermodynamic(k, n_qubits_max, heff_b, heff_s)
+    return dispersion_1d_thermodynamic(k, heff_b, heff_s)
 
 
 def exact_dispersion(n_qubits_max: int, J: float, k: float = 0.0):
     ham_l = TFIM(n_qubits_max, 1, J, periodic=False)
     ham_s = TFIM(n_qubits_max - 1, 1, J, periodic=False)
-    heff_exact_l = exact_effective_hamiltonian(ham_l)
-    heff_exact_s = exact_effective_hamiltonian(ham_s)
+    heff_exact_l = H_effective_ed(ham_l)
+    heff_exact_s = H_effective_ed(ham_s)
 
-    return dispersion_1d_thermodynamic(k, n_qubits_max, heff_exact_l, heff_exact_s)
+    return dispersion_1d_thermodynamic(k, heff_exact_l, heff_exact_s)
 
 
 def get_overlaps(mult: int, n_qubits: int, J: float):
@@ -127,10 +126,7 @@ def probe_dispersion_diff_scan_k(n_qubits_max):
     heff_exact_s = H_effective_ed(ham_s)
 
     def exact_dd(k: np.ndarray):
-        return [
-            dispersion_1d_thermodynamic(_k, n_qubits_max, heff_exact_l, heff_exact_s)
-            for _k in k
-        ]
+        return [dispersion_1d_thermodynamic(_k, heff_exact_l, heff_exact_s) for _k in k]
 
     exact_disps = exact_dd(ks)
     sweep_disps[:, 0] = [identity_dispersion(n_qubits_max, J, k) for k in ks]
@@ -141,10 +137,7 @@ def probe_dispersion_diff_scan_k(n_qubits_max):
         heff_s = get_heff_sweep(n_qubits_max - 1, mult, J)
 
         def sweep_dd(k: np.ndarray):
-            return [
-                dispersion_1d_thermodynamic(_k, n_qubits_max, heff_b, heff_s)
-                for _k in k
-            ]
+            return [dispersion_1d_thermodynamic(_k, heff_b, heff_s) for _k in k]
 
         sweep_disps[:, ind_m + 1] = sweep_dd(ks)
 
@@ -210,7 +203,7 @@ def identity_heff(n_qubits: int, J: float):
 def identity_dispersion(n_qubits_max: int, J: float, k: float = 0.0):
     heff_l = identity_heff(n_qubits_max, J)
     heff_s = identity_heff(n_qubits_max - 1, J)
-    return dispersion_1d_thermodynamic(k, n_qubits_max, heff_l, heff_s)
+    return dispersion_1d_thermodynamic(k, heff_l, heff_s)
 
 
 def probe_overlaps():
@@ -254,5 +247,6 @@ def probe_ks():
 
 if __name__ == "__main__":
 
-    probe_ks()
+    fig, jobj = probe_dispersion_diff_scan_k(6)
+    plt.show()
     # probe_ks()

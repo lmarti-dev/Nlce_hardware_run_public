@@ -59,24 +59,6 @@ def H_effective(
     return H_effective
 
 
-def exact_effective_hamiltonian(hamiltonian: SparsePauliOp):
-    eig_vals, eig_states = np.linalg.eigh(hamiltonian.to_matrix(False))
-
-    n_qubits = hamiltonian.num_qubits
-    comp_states = hamming_weight_states(n_qubits, 1)
-    sl = [
-        from_bitstring(state, n_qubits=n_qubits, right_to_left=True)
-        for state in comp_states
-    ]
-    el = list(range(1, n_qubits + 1))
-    overlap = eig_states[np.ix_(sl, el)]
-    gs_expectation = eig_vals[0]
-    one_qp_expectation = np.diag(eig_vals[1 : n_qubits + 1])
-
-    heff = H_effective(gs_expectation, one_qp_expectation, overlap)
-    return heff
-
-
 def calculate_Ed(hamiltonian: np.ndarray):
     """
     Compute the smallest real eigenvalue of the Hamiltonian,

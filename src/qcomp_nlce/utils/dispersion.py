@@ -23,9 +23,12 @@ def cluster_dispersion(N: int, H_effective: np.ndarray, k: float) -> float:
 # H_effective_Ns : H_effective for smaller cluster of two (N-1 spins)
 
 
-def dispersion_1d_thermodynamic(k, N, H_eff_Nb, H_eff_Ns):
+def dispersion_1d_thermodynamic(
+    k: float, H_eff_Nb: np.ndarray, H_eff_Ns: np.ndarray
+) -> float:
 
     # Compute the difference between the sums of the "big" and "small" arrays
+    N = H_eff_Nb.shape[0]
     func_w = np.array(
         cluster_dispersion(N, H_eff_Nb, k) - cluster_dispersion(N - 1, H_eff_Ns, k)
     ).real

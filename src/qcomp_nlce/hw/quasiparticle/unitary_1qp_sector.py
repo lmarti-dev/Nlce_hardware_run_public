@@ -43,9 +43,12 @@ def measure_1qp_elements(
     # from the circuit-to-matrix qiskit function
     true_comp_vals = true_comp_vals[::-1, ::-1]
 
-    if group_size is None:
-        group_size = len(circuit)
-    custom_idx = custom_idx_groups_of_n(len(circuit), group_size)
+    if which != "full":
+        if group_size is None:
+            group_size = len(circuit)
+        custom_idx = custom_idx_groups_of_n(len(circuit), group_size)
+    else:
+        custom_idx = None
     sv_comp_vals = mme_func(
         circuit,
         comp_states,
@@ -90,18 +93,18 @@ def measure_1qp_elements(
         real_trace_dist = trace_dist(true_comp_vals, real_comp_vals)
         print(f"RealBackend ({real_backend.name}) {real_trace_dist:.5e}")
 
-        var_dict = {
-            "fake_backend": {
-                "name": fake_backend.name,
-                "trace_dist": fake_trace_dist,
-                "values": fake_comp_vals,
-            },
-            "statevector": {
-                "trace_dist": sv_trace_dist,
-                "values": sv_comp_vals,
-            },
-            "system": {"n_qubits": circuit.num_qubits, "values": true_comp_vals},
-        }
+    var_dict = {
+        "fake_backend": {
+            "name": fake_backend.name,
+            "trace_dist": fake_trace_dist,
+            "values": fake_comp_vals,
+        },
+        "statevector": {
+            "trace_dist": sv_trace_dist,
+            "values": sv_comp_vals,
+        },
+        "system": {"n_qubits": circuit.num_qubits, "values": true_comp_vals},
+    }
     if run_on_hardware:
         var_dict["real_backend"] = {
             "name": real_backend.name,

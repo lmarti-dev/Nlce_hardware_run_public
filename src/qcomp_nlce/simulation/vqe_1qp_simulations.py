@@ -59,7 +59,7 @@ def get_cost_sweep(
     return cost
 
 
-def train_and_save(n_qubits: int, J: float, dirname: str):
+def train_and_save(n_qubits: int, J: float, dirname: str, dry_run: bool):
     print(f"{n_qubits} qubits, J/h={J}")
     periodic = False
     h = 1
@@ -77,7 +77,12 @@ def train_and_save(n_qubits: int, J: float, dirname: str):
 
     print(f"The circuit depth is {circuit.depth()}")
     print(f"The number of parameters is {len(circuit.parameters)}")
-    cost_values, params = optimize_circuit(circuit, hamiltonian, cost=cost)
+    cost_values, params = optimize_circuit(
+        circuit,
+        hamiltonian,
+        cost=cost,
+        initial_params=np.random.rand(len(circuit.parameters)),
+    )
     print(f"final cost is {np.abs(cost_values[-1])}")
 
     save_optimized_vqe(
@@ -93,7 +98,7 @@ def train_and_save(n_qubits: int, J: float, dirname: str):
 if __name__ == "__main__":
 
     dry_run = False
-    dirname = "elem_vqe_08j"
-    for n_qubits in (8, 9):
-        for J in (0.8,):
-            train_and_save(n_qubits, J, dirname)
+    dirname = "elem_vqe_1j"
+    for n_qubits in (4, 5):
+        for J in (1.0,):
+            train_and_save(n_qubits, J, dirname, dry_run)
