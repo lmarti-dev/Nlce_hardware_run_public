@@ -26,6 +26,7 @@ def get_cost_offdiag(
 ) -> Callable[[np.ndarray], float]:
     def cost(xk: np.ndarray) -> float:
         a_mat = estimate_observable_1qp_initial_state(circuit, xk, hamiltonian)
+        a_mat -= np.diag(a_mat)
         b_mat = estimate_observable_1qp_initial_state(circuit, xk, hamiltonian**2)
         return np.abs(np.trace(b_mat) - np.sum(np.abs(a_mat) ** 2))
 
@@ -38,8 +39,8 @@ def get_cost_sweep(
     ham_end: SparsePauliOp,
 ) -> Callable[[np.ndarray], float]:
     min_gap = get_min_gap(ham_end)
-    total_time = 0.7 / (min_gap**2)
-    n_steps = 4 * ham_end.num_qubits
+    total_time = 1 / (min_gap**2)
+    n_steps = 10 * ham_end.num_qubits**2
 
     sweep_circuit = get_tfim_sweep_circuit(
         ham_start,
@@ -48,32 +49,43 @@ def get_cost_sweep(
         n_steps=int(n_steps),
     )
     sweep_mat = circuit_to_matrix(sweep_circuit)
-    identity = np.eye(2**vqe_circ.num_qubits)
 
     def cost(xk: np.ndarray) -> float:
 
         vqe_mat = circuit_to_matrix(apply_parameters(vqe_circ, xk))
 
-        return np.sum(np.abs(sweep_mat.conj().T @ vqe_mat - identity))
+        return np.sqrt(2**n_qubits - np.abs(np.trace(sweep_mat.conj().T @ vqe_mat)))
 
     return cost
 
 
-def train_and_save(n_qubits: int, J: float, dirname: str, dry_run: bool):
+def train_and_save(
+    n_qubits: int,
+    J: float,
+    dirname: str,
+    which_cost: str,
+    dry_run: bool,
+    n_layers: int = None,
+):
     print(f"{n_qubits} qubits, J/h={J}")
     periodic = False
     h = 1
     ham_j, ham_h = TFIM(n_qubits, h, J, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
-    n_layers = int(np.ceil(hamiltonian.num_qubits / 2))
+    if n_layers is None:
+        n_layers = int(np.ceil(hamiltonian.num_qubits / 2))
 
     circuit = get_hva_vqe(hamiltonian, n_layers=n_layers, unique_weights=True)
 
     # circuit = get_custom_vqe(4, n_layers=2)
     ground_energy = get_ground_energy(hamiltonian)
 
-    cost = get_cost_sweep(circuit, ham_j, hamiltonian)
-    cost = get_cost_offdiag(circuit, hamiltonian)
+    if which_cost == "sweep":
+        cost = get_cost_sweep(circuit, ham_j, hamiltonian)
+    elif which_cost == "offdiag":
+        cost = get_cost_offdiag(circuit, hamiltonian)
+    else:
+        raise ValueError(f"Invalid cost: {which_cost}")
 
     print(f"The circuit depth is {circuit.depth()}")
     print(f"The number of parameters is {len(circuit.parameters)}")
@@ -81,12 +93,12 @@ def train_and_save(n_qubits: int, J: float, dirname: str, dry_run: bool):
         circuit,
         hamiltonian,
         cost=cost,
-        initial_params=np.random.rand(len(circuit.parameters)),
+        initial_params=np.zeros((len(circuit.parameters),)),
     )
     print(f"final cost is {np.abs(cost_values[-1])}")
 
     save_optimized_vqe(
-        f"{dirname}/vqe/{n_qubits}q_{n_layers}l",
+        f"{dirname}/vqe/cost_{which_cost}/{n_qubits}q_{n_layers}l",
         hamiltonian,
         circuit,
         params,
@@ -98,7 +110,10 @@ def train_and_save(n_qubits: int, J: float, dirname: str, dry_run: bool):
 if __name__ == "__main__":
 
     dry_run = False
+    which_cost = "sweep"
     dirname = "elem_vqe_1j"
     for n_qubits in (4, 5):
         for J in (1.0,):
-            train_and_save(n_qubits, J, dirname, dry_run)
+            train_and_save(
+                n_qubits, J, dirname, which_cost, dry_run, n_layers=10 * n_qubits
+            )

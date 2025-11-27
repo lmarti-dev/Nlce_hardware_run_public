@@ -204,6 +204,8 @@ def get_heff_values(
     which_hadamard_test: str = "full",
     solve: bool = True,
 ):
+
+    print("-- Computing <j|U|k> --")
     elements_dict = loop_measure_1qp_elements_v2(
         circuit=elem_circuit,
         which_backends=which_backends,
@@ -214,6 +216,7 @@ def get_heff_values(
         which_hadamard_test=which_hadamard_test,
     )
 
+    print("-- Computing ground state energy --")
     ground_state_dict = loop_measure_ground_state_energy_subspace_sampling_v2(
         hamiltonian=hamiltonian,
         circuit=gs_circuit,
@@ -223,6 +226,7 @@ def get_heff_values(
         solve=solve,
     )
 
+    print("-- Computing <j|U* H U|k> --")
     expectations_dict = loop_measure_1qp_expectations_v2(
         hamiltonian=hamiltonian,
         circuit=elem_circuit,
@@ -279,7 +283,7 @@ if __name__ == "__main__":
 
     n_qubits_max = 5
     J = 1
-    mult = 0.5
+    mult = 1
     which_backends = [
         "statevector",
         # "fake_backend",
@@ -288,12 +292,12 @@ if __name__ == "__main__":
     n_shots = int(1e3)
     ks = np.linspace(0, np.pi, 21)
     group_size = 3
-    which_hadamard_test = "off-diag"
+    which_hadamard_test = "full"
 
     gs_dirname_l = Path(res_sim_dir(), "gs_vqe_1j/vqe/5q_3l")
-    elem_dirname_l = Path(res_sim_dir(), "elem_vqe_1j/vqe/5q_3l")
     gs_dirname_s = Path(res_sim_dir(), "gs_vqe_1j/vqe/4q_2l")
-    elem_dirname_s = Path(res_sim_dir(), "elem_vqe_1j/vqe/4q_2l")
+    elem_dirname_l = Path(res_sim_dir(), "elem_vqe_1j/vqe/cost_offdiag/5q_3l")
+    elem_dirname_s = Path(res_sim_dir(), "elem_vqe_1j/vqe/cost_offdiag/4q_2l")
 
     edm = ExperimentDataManager("workflow_tfim_all_backends", dry_run=True)
 
@@ -307,31 +311,11 @@ if __name__ == "__main__":
         },
     }
 
-    print("== Sweep ==")
-    sweep_dict_l, sweep_dict_s, sweep_disp = sweep_dispersion(
-        n_qubits_max,
-        J,
-        mult,
-        which_backends,
-        provider_name,
-        n_shots,
-        ks,
-        group_size,
-        which_hadamard_test,
-    )
-
-    out_dict["results"]["sweep"] = {
-        "dict_l": sweep_dict_l,
-        "dict_s": sweep_dict_s,
-        "disp": sweep_disp,
-    }
-
-    # print("== VQE ==")
-    # vqe_dict_l, vqe_dict_s, vqe_disp = vqe_dispersion(
-    #     gs_dirname_l,
-    #     elem_dirname_l,
-    #     gs_dirname_s,
-    #     elem_dirname_s,
+    # print("== Sweep ==")
+    # sweep_dict_l, sweep_dict_s, sweep_disp = sweep_dispersion(
+    #     n_qubits_max,
+    #     J,
+    #     mult,
     #     which_backends,
     #     provider_name,
     #     n_shots,
@@ -340,11 +324,31 @@ if __name__ == "__main__":
     #     which_hadamard_test,
     # )
 
-    # out_dict["results"]["vqe"] = {
-    #     "dict_l": vqe_dict_l,
-    #     "dict_s": vqe_dict_s,
-    #     "disp": vqe_disp,
+    # out_dict["results"]["sweep"] = {
+    #     "dict_l": sweep_dict_l,
+    #     "dict_s": sweep_dict_s,
+    #     "disp": sweep_disp,
     # }
+
+    print("== VQE ==")
+    vqe_dict_l, vqe_dict_s, vqe_disp = vqe_dispersion(
+        gs_dirname_l,
+        elem_dirname_l,
+        gs_dirname_s,
+        elem_dirname_s,
+        which_backends,
+        provider_name,
+        n_shots,
+        ks,
+        group_size,
+        which_hadamard_test,
+    )
+
+    out_dict["results"]["vqe"] = {
+        "dict_l": vqe_dict_l,
+        "dict_s": vqe_dict_s,
+        "disp": vqe_disp,
+    }
 
     ed_disp = tfim_ed_dispersion(n_qubits_max, J, ks)
     out_dict["results"]["ed"] = {"disp": {"statevector": ed_disp}}

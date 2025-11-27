@@ -5,7 +5,7 @@ from qiskit.quantum_info import SparsePauliOp, Statevector, partial_trace
 from scipy.optimize import minimize
 from itertools import combinations
 from collections.abc import Callable
-from qcomp_nlce.utils.circuit import apply_parameters
+from qcomp_nlce.utils.circuit import apply_parameters, circuit_to_matrix
 from qcomp_nlce.utils.hamiltonian import from_bitstring
 from typing import Literal
 
@@ -67,13 +67,10 @@ def optimize_circuit(
     if initial_params is None:
         initial_params = np.zeros((len(circuit.parameters)))
 
-    minimize(
-        fun=cost,
-        x0=initial_params,
-        method="COBYLA",
-        callback=callback,
-        bounds=circuit.num_parameters * [(0, np.pi)],
-    )
+    kwargs = {"method": "COBYLA", "bounds": circuit.num_parameters * [(0, np.pi)]}
+    # kwargs = {"method": "CG", "jac": jac}
+
+    minimize(fun=cost, x0=initial_params, callback=callback, **kwargs)
     return energy_values, xks
 
 
@@ -143,27 +140,28 @@ def hamming_weight_states(
     return states
 
 
+def single_x(ind: int, n_qubits: int) -> SparsePauliOp:
+    l = ["I" for x in range(n_qubits)]
+    l[ind] = "X"
+    return SparsePauliOp("".join(l))
+
+
 def estimate_observable_1qp_initial_state(
     circuit: QuantumCircuit, parameters: np.ndarray, observable: SparsePauliOp
 ) -> np.ndarray:
     n_qubits = circuit.num_qubits
+    circuit_out = apply_parameters(circuit, parameters)
 
-    out = np.zeros((n_qubits, n_qubits))
+    umat = circuit_to_matrix(circuit_out)
 
-    for ind_y in range(n_qubits):
-        for ind_x in range(n_qubits):
-            # initial state
-            circ_in = QuantumCircuit(circuit.num_qubits)
-            circ_in.x(ind_y)
-            circ_in = circ_in.compose(circuit)
-            # U1.compose(U2) gives U2 U1 |psi>
-            circ_out = QuantumCircuit(circuit.num_qubits)
-            # x is left bra and y right ket
-            circ_out.x(ind_x)
-            circ_out = circ_in.compose(circ_out, range(circuit.num_qubits))
-            sv = Statevector(apply_parameters(circ_out, parameters))
-            out[ind_x, ind_y] = np.real(sv.expectation_value(observable))
-    return out
+    omat = observable.to_matrix(False)
+
+    uHu = umat.T.conj() @ omat @ umat
+
+    comp_states = hamming_weight_states(n_qubits, 1)
+    inds = [from_bitstring(b, n_qubits, True) for b in comp_states]
+
+    return uHu[np.ix_(inds, inds)]
 
 
 # line 147, circuit needs to be replaced with circ_out

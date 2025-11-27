@@ -18,7 +18,7 @@ from qcomp_nlce.utils import (
     get_ground_energy,
 )
 from data_manager import ExperimentDataManager
-from qiskit.primitives.base.sampler_result import SamplerResult
+from qiskit.primitives import StatevectorSampler
 
 from pathlib import Path
 import os
@@ -144,14 +144,20 @@ def measure_ground_state_energy_subspace_sampling_v2(
     circuit_to_sample = add_meas_layer(circuit)
 
     if which_backend == "statevector":
-        comp_energy = sv_estimate_observables(
+        sv_energy = sv_estimate_observables(
             circuit=circuit, observables=[hamiltonian], param_sweep=[]
         ).data.evs[0]
-        print(f"Statevector {relerr(comp_energy):.5e}")
+        print(f"Statevector {relerr(sv_energy):.5e}")
 
         bn = which_backend
-        unique_bitstring = None
-        bitstring_prop = None
+
+        sv = StatevectorSampler()
+
+        job = sv.run([circuit_to_sample], shots=n_shots)
+
+        counts = job.result()[0].join_data().get_counts()
+
+        bn = which_backend
 
     elif which_backend == "fake_backend":
         backend = get_appropriate_fake_backend(circuit.num_qubits, provider_name)
@@ -163,15 +169,6 @@ def measure_ground_state_energy_subspace_sampling_v2(
             n_shots=n_shots,
         )
         counts = get_counts_from_job(fake_job)
-        unique_bitstring = get_unique_bitstrings(counts)
-        bitstring_prop = len(unique_bitstring) / (2**circuit.num_qubits)
-        comp_energy = subspace_diagonalize(
-            unique_bitstrings=unique_bitstring, ham=hamiltonian
-        )
-
-        print(
-            f"FakeBackend ({backend.name}) {relerr(comp_energy):.5e} sub. mat.: {len(unique_bitstring)} × {len(unique_bitstring)}: {bitstring_prop*100:.3f}%"
-        )
 
         bn = backend.name
 
@@ -183,18 +180,18 @@ def measure_ground_state_energy_subspace_sampling_v2(
             parameters=[],
             n_shots=n_shots,
         )
-        counts = get_counts_from_job(real_job)
-        unique_bitstring = get_unique_bitstrings(counts)
-        bitstring_prop = len(unique_bitstring) / (2**circuit.num_qubits)
-        backend_energy = subspace_diagonalize(
-            unique_bitstrings=unique_bitstring, ham=hamiltonian
-        )
-
-        print(
-            f"RealBackend ({backend.name}) {relerr(backend_energy):.5e} sub. mat.: {len(unique_bitstring)} × {len(unique_bitstring)}: {bitstring_prop*100:.3f}%"
-        )
-
         bn = backend.name
+        counts = get_counts_from_job(real_job)
+
+    unique_bitstring = get_unique_bitstrings(counts)
+    bitstring_prop = len(unique_bitstring) / (2**circuit.num_qubits)
+    comp_energy = subspace_diagonalize(
+        unique_bitstrings=unique_bitstring, ham=hamiltonian
+    )
+
+    print(
+        f"{which_backend} ({bn}) {relerr(comp_energy):.5e} sub. mat.: {len(unique_bitstring)} × {len(unique_bitstring)}: {bitstring_prop*100:.3f}%"
+    )
 
     return {
         which_backend: {
