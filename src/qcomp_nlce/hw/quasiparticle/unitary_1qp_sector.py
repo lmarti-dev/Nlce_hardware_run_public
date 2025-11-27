@@ -14,6 +14,7 @@ from qcomp_nlce.utils import (
     get_tfim_ratio,
     custom_idx_groups_of_n,
     trace_dist,
+    compare_with_true,
 )
 import os
 from pathlib import Path
@@ -23,16 +24,128 @@ from data_manager import ExperimentDataManager
 HOME = Path(__file__).parent
 
 
+def loop_measure_1qp_elements_v2(
+    circuit: QuantumCircuit,
+    which_backends: list[str],
+    solve: bool = True,
+    provider_name: str = "IBM",
+    n_shots: int = 1e3,
+    group_size: int = None,
+    which_hadamard_test: str = "full",
+):
+    n_qubits = circuit.num_qubits
+    comp_states = hamming_weight_states(n_qubits, 1)
+    if solve:
+        true_comp_vals = circuit_matrix_elements(circuit, comp_states)
+    else:
+        true_comp_vals = None
+    d = {
+        "system": {"n_qubits": circuit.num_qubits, "values": true_comp_vals},
+    }
+    for which_backend in which_backends:
+        print(f"==== {which_backend} ====")
+        item = measure_1qp_elements_v2(
+            circuit,
+            which_backend,
+            true_comp_vals,
+            provider_name,
+            n_shots,
+            group_size,
+            which_hadamard_test,
+        )
+        d[which_backend] = item[which_backend]
+    return d
+
+
+def measure_1qp_elements_v2(
+    circuit: QuantumCircuit,
+    which_backend: str,
+    true_comp_vals: np.ndarray = None,
+    provider_name: str = "IBM",
+    n_shots: int = 1e3,
+    group_size: int = None,
+    which_hadamard_test: str = "full",
+):
+
+    n_qubits = circuit.num_qubits
+    print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
+    comp_states = hamming_weight_states(n_qubits, 1)
+    true_comp_vals = circuit_matrix_elements(circuit, comp_states)
+
+    # the matrix you get otherwise is indexed backwards wrt to what you get
+    # from the circuit-to-matrix qiskit function
+    true_comp_vals = true_comp_vals[::-1, ::-1]
+
+    if which_hadamard_test != "full":
+        if group_size is None:
+            group_size = len(circuit)
+        custom_idx = custom_idx_groups_of_n(len(circuit), group_size)
+    else:
+        custom_idx = None
+
+    if which_backend == "statevector":
+        bn = "statevector"
+        comp_vals = measure_matrix_elements(
+            circuit,
+            comp_states,
+            circuit.parameters,
+            bn,
+            n_shots,
+            custom_idx=custom_idx,
+            which=which_hadamard_test,
+        )
+
+        td = compare_with_true(true_comp_vals, comp_vals, which_backend)
+
+    elif which_backend == "fake_backend":
+
+        backend = get_appropriate_fake_backend(circuit.num_qubits, which=provider_name)
+        comp_vals = measure_matrix_elements(
+            circuit,
+            comp_states,
+            circuit.parameters,
+            backend,
+            n_shots,
+            custom_idx=custom_idx,
+            which=which_hadamard_test,
+        )
+        print(f"Fake Backend ({backend.name})")
+        td = compare_with_true(true_comp_vals, comp_vals, backend.name)
+        bn = backend.name
+    elif which_backend == "real_backend":
+        backend = get_backend(circuit.num_qubits, provider_name)
+        comp_vals = measure_matrix_elements(
+            circuit,
+            comp_states,
+            circuit.parameters,
+            backend,
+            n_shots,
+            custom_idx=custom_idx,
+            which=which_hadamard_test,
+        )
+        print(f"RealBackend ({backend.name})")
+        td = compare_with_true(true_comp_vals, comp_vals, backend.name)
+        bn = backend.name
+
+    return {
+        which_backend: {
+            "name": bn,
+            "trace_dist": td,
+            "values": comp_vals,
+        }
+    }
+
+
 def measure_1qp_elements(
     circuit: QuantumCircuit,
     backend_name: str = "IBM",
     n_shots: int = 1e3,
     run_on_hardware: bool = False,
     group_size: int = None,
+    which: str = "full",
 ) -> np.ndarray:
 
     mme_func = measure_matrix_elements
-    which = "full"
 
     n_qubits = circuit.num_qubits
     print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")

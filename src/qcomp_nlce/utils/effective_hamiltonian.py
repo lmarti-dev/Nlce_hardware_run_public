@@ -1,10 +1,8 @@
 import numpy as np
+from qcomp_nlce.utils import from_bitstring, hamming_weight_states
 from qiskit.quantum_info import SparsePauliOp
-from scipy.linalg import sqrtm, inv
+from scipy.linalg import inv, sqrtm
 from scipy.sparse.linalg import eigsh
-
-
-from qcomp_nlce.utils import hamming_weight_states, from_bitstring
 
 # def Expectation(Hamiltonian, states):
 #     return states.conj().T @ Hamiltonian @ states

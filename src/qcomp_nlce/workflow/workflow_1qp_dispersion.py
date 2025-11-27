@@ -1,37 +1,37 @@
-from qcomp_nlce.hw.quasiparticle.unitary_1qp_sector import measure_1qp_elements
+from pathlib import Path
+from typing import Literal, get_args
+
+import matplotlib.pyplot as plt
+import numpy as np
 from qcomp_nlce.hw.gs.subspace_sampling_hw import (
     measure_ground_state_energy_subspace_sampling,
 )
-
-from Nlce_hardware_run.src.qcomp_nlce.hw.quasiparticle.hamiltonian_1qp_expectation import (
+from qcomp_nlce.hw.quasiparticle.hamiltonian_1qp_expectation import (
+    loop_measure_1qp_expectations_v2,
     measure_1qp_expectations,
 )
-
+from qcomp_nlce.hw.quasiparticle.unitary_1qp_sector import (
+    loop_measure_1qp_elements_v2,
+    measure_1qp_elements,
+)
 from qcomp_nlce.utils import (
-    load_optimized_vqe,
     TFIM,
-    get_min_gap,
     apply_parameters,
-    get_tfim_sweep_circuit,
     get_ground_energy,
+    get_min_gap,
+    get_tfim_sweep_circuit,
+    load_optimized_vqe,
 )
 from qcomp_nlce.utils.dispersion import (
     dispersion_1d_thermodynamic,
     exact_dispersion_1qp_1d,
 )
 from qcomp_nlce.utils.effective_hamiltonian import H_effective, H_effective_ed
-
 from qcomp_nlce.utils.folders import res_sim_dir
-
-from pathlib import Path
-from qiskit.quantum_info import SparsePauliOp
 from qiskit import QuantumCircuit
-from typing import Literal, get_args
+from qiskit.quantum_info import SparsePauliOp
+
 from data_manager import ExperimentDataManager
-
-import numpy as np
-
-import matplotlib.pyplot as plt
 
 BACKEND_TYPES = Literal["statevector", "fake_backend", "real_backend"]
 
@@ -51,24 +51,17 @@ def vqe_dispersion(
     elem_dirname_l: Path,
     gs_dirname_s: Path,
     elem_dirname_s: Path,
-    run_on_hardware: bool,
+    which_backends: list[str],
     backend_name: str,
     n_shots: int,
     ks: np.ndarray,
+    group_size: int,
 ):
     dict_l = vqe_heff(
-        gs_dirname_l,
-        elem_dirname_l,
-        run_on_hardware,
-        backend_name,
-        n_shots,
+        gs_dirname_l, elem_dirname_l, which_backends, backend_name, n_shots, group_size
     )
     dict_s = vqe_heff(
-        gs_dirname_s,
-        elem_dirname_s,
-        run_on_hardware,
-        backend_name,
-        n_shots,
+        gs_dirname_s, elem_dirname_s, which_backends, backend_name, n_shots, group_size
     )
 
     return dict_l, dict_s, dispersion_all_backends(dict_l, dict_s, ks)
@@ -78,14 +71,17 @@ def sweep_dispersion(
     n_qubits_max: int,
     J: float,
     mult: float,
-    run_on_hardware: bool,
+    which_backends: list[str],
     backend_name: str,
     n_shots: int,
     ks: np.ndarray,
+    group_size: int,
 ):
-    dict_l = sweep_heff(n_qubits_max, J, mult, run_on_hardware, backend_name, n_shots)
+    dict_l = sweep_heff(
+        n_qubits_max, J, mult, which_backends, backend_name, n_shots, group_size
+    )
     dict_s = sweep_heff(
-        n_qubits_max - 1, J, mult, run_on_hardware, backend_name, n_shots
+        n_qubits_max - 1, J, mult, which_backends, backend_name, n_shots, group_size
     )
 
     return dict_l, dict_s, dispersion_all_backends(dict_l, dict_s, ks)
@@ -94,9 +90,10 @@ def sweep_dispersion(
 def vqe_heff(
     gs_dirname: Path,
     elem_dirname: Path,
-    run_on_hardware: bool,
+    which_backends: list[str],
     backend_name: str,
     n_shots: int,
+    group_size: int,
 ) -> dict:
 
     hamiltonian, elem_circuit, elem_weights, ground_energy = load_optimized_vqe(
@@ -112,9 +109,10 @@ def vqe_heff(
         elem_circuit,
         hamiltonian,
         ground_energy,
-        run_on_hardware,
+        which_backends,
         backend_name,
         n_shots,
+        group_size,
     )
 
 
@@ -122,9 +120,10 @@ def sweep_heff(
     n_qubits: int,
     J: float,
     mult: float,
-    run_on_hardware: bool,
+    which_backends: list[str],
     backend_name: str,
     n_shots: int,
+    group_size: int,
 ):
     ham_j, ham_h = TFIM(n_qubits, 1, J, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
@@ -146,10 +145,11 @@ def sweep_heff(
         circuit,
         hamiltonian,
         ground_energy,
-        run_on_hardware,
+        which_backends,
         backend_name,
         n_shots,
-        1,
+        group_size,
+        "off-diag",
     )
 
 
@@ -157,11 +157,11 @@ def heff_backend_type(
     eld: dict,
     gsd: dict,
     exd: dict,
-    which: BACKEND_TYPES,
+    which_backend: BACKEND_TYPES,
 ):
-    overlap = eld[which]["values"]
-    one_qp_expectation = exd[which]["values"]
-    gs_expectation = gsd[which]["energy"]
+    overlap = eld[which_backend]["values"]
+    one_qp_expectation = exd[which_backend]["values"]
+    gs_expectation = gsd[which_backend]["energy"]
 
     heff = H_effective(gs_expectation, one_qp_expectation, overlap)
 
@@ -173,32 +173,42 @@ def get_heff_values(
     elem_circuit: QuantumCircuit,
     hamiltonian: SparsePauliOp,
     ground_energy: float,
-    run_on_hardware: bool,
-    backend_name: str = "IBM",
+    which_backends: list[str],
+    provider_name: str = "IBM",
     n_shots: int = 1000,
     group_size: int = None,
+    which_hadamard_test: str = "full",
+    solve: bool = True,
 ):
-    elements_dict = measure_1qp_elements(
-        elem_circuit, backend_name, n_shots, run_on_hardware, group_size
+    elements_dict = loop_measure_1qp_elements_v2(
+        circuit=elem_circuit,
+        which_backends=which_backends,
+        solve=solve,
+        provider_name=provider_name,
+        n_shots=n_shots,
+        group_size=group_size,
+        which_hadamard_test=which_hadamard_test,
     )
 
     ground_state_dict = measure_ground_state_energy_subspace_sampling(
-        hamiltonian, ground_energy, gs_circuit, n_shots, run_on_hardware, backend_name
+        hamiltonian, ground_energy, gs_circuit, n_shots, run_on_hardware, provider_name
     )
 
-    expectations_dict = measure_1qp_expectations(
-        hamiltonian, elem_circuit, backend_name, n_shots, run_on_hardware
+    expectations_dict = loop_measure_1qp_expectations_v2(
+        hamiltonian=hamiltonian,
+        circuit=elem_circuit,
+        which_backends=which_backends,
+        provider_name=provider_name,
+        n_shots=n_shots,
+        solve=solve,
     )
 
     heff = {}
 
-    for which in get_args(BACKEND_TYPES):
-        if not run_on_hardware and which == "real_backend":
-            pass
-        else:
-            heff[which] = heff_backend_type(
-                elements_dict, ground_state_dict, expectations_dict, which
-            )
+    for which_backend in which_backends:
+        heff[which_backend] = heff_backend_type(
+            elements_dict, ground_state_dict, expectations_dict, which_backend
+        )
 
     return {
         "eld": elements_dict,
@@ -241,10 +251,14 @@ if __name__ == "__main__":
     n_qubits_max = 5
     J = 1
     mult = 0.5
-    run_on_hardware = False
+    which_backends = [
+        "statevector",
+        "fake_backend",
+    ]
     backend_name = "AQT"
     n_shots = int(1e4)
     ks = np.linspace(0, np.pi, 21)
+    group_size = 10
     gs_dirname_l = Path(res_sim_dir(), "gs_vqe_1j/vqe/5q_3l")
     elem_dirname_l = Path(res_sim_dir(), "elem_vqe_1j/vqe/5q_3l")
     gs_dirname_s = Path(res_sim_dir(), "gs_vqe_1j/vqe/4q_2l")
@@ -254,11 +268,16 @@ if __name__ == "__main__":
 
     out_dict = {
         "results": {},
-        "inputs": {"ks": ks, "J": J, "backend_name": backend_name},
+        "inputs": {
+            "ks": ks,
+            "J": J,
+            "backend_name": backend_name,
+            "group_size": group_size,
+        },
     }
 
     sweep_dict_l, sweep_dict_s, sweep_disp = sweep_dispersion(
-        n_qubits_max, J, mult, run_on_hardware, backend_name, n_shots, ks
+        n_qubits_max, J, mult, which_backends, backend_name, n_shots, ks, group_size
     )
 
     out_dict["results"]["sweep"] = {
@@ -272,10 +291,11 @@ if __name__ == "__main__":
     #     elem_dirname_l,
     #     gs_dirname_s,
     #     elem_dirname_s,
-    #     run_on_hardware,
+    #     which_backends,
     #     backend_name,
     #     n_shots,
     #     ks,
+    # group_size
     # )
 
     # out_dict["results"]["vqe"] = {

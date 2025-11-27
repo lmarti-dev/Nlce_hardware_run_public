@@ -1,27 +1,30 @@
-from qiskit import QuantumCircuit
+import os
+from pathlib import Path
+from typing import Literal
+
 import numpy as np
 from qcomp_nlce.utils import (
+    TFIM,
+    apply_parameters,
     circ_ham_expectation_values,
-    measure_hamiltonian_elements,
+    compare_with_true,
     get_appropriate_fake_backend,
     get_backend,
     get_min_gap,
-    TFIM,
-    hamming_weight_states,
-    get_tfim_sweep_circuit,
-    load_optimized_vqe,
-    apply_parameters,
     get_tfim_ratio,
-    custom_idx_groups_of_n,
+    get_tfim_sweep_circuit,
+    hamming_weight_states,
+    load_optimized_vqe,
+    measure_hamiltonian_elements,
     trace_dist,
 )
-from pathlib import Path
+from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
-import os
 
 from data_manager import ExperimentDataManager
 
 HOME = Path(__file__).parent
+BACKEND_TYPES = Literal["statevector", "fake_backend", "real_backend"]
 
 
 def measure_1qp_expectations(
@@ -102,6 +105,97 @@ def measure_1qp_expectations(
         }
 
     return var_dict
+
+
+def loop_measure_1qp_expectations_v2(
+    hamiltonian: SparsePauliOp,
+    circuit: QuantumCircuit,
+    which_backends: list[str],
+    solve: bool = True,
+    provider_name: str = "IBM",
+    n_shots: int = 1e3,
+):
+    n_qubits = circuit.num_qubits
+    comp_states = hamming_weight_states(n_qubits, 1)
+    if solve:
+        true_comp_vals = circ_ham_expectation_values(hamiltonian, circuit, comp_states)
+    else:
+        true_comp_vals = None
+    d = {
+        "system": {"n_qubits": circuit.num_qubits, "values": true_comp_vals},
+    }
+    for which_backend in which_backends:
+        print(f"==== {which_backend} ====")
+        item = measure_1qp_expectations_v2(
+            hamiltonian, circuit, which_backend, true_comp_vals, provider_name, n_shots
+        )
+        d[which_backend] = item[which_backend]
+    return d
+
+
+def measure_1qp_expectations_v2(
+    hamiltonian: SparsePauliOp,
+    circuit: QuantumCircuit,
+    which_backend: BACKEND_TYPES,
+    true_comp_vals: np.ndarray = None,
+    provider_name: str = "IBM",
+    n_shots: int = 1e3,
+) -> np.ndarray:
+
+    n_qubits = circuit.num_qubits
+    print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
+
+    comp_states = hamming_weight_states(n_qubits, 1)
+
+    if which_backend == "statevector":
+
+        comp_vals = measure_hamiltonian_elements(
+            hamiltonian,
+            circuit,
+            comp_states,
+            None,
+            "statevector",
+            n_shots,
+        )
+
+        td = compare_with_true(true_comp_vals, comp_vals, which_backend)
+        bn = "Statevector"
+
+    elif which_backend == "fake_backend":
+
+        backend = get_appropriate_fake_backend(circuit.num_qubits, which=provider_name)
+        comp_vals = measure_hamiltonian_elements(
+            hamiltonian,
+            circuit,
+            comp_states,
+            None,
+            backend,
+            n_shots,
+        )
+        print(f"Fake Backend ({backend.name})")
+        td = compare_with_true(true_comp_vals, comp_vals, backend.name)
+        bn = backend.name
+    elif which_backend == "real_backend":
+        backend = get_backend(circuit.num_qubits, provider_name)
+        comp_vals = measure_hamiltonian_elements(
+            hamiltonian,
+            circuit,
+            comp_states,
+            None,
+            backend,
+            n_shots,
+        )
+        print(f"RealBackend ({backend.name})")
+        td = compare_with_true(true_comp_vals, comp_vals, backend.name)
+        bn = backend.name
+
+    return {
+        which_backend: {
+            "name": bn,
+            "trace_dist": td,
+            "values": comp_vals,
+        }
+    }
 
 
 def measure_sweep_1qp(n_shots=10000):

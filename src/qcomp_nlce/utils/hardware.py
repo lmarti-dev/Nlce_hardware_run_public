@@ -5,13 +5,11 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import EstimatorV2, RuntimeJob, SamplerV2
 
-try:
-    from iqm.qiskit_iqm.fake_backends.fake_garnet import IQMFakeGarnet
-    from iqm.qiskit_iqm.fake_backends.fake_aphrodite import IQMFakeAphrodite
-    from iqm.qiskit_iqm.fake_backends.fake_adonis import IQMFakeAdonis
-except ModuleNotFoundError:
-    pass
-
+from iqm.qiskit_iqm.fake_backends.fake_garnet import IQMFakeGarnet
+from iqm.qiskit_iqm.fake_backends.fake_aphrodite import IQMFakeAphrodite
+from iqm.qiskit_iqm.fake_backends.fake_adonis import IQMFakeAdonis
+from iqm.qiskit_iqm.fake_backends.iqm_fake_backend import IQMFakeBackend
+from iqm.qiskit_iqm import IQMProvider, IQMBackend, IQMJob
 
 import io
 
@@ -23,6 +21,7 @@ from qiskit_ibm_runtime.fake_provider import (
 )
 from typing import Literal, Union
 
+from qiskit import transpile
 from qiskit.primitives.base.sampler_result import SamplerResult
 from qiskit.circuit.parametertable import ParameterView
 from qiskit_aqt_provider import AQTProvider
@@ -62,6 +61,15 @@ def sampler_result_to_json(sampler: SamplerResult):
     return d
 
 
+def get_iqm_backend(n_qubits: int) -> "IQMBackend":
+    if n_qubits < 20:
+        device_name = "garnet"
+    else:
+        device_name = "emerald"
+    url = f"https://cocos.resonance.meetiqm.com/{device_name}"
+    return IQMProvider(url, token=get_token("IQM")).get_backend()
+
+
 def get_ibm_backend(n_qubits: int) -> IBMBackend:
     token = get_token("IBM")
     service = QiskitRuntimeService(channel="ibm_quantum", token=token)
@@ -79,7 +87,8 @@ def get_backend(
     elif which == "AQT":
         return get_aqt_backend(n_qubits)
     elif which == "IQM":
-        raise NotImplementedError("I'll get to it")
+        return get_iqm_backend(n_qubits)
+
     else:
         raise ValueError(f"Requested invalid backend: {which}")
 
@@ -151,6 +160,7 @@ def circuits_to_payload(
         circuit = [circuit]
     pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
     isa_circuit = pm.run(circuit)
+    isa_circ_depth(isa_circuit, True)
     if which == "v1":
         payload = [[], [], []]
         # assume that for each circuit you want to measure each parameters
@@ -211,6 +221,20 @@ def backend_sample(
     elif isinstance(backend, MQPBackend):
         circuit = circuit.assign_parameters(parameters_dict(circuit, parameters))
         job = backend.run(circuit, shots=n_shots, qasm3=True, queued=True)
+
+    elif isinstance(backend, (IQMFakeBackend, IQMBackend)):
+        circuit = circuit.assign_parameters(parameters_dict(circuit, parameters))
+
+        initial_layout = list(range(circuit.num_qubits))
+        isa_circuits = transpile(
+            circuit,
+            backend=backend,
+            initial_layout=initial_layout,
+            optimization_level=1,
+            coupling_map=backend.coupling_map,
+        )
+        sampler = SamplerV2(mode=backend)
+        job = backend.run(isa_circuits, shots=n_shots)
     else:
         raise ValueError(f"Unexpected backend: type {type(backend)}")
     return job
@@ -261,6 +285,8 @@ def get_token(which: Literal["IBM", "LRZ"]):
         token_fpath = Path(home, "../files/ibm_token.dat")
     elif which == "LRZ":
         token_fpath = Path(home, "../files/lrz_token.dat")
+    elif which == "IQM":
+        token_fpath = Path(home, "../files/iqm_token.dat")
     else:
         raise ValueError(f"Unallowed value: {which}")
     token = io.open(

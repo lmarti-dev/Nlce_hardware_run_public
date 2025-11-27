@@ -4,6 +4,7 @@ import numpy as np
 from qiskit_ibm_runtime import IBMBackend
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
 from qiskit.primitives.base.estimator_result import EstimatorResult
+from qiskit_aqt_provider.aqt_resource import OfflineSimulatorResource
 from qcomp_nlce.utils.measure import (
     sample_counts_circuit,
     sample_circuit,
@@ -20,9 +21,11 @@ from qcomp_nlce.utils.circuit import (
     circuit_to_matrix,
 )
 
+
+from qiskit.primitives import EstimatorResult, PrimitiveResult
 from qcomp_nlce.utils.hardware import isa_circ_depth
 
-from typing import Union
+from typing import Union, Tuple
 
 BACKEND_ALIAS = str | FakeBackendV2 | IBMBackend
 
@@ -32,6 +35,16 @@ def custom_idx_groups_of_n(total_len: int, group_size: int = 2):
         list(range(x, min(x + group_size, total_len)))
         for x in range(0, total_len, group_size)
     ]
+
+
+def compare_with_true(true_vals: np.ndarray, vals: np.ndarray, name: str) -> float:
+    td = -1
+    if true_vals is not None:
+        td = trace_dist(true_vals, vals)
+        print(f"{name} -- {td:.5e}")
+    else:
+        print(np.round(vals, 3))
+    return td
 
 
 def iterative_hadamard_test_circuits(
@@ -108,23 +121,38 @@ def iterative_hadamard_test_estimator(
         n_shots=n_shots,
     )
 
-    # gs = Re(g_l g*_l-1) + 1j * Im(g_l g*_l-1)
-    gs = np.array([x.data.evs[1] + 1j * x.data.evs[2] for x in jobs.result()])
+    final_g, _, _ = get_overlaps_from_res(jobs.result())
 
-    # I-Z = 1/2 (g**2_l-1 + g**2_l) - 1/2 (g**2_l-1 - g**2_l) = g**2_l
-    g_abs = np.array(
-        [np.sqrt(np.abs(x.data.evs[0] - x.data.evs[3])) for x in jobs.result()]
-    )
-    # g_abs is the absolute value of g_l = <psi|U_1...U_l-1 U_l|psi>
-    # g_m1 computes g_l-1 so that we get twice the results per shot.
-    # g_m1[0] == 0.707 always if custom_inds = [[0],[1], etc]!
-    # I+Z = 1/2 (g**2_l-1 + g**2_l) +  1/2 (g**2_l-1 - g**2_l) = g**2_l-1
-    g_m1 = np.array(
-        [np.sqrt(np.abs(x.data.evs[0] + x.data.evs[3])) for x in jobs.result()]
-    )
+    return final_g
 
-    better_g_abs = gs[:-1] + g_m1[1:] / 2
-    # print(f"|g_s|**2={g_abs**2}")
+
+def get_overlaps_from_res(
+    res: Union[EstimatorResult],
+) -> Tuple[float, np.ndarray, np.ndarray]:
+    # 1000 lines of code, and 999 of those are dedicated to babysit qiskit incompatibilities
+    if isinstance(res, EstimatorResult):
+        # this is a v1 primitive, so it depends on the order of your for loops :)
+        # I'm going to be a goose farmer i stg
+        n_obs = 4
+        gs = []
+        g_abs = []
+        vals = res.values
+        for ind in range(0, len(vals), n_obs):
+            gs.append(vals[ind + 1] + 1j * vals[ind + 2])
+            g_abs.append(vals[ind] + 1j * vals[ind + 3])
+    elif isinstance(res, PrimitiveResult):
+        # gs = Re(g_l g*_l-1) + 1j * Im(g_l g*_l-1)
+        gs = np.array([x.data.evs[1] + 1j * x.data.evs[2] for x in res])
+
+        # I-Z = 1/2 (g**2_l-1 + g**2_l) - 1/2 (g**2_l-1 - g**2_l) = g**2_l
+        g_abs = np.array([np.sqrt(np.abs(x.data.evs[0] - x.data.evs[3])) for x in res])
+        # g_abs is the absolute value of g_l = <psi|U_1...U_l-1 U_l|psi>
+        # g_m1 computes g_l-1 so that we get twice the results per shot.
+        # I+Z = 1/2 (g**2_l-1 + g**2_l) +  1/2 (g**2_l-1 - g**2_l) = g**2_l-1
+        g_m1 = np.array([np.sqrt(np.abs(x.data.evs[0] + x.data.evs[3])) for x in res])
+
+        better_g_abs = gs[:-1] + g_m1[1:] / 2
+        # print(f"({y,x} {k} min|g_s|**2={np.min(g_abs**2)}", end="\r")
 
     if np.any(np.isclose(g_abs, 0)):
         raise ValueError(f"g_abs has null values, algorithm will fail: g_abs={g_abs}")
@@ -136,7 +164,7 @@ def iterative_hadamard_test_estimator(
     elif len(gs) % 2 == 1:
         final_g = np.prod(gs[0::2]) / np.prod(np.conj(gs[1::2]))
 
-    return final_g
+    return final_g, gs, g_abs
 
 
 def iterative_hadamard_test_off_diag(
@@ -208,41 +236,7 @@ def iterative_hadamard_test_off_diag(
             n_shots=n_shots,
         )
 
-        if backend == "statevector":
-            isa_circs = [p[j].circuit for p in jobs._args for j in range(len(p))]
-        else:
-            isa_circs = [p.circuit for p in jobs.inputs["pubs"]]
-
-        isa_circ_depth(isa_circs, True)
-
-        # gs = Re(g_l g*_l-1) + 1j * Im(g_l g*_l-1)
-        gs = np.array([x.data.evs[1] + 1j * x.data.evs[2] for x in jobs.result()])
-
-        # I-Z = 1/2 (g**2_l-1 + g**2_l) - 1/2 (g**2_l-1 - g**2_l) = g**2_l
-        g_abs = np.array(
-            [np.sqrt(np.abs(x.data.evs[0] - x.data.evs[3])) for x in jobs.result()]
-        )
-        # g_abs is the absolute value of g_l = <psi|U_1...U_l-1 U_l|psi>
-        # g_m1 computes g_l-1 so that we get twice the results per shot.
-        # I+Z = 1/2 (g**2_l-1 + g**2_l) +  1/2 (g**2_l-1 - g**2_l) = g**2_l-1
-        g_m1 = np.array(
-            [np.sqrt(np.abs(x.data.evs[0] + x.data.evs[3])) for x in jobs.result()]
-        )
-
-        better_g_abs = gs[:-1] + g_m1[1:] / 2
-        # print(f"({y,x} {k} min|g_s|**2={np.min(g_abs**2)}", end="\r")
-
-        if np.any(np.isclose(g_abs, 0)):
-            raise ValueError(
-                f"g_abs has null values, algorithm will fail: g_abs={g_abs}"
-            )
-
-        if len(gs) == 1:
-            final_g = gs[0]
-        elif len(gs) % 2 == 0:
-            final_g = np.prod(gs[1::2]) / np.prod(np.conj(gs[0::2]))
-        elif len(gs) % 2 == 1:
-            final_g = np.prod(gs[0::2]) / np.prod(np.conj(gs[1::2]))
+        final_g, _, _ = get_overlaps_from_res(jobs.result())
         d[k] = final_g
 
     alpha = 1j * (d["+i"] - (d["+"] + d["-"]) / 2)
@@ -303,32 +297,7 @@ def iterative_hadamard_test_projecto_estimo(
         n_shots=n_shots,
     )
 
-    # gs = Re(g_l g*_l-1) + 1j * Im(g_l g*_l-1)
-    gs = np.array([x.data.evs[1] + 1j * x.data.evs[2] for x in jobs.result()])
-
-    # I-Z = 1/2 (g**2_l-1 + g**2_l) - 1/2 (g**2_l-1 - g**2_l) = g**2_l
-    g_abs = np.array(
-        [np.sqrt(np.abs(x.data.evs[0] - x.data.evs[3])) for x in jobs.result()]
-    )
-    # g_abs is the absolute value of g_l = <psi|U_1...U_l-1 U_l|psi>
-    # g_m1 computes g_l-1 so that we get twice the results per shot.
-    # I+Z = 1/2 (g**2_l-1 + g**2_l) +  1/2 (g**2_l-1 - g**2_l) = g**2_l-1
-    g_m1 = np.array(
-        [np.sqrt(np.abs(x.data.evs[0] + x.data.evs[3])) for x in jobs.result()]
-    )
-
-    better_g_abs = gs[:-1] + g_m1[1:] / 2
-    # print(f"({y,x} min|g_s|**2={np.min(g_abs**2)}", end="\r")
-
-    if np.any(np.isclose(g_abs, 0)):
-        raise ValueError(f"g_abs has null values, algorithm will fail: g_abs={g_abs}")
-
-    if len(gs) == 1:
-        final_g = gs[0]
-    elif len(gs) % 2 == 0:
-        final_g = np.prod(gs[1::2]) / np.prod(np.conj(gs[0::2]))
-    elif len(gs) % 2 == 1:
-        final_g = np.prod(gs[0::2]) / np.prod(np.conj(gs[1::2]))
+    final_g, _, _ = get_overlaps_from_res(jobs.result())
 
     return final_g
 
@@ -672,7 +641,7 @@ def measure_matrix_elements(
     circuit: QuantumCircuit,
     comp_states: list[str],
     parameters: np.ndarray,
-    backend: BACKEND_ALIAS,
+    which_backend: BACKEND_ALIAS,
     n_shots: int,
     which: str = "iterative",
     custom_idx: list[list[int]] = None,
@@ -689,7 +658,7 @@ def measure_matrix_elements(
                     x,
                     y,
                     parameters,
-                    backend,
+                    which_backend,
                     n_shots,
                     which,
                     custom_idx=custom_idx,
@@ -706,7 +675,7 @@ def measure_matrix_elements(
                     x,
                     y,
                     parameters,
-                    backend,
+                    which_backend,
                     n_shots,
                     which,
                     custom_idx=custom_idx,

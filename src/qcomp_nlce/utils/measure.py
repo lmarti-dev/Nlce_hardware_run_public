@@ -8,6 +8,8 @@ from typing import Union
 from mqp.qiskit_provider.job import MQPJob
 from qiskit.quantum_info import SparsePauliOp
 import numpy as np
+from qiskit_aer import AerJob
+from iqm.qiskit_iqm.iqm_job import IQMJob
 
 BACKEND_ALIAS = str | FakeBackendV2 | IBMBackend
 
@@ -93,7 +95,7 @@ def get_counts_from_job(
             counts = {k: int(qd[k] * n_shots) for k in qd.keys()}
         except AttributeError:
             counts = res[ind].join_data().get_counts()
-    elif isinstance(job, MQPJob):
+    elif isinstance(job, (MQPJob, AerJob, IQMJob)):
         counts = job.result().get_counts(ind)
     else:
         raise ValueError(f"Unexpected job type: type {type(job)}")
