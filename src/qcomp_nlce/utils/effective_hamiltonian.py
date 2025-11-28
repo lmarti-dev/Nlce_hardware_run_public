@@ -42,14 +42,16 @@ def H_effective(
 
     # one qp expectation: <psi|U* H U |psi>
     # overlap: <psi|U|psi>
-    #  gs expectation is ground state energy I assume?
+    #  gs expectation is ground state energy 
 
     # Get dimension from one_qp_expectation matrix
     N = one_qp_expectation.shape[0]
 
-    # Compute V¹ = X̃†(X̃X̃†)^(-1/2) (Eq. 45)
+    # Compute transformation matrix: B = (overlap @ overlap†)^(-1/2) @ overlap
     overlap_product = overlap @ overlap.conj().T
-    B = overlap.conj().T @ np.linalg.inv(sqrtm(overlap_product))
+    sqrt_overlap_product = sqrtm(overlap_product)
+    inv_sqrt = inv(sqrt_overlap_product)
+    B = inv_sqrt @ overlap
 
     # Apply PCAT transformation (Eq. 47)
     H_effective = B.conj().T @ one_qp_expectation @ B - np.eye(N) * gs_expectation

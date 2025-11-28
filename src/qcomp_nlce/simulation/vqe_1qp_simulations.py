@@ -107,6 +107,7 @@ def train_and_save(
     )
 
 
+# input here "offdiag" or "sweep"
 if __name__ == "__main__":
 
     dry_run = False
@@ -115,5 +116,5 @@ if __name__ == "__main__":
     for n_qubits in (4, 5):
         for J in (1.0,):
             train_and_save(
-                n_qubits, J, dirname, which_cost, dry_run, n_layers=10 * n_qubits
+                n_qubits, J, dirname, which_cost, dry_run
             )

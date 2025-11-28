@@ -344,6 +344,11 @@ if __name__ == "__main__":
         which_hadamard_test,
     )
 
+    # Print effective Hamiltonians
+    for backend in which_backends:
+        print(f"\nH_eff (large, {backend}):\n{vqe_dict_l['heff'][backend]}")
+        print(f"\nH_eff (small, {backend}):\n{vqe_dict_s['heff'][backend]}")
+
     out_dict["results"]["vqe"] = {
         "dict_l": vqe_dict_l,
         "dict_s": vqe_dict_s,

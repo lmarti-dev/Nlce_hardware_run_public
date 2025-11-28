@@ -55,7 +55,7 @@ def optimize_ansatz(hamiltonian: SparsePauliOp) -> list:
     minimize(
         fun=fun,
         x0=np.random.rand(2 * n_qubits),
-        method="COBYLA",
+        method="CG",
         callback=callback,
     )
     return energy_values, xks
