@@ -25,7 +25,7 @@ def train_and_save(n_qubits: int, J: float, dirname: str, dry_run: bool):
     energy_values, params = optimize_circuit(
         circuit,
         hamiltonian,
-        initial_params=np.random.rand(len(circuit.parameters)),
+        initial_params=0.1 * np.ones((len(circuit.parameters),)),
     )
     print(
         f"final energy error is {np.abs(ground_energy-energy_values[-1])/np.abs(ground_energy)}"

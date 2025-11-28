@@ -93,7 +93,7 @@ def train_and_save(
         circuit,
         hamiltonian,
         cost=cost,
-        initial_params=np.zeros((len(circuit.parameters),)),
+        initial_params=0.1 * np.ones((len(circuit.parameters),)),
     )
     print(f"final cost is {np.abs(cost_values[-1])}")
 
@@ -110,10 +110,8 @@ def train_and_save(
 if __name__ == "__main__":
 
     dry_run = False
-    which_cost = "sweep"
+    which_cost = "offdiag"
     dirname = "elem_vqe_1j"
     for n_qubits in (4, 5):
         for J in (1.0,):
-            train_and_save(
-                n_qubits, J, dirname, which_cost, dry_run, n_layers=10 * n_qubits
-            )
+            train_and_save(n_qubits, J, dirname, which_cost, dry_run)
