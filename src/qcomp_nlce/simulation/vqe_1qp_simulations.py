@@ -26,7 +26,6 @@ def get_cost_offdiag(
 ) -> Callable[[np.ndarray], float]:
     def cost(xk: np.ndarray) -> float:
         a_mat = estimate_observable_1qp_initial_state(circuit, xk, hamiltonian)
-        # a_mat -= np.diag(a_mat)
         b_mat = estimate_observable_1qp_initial_state(circuit, xk, hamiltonian**2)
         return np.abs(np.trace(b_mat) - np.sum(np.abs(a_mat) ** 2))
 
@@ -43,6 +42,7 @@ def get_cost_trace(
     Returns:
         Cost function that takes parameters and returns trace of expectation matrix
     """
+
     def cost(xk: np.ndarray) -> float:
         # Compute expectation matrix A = <psi|U* H U|psi>
         a_mat = estimate_observable_1qp_initial_state(circuit, xk, hamiltonian)
