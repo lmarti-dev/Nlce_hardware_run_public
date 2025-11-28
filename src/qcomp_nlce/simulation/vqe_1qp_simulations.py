@@ -33,6 +33,25 @@ def get_cost_offdiag(
     return cost
 
 
+def get_cost_trace(
+    circuit: QuantumCircuit, hamiltonian: SparsePauliOp
+) -> Callable[[np.ndarray], float]:
+    """
+    Alternative cost function for VQE 1qp optimization.
+    Minimizes the trace of the expectation matrix: sum of diagonal elements.
+
+    Returns:
+        Cost function that takes parameters and returns trace of expectation matrix
+    """
+    def cost(xk: np.ndarray) -> float:
+        # Compute expectation matrix A = <psi|U* H U|psi>
+        a_mat = estimate_observable_1qp_initial_state(circuit, xk, hamiltonian)
+        # Return real part of sum of diagonal elements (trace)
+        return np.real(np.trace(a_mat))
+
+    return cost
+
+
 def get_cost_sweep(
     vqe_circ: QuantumCircuit,
     ham_start: SparsePauliOp,
@@ -107,6 +126,7 @@ def train_and_save(
     )
 
 
+# input here "offdiag" or "sweep"
 if __name__ == "__main__":
 
     dry_run = False
