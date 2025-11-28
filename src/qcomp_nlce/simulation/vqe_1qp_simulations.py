@@ -26,7 +26,7 @@ def get_cost_offdiag(
 ) -> Callable[[np.ndarray], float]:
     def cost(xk: np.ndarray) -> float:
         a_mat = estimate_observable_1qp_initial_state(circuit, xk, hamiltonian)
-        a_mat -= np.diag(a_mat)
+        # a_mat -= np.diag(a_mat)
         b_mat = estimate_observable_1qp_initial_state(circuit, xk, hamiltonian**2)
         return np.abs(np.trace(b_mat) - np.sum(np.abs(a_mat) ** 2))
 

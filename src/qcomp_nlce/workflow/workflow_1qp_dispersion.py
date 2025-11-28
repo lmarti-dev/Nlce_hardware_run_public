@@ -289,7 +289,7 @@ if __name__ == "__main__":
         # "fake_backend",
     ]
     provider_name = "IBM"
-    n_shots = int(1e3)
+    n_shots = int(1e5)
     ks = np.linspace(0, np.pi, 21)
     group_size = 3
     which_hadamard_test = "full"
@@ -311,7 +311,7 @@ if __name__ == "__main__":
         },
     }
 
-    # print("== Sweep ==")
+    print("== Sweep ==")
     # sweep_dict_l, sweep_dict_s, sweep_disp = sweep_dispersion(
     #     n_qubits_max,
     #     J,
