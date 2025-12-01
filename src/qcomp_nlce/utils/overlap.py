@@ -475,6 +475,11 @@ def hadam_diff(
     counts: dict, n_shots: int = None, keys: dict[str, str] = {"p0": "0", "p1": "1"}
 ) -> float:
 
+    out_counts = {}
+    for k in counts:
+        out_counts[str(k)] = counts[k]
+    counts = out_counts
+
     if n_shots is None:
         # my brain
         n_shots = np.sum([counts[k] for k in keys.values() if k in counts.keys()])
@@ -716,8 +721,10 @@ def measure_hamiltonian_element(
         job = estimate_circuit(circ_out, [hamiltonian], parameters, backend, n_shots)
 
         res = job.result()
-
-        return res[0].data.evs
+        if isinstance(res, EstimatorResult):
+            return res.values[0]
+        else:
+            return res[0].data.evs
 
     else:
         d = ["+", "-", "+i", "-i"]
@@ -731,9 +738,15 @@ def measure_hamiltonian_element(
 
         res = job.result()
 
-        return (res[0].data.evs - res[1].data.evs) / 2 + 1j * (
-            res[2].data.evs - res[3].data.evs
-        ) / 2
+        if isinstance(res, EstimatorResult):
+            return (res.values[0] - res.values[1]) / 2 + 1j * (
+                res.values[2] - res.values[3]
+            ) / 2
+
+        else:
+            return (res[0].data.evs - res[1].data.evs) / 2 + 1j * (
+                res[2].data.evs - res[3].data.evs
+            ) / 2
 
 
 def measure_hamiltonian_elements(
