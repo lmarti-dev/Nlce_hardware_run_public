@@ -149,7 +149,7 @@ def measure_1qp_expectations_v2(
 
     if which_backend == "statevector":
 
-        comp_vals = measure_hamiltonian_elements(
+        comp_vals, stds = measure_hamiltonian_elements(
             hamiltonian,
             circuit,
             comp_states,
@@ -164,7 +164,7 @@ def measure_1qp_expectations_v2(
     elif which_backend == "fake_backend":
 
         backend = get_appropriate_fake_backend(circuit.num_qubits, which=provider_name)
-        comp_vals = measure_hamiltonian_elements(
+        comp_vals, stds = measure_hamiltonian_elements(
             hamiltonian,
             circuit,
             comp_states,
@@ -177,7 +177,7 @@ def measure_1qp_expectations_v2(
         bn = backend.name
     elif which_backend == "real_backend":
         backend = get_backend(circuit.num_qubits, provider_name)
-        comp_vals = measure_hamiltonian_elements(
+        comp_vals, stds = measure_hamiltonian_elements(
             hamiltonian,
             circuit,
             comp_states,
@@ -194,11 +194,17 @@ def measure_1qp_expectations_v2(
             "name": bn,
             "trace_dist": td,
             "values": comp_vals,
+            "stds": stds,
         }
     }
 
 
 def measure_sweep_1qp(n_shots=10000):
+
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
     n_qubits = 4
     ham_j, ham_h = TFIM(n_qubits, 1, 1, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
@@ -225,6 +231,10 @@ def measure_sweep_1qp(n_shots=10000):
 
 
 def measure_vqe_1qp(n_shots: int = 10000):
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
     dirpath = Path(HOME, "../../res_sim/1qp_small/vqe/")
     mm = {}
     for dirname in os.listdir(dirpath):
@@ -241,6 +251,10 @@ def measure_vqe_1qp(n_shots: int = 10000):
 
 
 if __name__ == "__main__":
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
     # 1e9 shots is too much for fake backend, causing:
     # ERROR: [Experiment 0] bad allocation [Experiment 1] bad allocation , ERROR: bad allocation' qiskit
     # full Hadamard test for 4 qubits at 1e7 shots is GARBAGE on IBM fakebackend

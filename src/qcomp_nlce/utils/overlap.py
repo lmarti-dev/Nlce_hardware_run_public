@@ -121,9 +121,9 @@ def iterative_hadamard_test_estimator(
         n_shots=n_shots,
     )
 
-    final_g, _, _ = get_overlaps_from_res(jobs.result())
+    final_g, _, _, std = get_overlaps_from_res(jobs.result())
 
-    return final_g
+    return final_g, std
 
 
 def get_overlaps_from_res(
@@ -136,13 +136,19 @@ def get_overlaps_from_res(
         n_obs = 4
         gs = []
         g_abs = []
+        stds = []
         vals = res.values
+        variances = [m["variance"] for m in res.metadata]
         for ind in range(0, len(vals), n_obs):
             gs.append(vals[ind + 1] + 1j * vals[ind + 2])
+            stds.append(np.sqrt(variances[ind + 1] + variances[ind + 2]))
             g_abs.append(vals[ind] + 1j * vals[ind + 3])
     elif isinstance(res, PrimitiveResult):
         # gs = Re(g_l g*_l-1) + 1j * Im(g_l g*_l-1)
         gs = np.array([x.data.evs[1] + 1j * x.data.evs[2] for x in res])
+        stds = np.array(
+            [np.sqrt(x.data.stds[1] ** 2 + x.data.stds[2] ** 2) for x in res]
+        )
 
         # I-Z = 1/2 (g**2_l-1 + g**2_l) - 1/2 (g**2_l-1 - g**2_l) = g**2_l
         g_abs = np.array([np.sqrt(np.abs(x.data.evs[0] - x.data.evs[3])) for x in res])
@@ -164,7 +170,10 @@ def get_overlaps_from_res(
     elif len(gs) % 2 == 1:
         final_g = np.prod(gs[0::2]) / np.prod(np.conj(gs[1::2]))
 
-    return final_g, gs, g_abs
+    # first order error prop
+    final_std = np.abs(final_g) * np.sqrt(np.sum((stds**2) / (gs**2)))
+
+    return final_g, gs, g_abs, final_std
 
 
 def iterative_hadamard_test_off_diag(
@@ -179,12 +188,10 @@ def iterative_hadamard_test_off_diag(
 ):
 
     if x == y:
-        return (
-            iterative_hadamard_test_projecto_estimo(
-                circuit, parameters, n_shots, x, y, backend, custom_idx, handcraft
-            ),
-            0,
+        jUj, std = iterative_hadamard_test_projecto_estimo(
+            circuit, parameters, n_shots, x, y, backend, custom_idx, handcraft
         )
+        return (jUj, 0, std)
 
     # prepare
     # a = ket(x + iy)
@@ -236,16 +243,19 @@ def iterative_hadamard_test_off_diag(
             n_shots=n_shots,
         )
 
-        final_g, _, _ = get_overlaps_from_res(jobs.result())
-        d[k] = final_g
+        final_g, _, _, std = get_overlaps_from_res(jobs.result())
+        d[k] = (final_g, std)
 
-    alpha = 1j * (d["+i"] - (d["+"] + d["-"]) / 2)
-    beta = (d["+"] - d["-"]) / 2
+    alpha = 1j * (d["+i"][0] - (d["+"][0] + d["-"][0]) / 2)
+    beta = (d["+"][0] - d["-"][0]) / 2
 
     jUk = beta - alpha
     kUj = alpha + beta
 
-    return jUk, kUj
+    # I wish I lived in a world without propagation of errors
+    std = np.sqrt(0.5 * (d["+"][1] ** 2) + 0.5 * (d["-"][1] ** 2) + d["+i"] ** 2)
+
+    return jUk, kUj, std
 
 
 def iterative_hadamard_test_projecto_estimo(
@@ -297,9 +307,9 @@ def iterative_hadamard_test_projecto_estimo(
         n_shots=n_shots,
     )
 
-    final_g, _, _ = get_overlaps_from_res(jobs.result())
+    final_g, _, _, std = get_overlaps_from_res(jobs.result())
 
-    return final_g
+    return final_g, std
 
 
 def iterative_hadamard_test(
@@ -474,7 +484,7 @@ def measure_matrix_elements_merge_circuits(
 def hadam_diff(
     counts: dict, n_shots: int = None, keys: dict[str, str] = {"p0": "0", "p1": "1"}
 ) -> float:
-
+    # make sure that keys are str and not int!
     out_counts = {}
     for k in counts:
         out_counts[str(k)] = counts[k]
@@ -538,9 +548,13 @@ def get_hadam_estimator(res: EstimatorResult):
     # anyway, here's wonderwall
 
     try:
-        return res[0].data.evs[0] + 1j * res[0].data.evs[1]
+        return res[0].data.evs[0] + 1j * res[0].data.evs[1], np.sqrt(
+            res[0].data.stds[0] ** 2 + res[0].data.stds[1] ** 2
+        )
     except Exception:
-        return res.values[0] + 1j * res.values[1]
+        return res.values[0] + 1j * res.values[1], np.sqrt(
+            res.metadata[0]["variance"] ** 2 + res.metadata[1]["variance"] ** 2
+        )
 
 
 def measure_matrix_element(
@@ -559,7 +573,7 @@ def measure_matrix_element(
 
     if which == "projecto-estimo":
 
-        ol = iterative_hadamard_test_projecto_estimo(
+        ol, std = iterative_hadamard_test_projecto_estimo(
             circuit,
             parameters,
             n_shots,
@@ -569,11 +583,11 @@ def measure_matrix_element(
             custom_idx=custom_idx,
             handcraft=handcraft,
         )
-        return ol
+        return ol, std
 
     elif which == "off-diag":
 
-        jUk, kUj = iterative_hadamard_test_off_diag(
+        jUk, kUj, std = iterative_hadamard_test_off_diag(
             circuit,
             parameters,
             n_shots,
@@ -583,7 +597,7 @@ def measure_matrix_element(
             custom_idx=custom_idx,
             handcraft=handcraft,
         )
-        return jUk, kUj
+        return jUk, kUj, std
 
     elif which == "full":
         circ_out = circuit_with_init(circuit, x, y)
@@ -600,7 +614,8 @@ def measure_matrix_element(
             v = hadam_diff(counts, n_shots)
             vals.append(v)
         ol = vals[0] + 1j * vals[1]
-        return ol
+        std = 1 / np.sqrt(n_shots)
+        return ol, std
     elif which == "estimator":
         circ_out = circuit_with_init(circuit, x, y)
         if custom_idx is None:
@@ -626,6 +641,7 @@ def measure_matrix_element(
         return get_hadam_estimator(res)
 
     elif which == "iterative":
+        raise ValueError("nuh huh")
         circ_out = circuit_with_init(circuit, x, y)
 
         ol = iterative_hadamard_test_estimator(
@@ -642,6 +658,18 @@ def measure_matrix_element(
         raise ValueError(f"Expected full, estimator, or iterative, got {which}")
 
 
+def reorder_matrix_elems(vals: np.ndarray) -> np.ndarray:
+    # somehow indices are all messy
+    out = np.zeros_like(vals)
+    diag = np.diag(vals)
+
+    out = vals[::-1, ::-1]
+
+    out[range(out.shape[0]), range(out.shape[0])] = diag
+
+    return out
+
+
 def measure_matrix_elements(
     circuit: QuantumCircuit,
     comp_states: list[str],
@@ -653,12 +681,13 @@ def measure_matrix_elements(
     handcraft: bool = True,
 ) -> np.ndarray:
 
-    out = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
+    vals = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
+    stds = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
 
     if which != "off-diag":
         for ind_x, x in enumerate(comp_states):
             for ind_y, y in enumerate(comp_states):
-                out[ind_x, ind_y] = measure_matrix_element(
+                vals[ind_x, ind_y], stds[ind_x, ind_y] = measure_matrix_element(
                     circuit,
                     x,
                     y,
@@ -669,13 +698,12 @@ def measure_matrix_elements(
                     custom_idx=custom_idx,
                     handcraft=handcraft,
                 )
-                print(f"{ind_x} - {ind_y}: {out[ind_x,ind_y]:.4f}")
+                print(f"{ind_x} - {ind_y}: {vals[ind_x,ind_y]:.4f}")
     elif which == "off-diag":
-        diag = []
         for ind_x, x in enumerate(comp_states):
             for ind_y, y in enumerate(comp_states[ind_x:]):
                 ind_y = ind_x + ind_y
-                jUk, kUj = measure_matrix_element(
+                jUk, kUj, std = measure_matrix_element(
                     circuit,
                     x,
                     y,
@@ -686,15 +714,15 @@ def measure_matrix_elements(
                     custom_idx=custom_idx,
                     handcraft=handcraft,
                 )
-                if ind_x == ind_y:
-                    diag.append(jUk)
-                else:
-                    out[ind_x, ind_y] = jUk
-                    out[ind_y, ind_x] = kUj
+                vals[ind_x, ind_y] = jUk
+                vals[ind_y, ind_x] = kUj
+                stds[ind_x, ind_y] = std
+                stds[ind_y, ind_x] = std
                 print(f"{ind_x} - {ind_y}: {jUk:.3f}, {kUj:.3f}")
         # somehow indices are all messy
-        out = out[::-1, ::-1] + np.diag(diag)
-    return out
+        vals = reorder_matrix_elems(vals)
+        stds = reorder_matrix_elems(stds)
+    return vals, stds
 
 
 def trace_dist(u1: np.ndarray, u2: np.ndarray) -> float:
@@ -711,7 +739,7 @@ def measure_hamiltonian_element(
     parameters: np.ndarray,
     backend: BACKEND_ALIAS,
     n_shots: int,
-):
+) -> tuple[complex, complex]:
     if x == y:
         circ_out = QuantumCircuit(circuit.num_qubits)
         x_inds = index_bits(x, circuit.num_qubits, right_to_left=True)
@@ -722,9 +750,9 @@ def measure_hamiltonian_element(
 
         res = job.result()
         if isinstance(res, EstimatorResult):
-            return res.values[0]
+            return res.values[0], np.sqrt(res.metadata[0]["variance"])
         else:
-            return res[0].data.evs
+            return res[0].data.evs, res[0].data.stds
 
     else:
         d = ["+", "-", "+i", "-i"]
@@ -739,14 +767,18 @@ def measure_hamiltonian_element(
         res = job.result()
 
         if isinstance(res, EstimatorResult):
-            return (res.values[0] - res.values[1]) / 2 + 1j * (
+            val = (res.values[0] - res.values[1]) / 2 + 1j * (
                 res.values[2] - res.values[3]
             ) / 2
+            std = np.sqrt(sum([res.metadata[k]["variance"] for k in range(4)])) / 2
+            return val, std
 
         else:
-            return (res[0].data.evs - res[1].data.evs) / 2 + 1j * (
+            val = (res[0].data.evs - res[1].data.evs) / 2 + 1j * (
                 res[2].data.evs - res[3].data.evs
             ) / 2
+            std = np.sqrt(sum([res[k].data.std**2 for k in range(4)])) / 2
+            return val, std
 
 
 def measure_hamiltonian_elements(
@@ -759,20 +791,21 @@ def measure_hamiltonian_elements(
 ):
 
     out = np.zeros((len(states), len(states)), dtype=complex)
-    diag_items = np.zeros((len(states), len(states)), dtype=complex)
+    stds = np.zeros((len(states), len(states)), dtype=complex)
     for ind_x, x in enumerate(states):
         for ind_y, y in enumerate(states[ind_x:]):
             ind_y = ind_x + ind_y
-            val = measure_hamiltonian_element(
+            val, std = measure_hamiltonian_element(
                 hamiltonian, circuit, x, y, parameters, backend, n_shots
             )
-            if ind_x == ind_y:
-                diag_items[ind_x, ind_y] = val
-            else:
-                out[ind_x, ind_y] = val.conj()
-                out[ind_y, ind_x] = val
-    out += diag_items[::-1, ::-1]
-    return out
+            out[ind_x, ind_y] = val.conj()
+            out[ind_y, ind_x] = val
+            stds[ind_x, ind_y] = std
+            stds[ind_y, ind_x] = std
+    # this is correct!
+    out = reorder_matrix_elems(out)[::-1, ::-1]
+    stds = reorder_matrix_elems(stds)[::-1, ::-1]
+    return out, stds
 
 
 def circ_ham_expectation_values(

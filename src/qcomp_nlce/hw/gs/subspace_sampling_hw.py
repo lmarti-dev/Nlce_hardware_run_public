@@ -117,7 +117,6 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
             "ground_energy": ground_energy,
             "n_qubits": circuit.num_qubits,
             "hamiltonian": hamiltonian,
-            "ratio": get_tfim_ratio(hamiltonian),
         }
     }
 
@@ -142,7 +141,9 @@ def measure_ground_state_energy_subspace_sampling_v2(
         return np.abs(e - ground_energy) / np.abs(ground_energy)
 
     circuit_to_sample = add_meas_layer(circuit)
-
+    # assume that the std is sample dependent ish.
+    # TODO: derive a better expression!!
+    std = 1 / np.sqrt(n_shots)
     if which_backend == "statevector":
         sv_energy = sv_estimate_observables(
             circuit=circuit, observables=[hamiltonian], param_sweep=[]
@@ -201,6 +202,8 @@ def measure_ground_state_energy_subspace_sampling_v2(
             "unique_bitstrings": unique_bitstring,
             "bitstring_prop": bitstring_prop,
             "n_shots": n_shots,
+            "std": std,
+            "counts": counts,
         }
     }
 

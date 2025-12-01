@@ -5,7 +5,8 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import EstimatorV2, RuntimeJob, SamplerV2
 
-from iqm.qiskit_iqm.fake_backends.fake_garnet import IQMFakeGarnet
+
+from iqm.qiskit_iqm.fake_backends.fake_apollo import IQMFakeApollo
 from iqm.qiskit_iqm.fake_backends.fake_aphrodite import IQMFakeAphrodite
 from iqm.qiskit_iqm.fake_backends.fake_adonis import IQMFakeAdonis
 from iqm.qiskit_iqm.fake_backends.iqm_fake_backend import IQMFakeBackend
@@ -116,7 +117,7 @@ def get_appropriate_fake_backend(
         if n_qubits <= 5:
             return IQMFakeAdonis()
         elif n_qubits <= 20:
-            return IQMFakeGarnet()
+            return IQMFakeApollo()
         else:
             return IQMFakeAphrodite()
     else:

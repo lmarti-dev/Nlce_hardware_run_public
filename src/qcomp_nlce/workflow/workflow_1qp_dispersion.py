@@ -288,11 +288,11 @@ if __name__ == "__main__":
         "statevector",
         "fake_backend",
     ]
-    provider_name = "IQM"
-    n_shots = int(1e4)
+    provider_name = "AQT"
+    n_shots = int(2e3)
     ks = np.linspace(0, np.pi, 21)
     group_size = 6
-    which_hadamard_test = "off-diag"
+    which_hadamard_test = "full"
 
     gs_dirname_l = Path(res_sim_dir(), "gs_vqe_1j/vqe/5q_3l")
     gs_dirname_s = Path(res_sim_dir(), "gs_vqe_1j/vqe/4q_2l")

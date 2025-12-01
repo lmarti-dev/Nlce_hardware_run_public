@@ -85,7 +85,7 @@ def measure_1qp_elements_v2(
 
     if which_backend == "statevector":
         bn = "statevector"
-        comp_vals = measure_matrix_elements(
+        comp_vals, stds = measure_matrix_elements(
             circuit,
             comp_states,
             circuit.parameters,
@@ -100,7 +100,7 @@ def measure_1qp_elements_v2(
     elif which_backend == "fake_backend":
 
         backend = get_appropriate_fake_backend(circuit.num_qubits, which=provider_name)
-        comp_vals = measure_matrix_elements(
+        comp_vals, stds = measure_matrix_elements(
             circuit,
             comp_states,
             circuit.parameters,
@@ -114,7 +114,7 @@ def measure_1qp_elements_v2(
         bn = backend.name
     elif which_backend == "real_backend":
         backend = get_backend(circuit.num_qubits, provider_name)
-        comp_vals = measure_matrix_elements(
+        comp_vals, stds = measure_matrix_elements(
             circuit,
             comp_states,
             circuit.parameters,
@@ -132,6 +132,7 @@ def measure_1qp_elements_v2(
             "name": bn,
             "trace_dist": td,
             "values": comp_vals,
+            "stds": stds,
         }
     }
 

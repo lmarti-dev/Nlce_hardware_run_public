@@ -193,6 +193,12 @@ def get_ground_energy(hamiltonian: SparsePauliOp) -> float:
     return ground_energy[0]
 
 
+def get_max_energy(hamiltonian: SparsePauliOp) -> float:
+    mat = hamiltonian.to_matrix(sparse=True)
+    energy, _ = eigsh(mat, k=1, which="LM")
+    return energy[0]
+
+
 def get_ground_energy_n_qp(hamiltonian: SparsePauliOp, n_qp: int) -> float:
     # this might be wrong: you don't get an eigenstate of the whole Hamiltonian!
     mat = hamiltonian.to_matrix(sparse=True)
