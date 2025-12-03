@@ -4,6 +4,7 @@ from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import EstimatorV2, RuntimeJob, SamplerV2
+from qiskit.primitives import EstimatorResult, PrimitiveResult
 
 
 from iqm.qiskit_iqm.fake_backends.fake_apollo import IQMFakeApollo
@@ -124,6 +125,21 @@ def get_appropriate_fake_backend(
         raise ValueError(f"Expected a provider got: {which}")
 
 
+def mean_std_tuples_from_res(
+    res: EstimatorResult | PrimitiveResult,
+) -> list[tuple[complex, float]]:
+
+    out = []
+    if isinstance(res, EstimatorResult):
+        for m, s in zip(res.values, res.metadata):
+            out.append((m, s["variance"] ** (0.5)))
+    elif isinstance(res, PrimitiveResult):
+        for k in res:
+            for m, s in zip(k.data.evs, k.data.stds):
+                out.append((m, s))
+    return out
+
+
 def isa_circ_depth(isa_circ: list | QuantumCircuit, verbose: bool = False):
     if isinstance(isa_circ, list):
         if len(isa_circ) == 1:
@@ -141,13 +157,25 @@ def isa_circ_depth(isa_circ: list | QuantumCircuit, verbose: bool = False):
 
     elif isinstance(isa_circ, QuantumCircuit):
         if verbose:
-            print(f"Circuit depth is {isa_circ.depth()}")
+            depths = [isa_circ.depth()]
+            print(f"Circuit depth is {depths[0]}")
     else:
         raise ValueError(
             f"circ is neither QuantumCircuit nor list, but: {type(isa_circ)}"
         )
 
     return depths
+
+
+def compile_circuit_for_backend(
+    circuit: QuantumCircuit, backend: BACKEND_ALIAS, options: dict = None
+):
+    if options is None:
+        options = {}
+    pm = generate_preset_pass_manager(backend=backend, **options)
+    isa_circuit = pm.run(circuit)
+    isa_circ_depth(isa_circuit, True)
+    return isa_circuit
 
 
 def circuits_to_payload(
@@ -159,9 +187,9 @@ def circuits_to_payload(
 ) -> list[tuple[QuantumCircuit, dict]]:
     if isinstance(circuit, QuantumCircuit):
         circuit = [circuit]
-    pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
-    isa_circuit = pm.run(circuit)
-    isa_circ_depth(isa_circuit, True)
+    isa_circuit = compile_circuit_for_backend(
+        circuit, backend, {"optimization_level": 3}
+    )
     if which == "v1":
         payload = [[], [], []]
         # assume that for each circuit you want to measure each parameters

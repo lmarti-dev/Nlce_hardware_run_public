@@ -3,7 +3,6 @@ from qiskit.quantum_info import (
     Pauli,
     state_fidelity,
     Statevector,
-    DensityMatrix,
 )
 from scipy.sparse.linalg import eigsh
 import numpy as np
@@ -214,9 +213,7 @@ def get_ground_state(hamiltonian: SparsePauliOp) -> np.ndarray:
     return ground_state
 
 
-def ground_state_fidelity(
-    state: Statevector | DensityMatrix, hamiltonian: SparsePauliOp
-) -> float:
+def ground_state_fidelity(state: Statevector, hamiltonian: SparsePauliOp) -> float:
     return state_fidelity(state, get_ground_state(hamiltonian))
 
 
@@ -266,7 +263,7 @@ def subspace_diagonalize(
 
 
 def eigenvector_decomposition(
-    state: Statevector | DensityMatrix, hamiltonian: SparsePauliOp
+    state: Statevector, hamiltonian: SparsePauliOp
 ) -> np.ndarray:
     _, eig_states = np.linalg.eigh(hamiltonian.to_matrix(False))
     fidelities = np.zeros((eig_states.shape[-1],))

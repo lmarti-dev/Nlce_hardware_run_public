@@ -2,7 +2,7 @@ import numpy as np
 
 
 def cluster_dispersion(N: int, H_effective: np.ndarray, k: float) -> float:
-    mat_el = []
+    mat_el = np.zeros((N, N), dtype=complex)
     for i in range(N):
         for j in range(N):
 
@@ -10,7 +10,7 @@ def cluster_dispersion(N: int, H_effective: np.ndarray, k: float) -> float:
             # Here k is the momentum, and i, j are the site indices
             func = H_effective[i, j] * np.exp(1j * k * (i - j))
             # Append the result to the "big" array
-            mat_el.append(func)
+            mat_el[i, j] = func
 
     return np.sum(mat_el)
 

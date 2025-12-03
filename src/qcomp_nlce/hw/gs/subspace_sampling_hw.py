@@ -16,6 +16,7 @@ from qcomp_nlce.utils import (
     apply_parameters,
     backend_estimate,
     get_ground_energy,
+    mean_std_tuples_from_res,
 )
 from data_manager import ExperimentDataManager
 from qiskit.primitives import StatevectorSampler
@@ -29,73 +30,60 @@ from typing import Literal
 
 def measure_ground_state_energy_estimator(
     hamiltonian: SparsePauliOp,
-    ground_energy: float,
+    target_energy: float,
     circuit: QuantumCircuit,
+    which_backend: str,
     n_shots: int = 1e3,
-    run_on_hardware: bool = False,
-    backend_name: str = "AQT",
+    provider_name: str = "AQT",
 ):
-    fake_backend = get_appropriate_fake_backend(circuit.num_qubits, backend_name)
 
     def relerr(e):
-        return np.abs(e - ground_energy) / np.abs(ground_energy)
+        return np.abs(e - target_energy) / np.abs(target_energy)
 
-    fake_job = backend_estimate(
-        backend=fake_backend,
-        observables=hamiltonian,
-        parameters=None,
-        circuit=circuit,
-        n_shots=n_shots,
-    )
-    fake_backend_energy = fake_job.result()[0].data.evs
+    if which_backend == "fake_backend":
+        backend = get_appropriate_fake_backend(circuit.num_qubits, provider_name)
+        job = backend_estimate(
+            backend=backend,
+            observables=hamiltonian,
+            parameters=None,
+            circuit=circuit,
+            n_shots=n_shots,
+        )
+        energy, std = mean_std_tuples_from_res(job.result())
+        bn = backend.name
+    elif which_backend == "statevector":
+        res0 = sv_estimate_observables(
+            circuit=circuit, observables=[hamiltonian], param_sweep=None
+        )
+        energy = res0.data.evs[0]
+        std = res0.data.stds[0]
+        bn = which_backend
 
-    statevector_energy = sv_estimate_observables(
-        circuit=circuit, observables=hamiltonian, param_sweep=None
-    ).data.evs
+    elif which_backend == "real_hardware":
+        backend = get_backend(circuit.num_qubits, provider_name)
 
-    if run_on_hardware:
-        real_backend = real_backend = get_backend(circuit.num_qubits, backend_name)
-
-        real_job = backend_estimate(
-            backend=real_backend,
+        job = backend_estimate(
+            backend=backend_name,
             observables=hamiltonian,
             parameters=None,
             circuit=circuit,
             n_shots=n_shots,
         )
 
-        hardware_energy = real_job.result()[0].data.evs
-        print(f"RealBackend ({real_backend.name}) {relerr(hardware_energy)}")
+        energy, std = mean_std_tuples_from_res(job.result())
+        bn = backend.name
 
-    print(f"Statevector {relerr(statevector_energy)}")
+    print(f"{bn} -- estimated energy: {energy:.5f}, err {relerr(energy):.5f}")
 
-    print(f"FakeBackend: {relerr(fake_backend_energy)}")
-
-    var_dict = {
-        "fake_backend": {
-            "name": fake_backend.name,
-            "error": relerr(fake_backend_energy),
-            "energy": fake_backend_energy,
-            "job": encode_sampler_result(fake_job),
-        },
-        "statevector": {
-            "error": relerr(statevector_energy),
-            "energy": statevector_energy,
-        },
-        "system": {
-            "ground_energy": ground_energy,
-            "n_qubits": circuit.num_qubits,
-        },
-    }
-    if run_on_hardware:
-        var_dict["real_backend"] = {
-            "name": real_backend.name,
-            "error": relerr(hardware_energy),
-            "energy": hardware_energy,
-            "job": encode_sampler_result(real_job),
+    return {
+        which_backend: {
+            "name": bn,
+            "error": relerr(energy),
+            "energy": energy,
+            "n_shots": n_shots,
+            "std": std,
         }
-
-    return var_dict
+    }
 
 
 def loop_measure_ground_state_energy_subspace_sampling_v2(

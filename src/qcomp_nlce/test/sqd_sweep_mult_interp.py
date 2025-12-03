@@ -7,6 +7,7 @@ from qcomp_nlce.utils import (
 )
 from qcomp_nlce.hw.gs.subspace_sampling_hw import (
     measure_ground_state_energy_subspace_sampling_v2,
+    measure_ground_state_energy_estimator,
 )
 import numpy as np
 
@@ -27,7 +28,7 @@ def get_prop_of_counts(counts, p):
 
 n_qubits = 10
 J = 1
-n_shots = 1000
+n_shots = 10000
 
 ham_j, ham_h = TFIM(n_qubits, 1, J, periodic=False, split_parts=True)
 hamiltonian = ham_j + ham_h
@@ -39,14 +40,14 @@ max_ham_start = get_max_energy(ham_h)
 # the total time can be low-ish
 
 
-n_steps_list = np.arange(2, 100, 10)
+n_steps_list = np.arange(2, 100, 5)
 
 energies = np.zeros_like(n_steps_list)
 for jjj, n_steps in enumerate(n_steps_list):
 
-    alpha = abs(max_ham_end) + abs(max_ham_end)
+    alpha = abs(max_ham_start) + abs(max_ham_end)
     total_time = n_steps / alpha
-    print(f"{jjj:0>3} -- total time: {total_time}, n_steps: {n_steps}")
+    print(f"{jjj:0>3} -- total time: {total_time:.5e}, n_steps: {n_steps:5.0f}")
     circuit = get_tfim_sweep_circuit(
         ham_h,
         ham_j + ham_h,
@@ -54,13 +55,20 @@ for jjj, n_steps in enumerate(n_steps_list):
         n_steps=n_steps,
     )
 
-    out = measure_ground_state_energy_subspace_sampling_v2(
+    # out = measure_ground_state_energy_subspace_sampling_v2(
+    #     hamiltonian=hamiltonian,
+    #     ground_energy=ground_energy,
+    #     circuit=circuit,
+    #     which_backend="statevector",
+    #     n_shots=n_shots,
+    #     provider_name="IBM",
+    # )
+    out = measure_ground_state_energy_estimator(
         hamiltonian=hamiltonian,
-        ground_energy=ground_energy,
+        target_energy=ground_energy,
         circuit=circuit,
-        which_backend="statevector",
         n_shots=n_shots,
-        provider_name="IBM",
+        which_backend="statevector",
     )
 
     energies[jjj] = out["statevector"]["energy"]

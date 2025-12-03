@@ -1,5 +1,9 @@
 from pathlib import Path
-from typing import Literal, get_args
+from typing import Literal
+
+import io
+import json
+import copy
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,7 +42,6 @@ def dispersion_all_backends(dict_l: dict, dict_s: dict, ks: np.ndarray):
     for which in dict_l["heff"].keys():
         H_eff_Nb = dict_l["heff"][which]
         H_eff_Ns = dict_s["heff"][which]
-
         disp[which] = [dispersion_1d_thermodynamic(k, H_eff_Nb, H_eff_Ns) for k in ks]
     return disp
 
@@ -54,6 +57,7 @@ def vqe_dispersion(
     ks: np.ndarray,
     group_size: int,
     which_hadamard_test: str,
+    uncertainties: bool,
 ):
     dict_l = vqe_heff(
         gs_dirname_l,
@@ -63,6 +67,7 @@ def vqe_dispersion(
         n_shots,
         group_size,
         which_hadamard_test,
+        uncertainties,
     )
     dict_s = vqe_heff(
         gs_dirname_s,
@@ -72,6 +77,7 @@ def vqe_dispersion(
         n_shots,
         group_size,
         which_hadamard_test,
+        uncertainties,
     )
 
     return dict_l, dict_s, dispersion_all_backends(dict_l, dict_s, ks)
@@ -87,6 +93,7 @@ def sweep_dispersion(
     ks: np.ndarray,
     group_size: int,
     which_hadamard_test: str,
+    uncertainties: bool,
 ):
     dict_l = sweep_heff(
         n_qubits_max,
@@ -97,6 +104,7 @@ def sweep_dispersion(
         n_shots,
         group_size,
         which_hadamard_test,
+        uncertainties,
     )
     dict_s = sweep_heff(
         n_qubits_max - 1,
@@ -107,6 +115,7 @@ def sweep_dispersion(
         n_shots,
         group_size,
         which_hadamard_test,
+        uncertainties,
     )
 
     return dict_l, dict_s, dispersion_all_backends(dict_l, dict_s, ks)
@@ -120,6 +129,7 @@ def vqe_heff(
     n_shots: int,
     group_size: int,
     which_hadamard_test: str,
+    uncertainties: bool,
 ) -> dict:
 
     hamiltonian, elem_circuit, elem_weights, ground_energy = load_optimized_vqe(
@@ -139,6 +149,7 @@ def vqe_heff(
         n_shots,
         group_size,
         which_hadamard_test,
+        uncertainties,
     )
 
 
@@ -151,6 +162,7 @@ def sweep_heff(
     n_shots: int,
     group_size: int,
     which_hadamard_test: str,
+    uncertainties: bool,
 ):
     ham_j, ham_h = TFIM(n_qubits, 1, J, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
@@ -175,15 +187,17 @@ def sweep_heff(
         n_shots,
         group_size,
         which_hadamard_test,
+        uncertainties,
     )
 
 
-def heff_backend_type(
-    eld: dict,
-    gsd: dict,
-    exd: dict,
-    which_backend: BACKEND_TYPES,
-):
+def load_and_plot(fpath: Path):
+    with io.open(fpath, "r", encoding="utf8") as f:
+        d = json.loads(f.read())
+    plot_all_dispersions(d)
+
+
+def heff_backend_type(eld: dict, gsd: dict, exd: dict, which_backend: BACKEND_TYPES):
     overlap = eld[which_backend]["values"]
     one_qp_expectation = exd[which_backend]["values"]
     gs_expectation = gsd[which_backend]["energy"]
@@ -203,6 +217,7 @@ def get_heff_values(
     group_size: int = None,
     which_hadamard_test: str = "full",
     solve: bool = True,
+    uncertainties: bool = False,
 ):
 
     print("-- Computing <j|U|k> --")
@@ -240,7 +255,10 @@ def get_heff_values(
 
     for which_backend in which_backends:
         heff[which_backend] = heff_backend_type(
-            elements_dict, ground_state_dict, expectations_dict, which_backend
+            elements_dict,
+            ground_state_dict,
+            expectations_dict,
+            which_backend,
         )
 
     return {
@@ -265,11 +283,11 @@ def ed_dispersion(
     return [dispersion_1d_thermodynamic(k, heff_l, heff_s) for k in ks]
 
 
-def plot_all_dispersions(d: dict) -> plt.Figure:
-    ks = d["inputs"]["ks"]
-    j = d["inputs"]["J"]
+def plot_all_dispersions(_d: dict) -> plt.Figure:
+    ks = _d["inputs"]["ks"]
+    j = _d["inputs"]["J"]
     fig, ax = plt.subplots()
-    res = d["results"]
+    res = _d["results"]
     for k in res:
         disp = res[k]["disp"]
         for be in disp:
@@ -279,7 +297,39 @@ def plot_all_dispersions(d: dict) -> plt.Figure:
     return fig
 
 
-if __name__ == "__main__":
+def plot_multiple_dispersions(_l: list[dict]) -> plt.Figure:
+    fig, ax = plt.subplots()
+    for ind, _d in enumerate(_l):
+        ks = _d["inputs"]["ks"]
+        j = _d["inputs"]["J"]
+        res = _d["results"]
+        for k in res:
+            disp = res[k]["disp"]
+            for be in disp:
+                ax.plot(ks, disp[be], label=f"{k} - {be} ({ind})")
+    ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="analytic")
+    ax.legend()
+    return fig
+
+
+def u_plot_all_dispersions(d: dict) -> plt.Figure:
+    ks = d["inputs"]["ks"]
+    j = d["inputs"]["J"]
+    fig, ax = plt.subplots()
+    res = d["results"]
+    for k in res:
+        disp = res[k]["disp"]
+        for be in disp:
+
+            ax.errorbar(ks, disp[be][0][:], yerr=disp[be][1][:], label=f"{k} - {be}")
+            ax.legend()
+
+    ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="analytic")
+    ax.legend()
+    return fig
+
+
+def workflow_5q():
 
     n_qubits_max = 5
     J = 1
@@ -293,13 +343,16 @@ if __name__ == "__main__":
     ks = np.linspace(0, np.pi, 21)
     group_size = 6
     which_hadamard_test = "full"
+    uncertainties = False
 
     gs_dirname_l = Path(res_sim_dir(), "gs_vqe_1j/vqe/5q_3l")
     gs_dirname_s = Path(res_sim_dir(), "gs_vqe_1j/vqe/4q_2l")
     elem_dirname_l = Path(res_sim_dir(), "elem_vqe_1j/vqe/cost_offdiag/5q_3l")
     elem_dirname_s = Path(res_sim_dir(), "elem_vqe_1j/vqe/cost_offdiag/4q_2l")
 
-    edm = ExperimentDataManager("workflow_tfim_all_backends", dry_run=True)
+    dry_run = False
+
+    edm = ExperimentDataManager("workflow_tfim_all_backends_test", dry_run=dry_run)
 
     out_dict = {
         "results": {},
@@ -308,6 +361,7 @@ if __name__ == "__main__":
             "J": J,
             "provider_name": provider_name,
             "group_size": group_size,
+            "n_qubits": n_qubits_max,
         },
     }
 
@@ -322,6 +376,7 @@ if __name__ == "__main__":
     #     ks,
     #     group_size,
     #     which_hadamard_test,
+    # uncertainties,
     # )
 
     # out_dict["results"]["sweep"] = {
@@ -342,6 +397,7 @@ if __name__ == "__main__":
         ks,
         group_size,
         which_hadamard_test,
+        uncertainties,
     )
 
     # Print effective Hamiltonians
@@ -357,10 +413,88 @@ if __name__ == "__main__":
 
     ed_disp = tfim_ed_dispersion(n_qubits_max, J, ks)
     out_dict["results"]["ed"] = {"disp": {"statevector": ed_disp}}
+    edm.save_dict(out_dict)
 
     fig = plot_all_dispersions(out_dict)
 
+    edm.save_figure(fig, fig_shape="double-y")
+    # plt.show()
+
+
+def average_matrices(dicts: list[dict]) -> dict:
+
+    n_qubits = 5
+    n_dicts = len(dicts)
+
+    out_d = copy.deepcopy(dicts[0])
+    ks = out_d["inputs"]["ks"]
+    for si in ("dict_l", "dict_s"):
+        for backend in out_d["results"]["vqe"][si]["eld"]:
+            if backend != "system":
+                out_d["results"]["vqe"][si]["eld"][backend]["values"] = (
+                    out_d["results"]["vqe"][si]["eld"][backend]["values"] / n_dicts
+                )
+                out_d["results"]["vqe"][si]["exd"][backend]["values"] = (
+                    out_d["results"]["vqe"][si]["exd"][backend]["values"] / n_dicts
+                )
+                out_d["results"]["vqe"][si]["gsd"][backend]["energy"] = (
+                    out_d["results"]["vqe"][si]["gsd"][backend]["energy"] / n_dicts
+                )
+
+    for ii in range(1, len(dicts)):
+        d = dicts[ii]
+        for si in ("dict_l", "dict_s"):
+            for backend in d["results"]["vqe"][si]["eld"]:
+                if backend != "system":
+                    out_d["results"]["vqe"][si]["eld"][backend]["values"] = (
+                        out_d["results"]["vqe"][si]["eld"][backend]["values"]
+                        + d["results"]["vqe"][si]["eld"][backend]["values"] / n_dicts
+                    )
+                    out_d["results"]["vqe"][si]["exd"][backend]["values"] = (
+                        out_d["results"]["vqe"][si]["exd"][backend]["values"]
+                        + d["results"]["vqe"][si]["exd"][backend]["values"] / n_dicts
+                    )
+                    out_d["results"]["vqe"][si]["gsd"][backend]["energy"] = (
+                        out_d["results"]["vqe"][si]["gsd"][backend]["energy"]
+                        + d["results"]["vqe"][si]["gsd"][backend]["energy"] / n_dicts
+                    )
+    for si in ("dict_l", "dict_s"):
+        for backend in d["results"]["vqe"][si]["eld"]:
+            if backend != "system":
+                eld = out_d["results"]["vqe"][si]["eld"]
+                gsd = out_d["results"]["vqe"][si]["gsd"]
+                exd = out_d["results"]["vqe"][si]["exd"]
+                heff = heff_backend_type(eld, gsd, exd, backend)
+                out_d["results"]["vqe"][si]["heff"][backend] = heff
+        disp = dispersion_all_backends(
+            out_d["results"]["vqe"]["dict_l"], out_d["results"]["vqe"]["dict_s"], ks
+        )
+    out_d["results"]["vqe"]["disp"] = disp
+    return out_d
+
+
+def average_over_runs():
+    runs = (
+        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test_00005",
+        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test",
+        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test_00001",
+        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test_00002",
+        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test_00003",
+        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test_00004",
+    )
+
+    dicts = []
+    for r in runs:
+        edm = ExperimentDataManager.load(r)
+        d = edm.load_last_saved_data_file
+        dicts.append(d)
+
+    out_d = average_matrices(dicts)
+
+    fig = plot_multiple_dispersions([out_d, dicts[0]])
+
     plt.show()
 
-    edm.save_dict(out_dict)
-    edm.save_figure(fig, fig_shape="double-y")
+
+if __name__ == "__main__":
+    workflow_5q()

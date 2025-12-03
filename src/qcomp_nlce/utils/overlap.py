@@ -3,7 +3,6 @@ from qiskit.quantum_info import SparsePauliOp
 import numpy as np
 from qiskit_ibm_runtime import IBMBackend
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
-from qiskit.primitives.base.estimator_result import EstimatorResult
 from qiskit_aqt_provider.aqt_resource import OfflineSimulatorResource
 from qcomp_nlce.utils.measure import (
     sample_counts_circuit,
@@ -21,9 +20,9 @@ from qcomp_nlce.utils.circuit import (
     circuit_to_matrix,
 )
 
+from qcomp_nlce.utils.stats import sum_std
 
 from qiskit.primitives import EstimatorResult, PrimitiveResult
-from qcomp_nlce.utils.hardware import isa_circ_depth
 
 from typing import Union, Tuple
 
@@ -141,14 +140,12 @@ def get_overlaps_from_res(
         variances = [m["variance"] for m in res.metadata]
         for ind in range(0, len(vals), n_obs):
             gs.append(vals[ind + 1] + 1j * vals[ind + 2])
-            stds.append(np.sqrt(variances[ind + 1] + variances[ind + 2]))
+            stds.append(np.sqrt(variances[ind + 1]) + 1j * np.sqrt(variances[ind + 2]))
             g_abs.append(vals[ind] + 1j * vals[ind + 3])
     elif isinstance(res, PrimitiveResult):
         # gs = Re(g_l g*_l-1) + 1j * Im(g_l g*_l-1)
         gs = np.array([x.data.evs[1] + 1j * x.data.evs[2] for x in res])
-        stds = np.array(
-            [np.sqrt(x.data.stds[1] ** 2 + x.data.stds[2] ** 2) for x in res]
-        )
+        stds = np.array([x.data.stds[1] + 1j * x.data.stds[2] for x in res])
 
         # I-Z = 1/2 (g**2_l-1 + g**2_l) - 1/2 (g**2_l-1 - g**2_l) = g**2_l
         g_abs = np.array([np.sqrt(np.abs(x.data.evs[0] - x.data.evs[3])) for x in res])
@@ -171,7 +168,11 @@ def get_overlaps_from_res(
         final_g = np.prod(gs[0::2]) / np.prod(np.conj(gs[1::2]))
 
     # first order error prop
-    final_std = np.abs(final_g) * np.sqrt(np.sum((stds**2) / (gs**2)))
+
+    raise NotImplementedError(
+        "This can be implemented via a UT, but I first need to get it to work"
+    )
+    final_std = ...
 
     return final_g, gs, g_abs, final_std
 
@@ -481,29 +482,32 @@ def measure_matrix_elements_merge_circuits(
     return np.reshape(out, shape=(len(comp_states), len(comp_states)))
 
 
-def hadam_diff(
-    counts: dict, n_shots: int = None, keys: dict[str, str] = {"p0": "0", "p1": "1"}
-) -> float:
+def get_n0n1_hadam_counts(counts: dict, keys: dict[str, str] = {"p0": "0", "p1": "1"}):
     # make sure that keys are str and not int!
     out_counts = {}
     for k in counts:
         out_counts[str(k)] = counts[k]
     counts = out_counts
 
-    if n_shots is None:
-        # my brain
-        n_shots = np.sum([counts[k] for k in keys.values() if k in counts.keys()])
-
-    # 0 overlap
-    if n_shots == 0:
-        return 0
     if keys["p0"] not in counts.keys():
-        return -1.0
-    p0 = counts[keys["p0"]] / n_shots
+        n0 = 0
+    else:
+        n0 = counts[keys["p0"]]
     if keys["p1"] not in counts.keys():
-        return 1.0
-    p1 = counts[keys["p1"]] / n_shots
-    return p0 - p1
+        n1 = 0
+    else:
+        n1 = counts[keys["p1"]]
+    return n0, n1
+
+
+def hadam_diff(
+    counts: dict, n_shots: int = None, keys: dict[str, str] = {"p0": "0", "p1": "1"}
+) -> float:
+
+    n0, n1 = get_n0n1_hadam_counts(counts, keys)
+    if n_shots is None:
+        n_shots = n0 + n1
+    return (n0 - n1) / n_shots
 
 
 def circuit_with_init(
@@ -548,13 +552,23 @@ def get_hadam_estimator(res: EstimatorResult):
     # anyway, here's wonderwall
 
     try:
-        return res[0].data.evs[0] + 1j * res[0].data.evs[1], np.sqrt(
-            res[0].data.stds[0] ** 2 + res[0].data.stds[1] ** 2
+        return (
+            res[0].data.evs[0] + 1j * res[0].data.evs[1],
+            res[0].data.stds[0] + 1j * res[0].data.stds[1],
         )
+
     except Exception:
         return res.values[0] + 1j * res.values[1], np.sqrt(
-            res.metadata[0]["variance"] ** 2 + res.metadata[1]["variance"] ** 2
+            np.sqrt(res.metadata[0]["variance"])
+            + 1j * +np.sqrt(res.metadata[1]["variance"])
         )
+
+
+def full_hadamard_std(n_1: int, n_0: int) -> float:
+    N = n_1 + n_0
+    mu = n_1 / N
+    sigma = np.sqrt((n_1 * ((mu - 1) ** 2)) / N)
+    return sigma
 
 
 def measure_matrix_element(
@@ -609,12 +623,16 @@ def measure_matrix_element(
         )
 
         vals = []
+        stds = []
         for tmp_circ in (re_circ, im_circ):
             counts = sample_counts_circuit(tmp_circ, parameters, backend, n_shots)
             v = hadam_diff(counts, n_shots)
+            std = full_hadamard_std(*get_n0n1_hadam_counts(counts))
+            stds.append(std)
             vals.append(v)
+
         ol = vals[0] + 1j * vals[1]
-        std = 1 / np.sqrt(n_shots)
+        std = stds[0] + 1j * stds[1]
         return ol, std
     elif which == "estimator":
         circ_out = circuit_with_init(circuit, x, y)
@@ -770,14 +788,16 @@ def measure_hamiltonian_element(
             val = (res.values[0] - res.values[1]) / 2 + 1j * (
                 res.values[2] - res.values[3]
             ) / 2
-            std = np.sqrt(sum([res.metadata[k]["variance"] for k in range(4)])) / 2
+            stds = [np.sqrt(res.metadata[k]["variance"]) for k in range(4)]
+            std = sum_std(stds[0:2]) + 1j * sum_std(stds[2:4])
             return val, std
 
         else:
             val = (res[0].data.evs - res[1].data.evs) / 2 + 1j * (
                 res[2].data.evs - res[3].data.evs
             ) / 2
-            std = np.sqrt(sum([res[k].data.std**2 for k in range(4)])) / 2
+            stds = [res[k].data.stds for k in range(4)]
+            std = sum_std(stds[0:2]) + 1j * sum_std(stds[2:4])
             return val, std
 
 

@@ -5,6 +5,7 @@ from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.synthesis import SuzukiTrotter, LieTrotter
 import numpy as np
 from scipy.linalg import expm
+from qcomp_nlce.utils.hamiltonian import get_max_energy
 
 
 def get_sweep_function(kind: str):
@@ -22,6 +23,18 @@ def get_sweep_function(kind: str):
         raise NotImplementedError(f"Unknown kind: {kind}")
 
     return sweep_function
+
+
+def sweep_time_from_steps(ham_0: SparsePauliOp, ham_1: SparsePauliOp, n_steps: int):
+    max_ham_end = get_max_energy(ham_0)
+    max_ham_start = get_max_energy(ham_1)
+    alpha = abs(max_ham_start) + abs(max_ham_end)
+    total_time = n_steps / alpha
+    return total_time
+
+
+# the most important thing is to have enough steps!!!
+# the total time can be low-ish
 
 
 def get_sweep_spectrum(
