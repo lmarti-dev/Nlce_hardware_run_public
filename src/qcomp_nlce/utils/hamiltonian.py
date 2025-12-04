@@ -286,3 +286,9 @@ def hamiltonian_elems(
     hamiltonian: SparsePauliOp, state_l: np.ndarray, state_r: np.ndarray
 ) -> np.ndarray:
     return state_l.T.conj() @ hamiltonian.to_matrix() @ state_r
+
+
+def trace_dist(u1: np.ndarray, u2: np.ndarray) -> float:
+    diff = u1 - u2
+    out = np.sqrt(diff.T.conj() @ diff)
+    return 0.5 * np.real(np.trace(out))

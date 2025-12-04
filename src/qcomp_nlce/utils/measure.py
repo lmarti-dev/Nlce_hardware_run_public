@@ -1,5 +1,5 @@
 from qiskit.primitives import StatevectorSampler, PrimitiveJob, StatevectorEstimator
-from qcomp_nlce.utils.hardware import backend_sample, backend_estimate
+from qcomp_nlce.utils.hardware import backend_sample, backend_estimate, BACKEND_ALIAS
 from qcomp_nlce.utils.circuit import parameters_exist
 from qiskit_ibm_runtime import IBMBackend, RuntimeJob
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
@@ -10,8 +10,6 @@ from qiskit.quantum_info import SparsePauliOp
 import numpy as np
 from qiskit_aer import AerJob
 from iqm.qiskit_iqm.iqm_job import IQMJob
-
-BACKEND_ALIAS = str | FakeBackendV2 | IBMBackend
 
 
 def estimate_circuit(

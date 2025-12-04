@@ -1,6 +1,6 @@
 from qiskit import QuantumCircuit
 from qiskit.circuit.gate import Gate
-from qiskit.quantum_info import Operator
+from qiskit.quantum_info import Operator, SparsePauliOp
 import numpy as np
 from qcomp_nlce.utils.hamiltonian import from_bitstring, hamming_weight, index_bits
 from typing import Union, Literal
@@ -228,3 +228,39 @@ def prep_circ_1qp_superpos(
     else:
         raise ValueError(f"Incorrect which: {which}")
     return c
+
+
+def circ_ham_expectation_values(
+    hamiltonian: SparsePauliOp, circuit: QuantumCircuit, states: list[str]
+) -> np.ndarray:
+    # this returns the hamiltonian matrix for the 1 to n+1 first eigenstates
+    # this is for the 1qp thing mostly
+    out = np.zeros((len(states), len(states)), dtype=complex)
+    inds = []
+    for state in states:
+        inds.append(from_bitstring(state, hamiltonian.num_qubits, right_to_left=True))
+
+    umat = circuit_to_matrix(circuit)
+    mat = umat.T.conj() @ hamiltonian.to_matrix() @ umat
+
+    return mat[np.ix_(inds, inds)]
+
+
+def swap_test_circuit(
+    circuit: QuantumCircuit, init_circuit: QuantumCircuit = None
+) -> QuantumCircuit:
+    n_qubits = circuit.num_qubits
+    swap_circuit = QuantumCircuit(circuit.num_qubits * 2 + 1)
+    swap_circuit.h(0)
+    if init_circuit is not None:
+        swap_circuit = swap_circuit.compose(init_circuit, range(1, n_qubits + 1))
+        swap_circuit = swap_circuit.compose(
+            init_circuit, range(n_qubits + 1, swap_circuit.num_qubits)
+        )
+    swap_circuit = swap_circuit.compose(circuit, range(1, n_qubits + 1))
+    for x in range(1, n_qubits + 1):
+        swap_circuit.cswap(0, x, x + n_qubits)
+
+    swap_circuit.h(0)
+
+    return swap_circuit

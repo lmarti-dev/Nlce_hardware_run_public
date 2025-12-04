@@ -40,7 +40,10 @@ from qcomp_nlce.utils.circuit import (
 )
 from qiskit_ibm_runtime import QiskitRuntimeService, IBMBackend
 
-BACKEND_ALIAS = str | FakeBackendV2 | IBMBackend | MQPBackend
+
+BACKEND_ALIAS = (
+    Literal["statevector"] | FakeBackendV2 | IBMBackend | MQPBackend | IQMBackend
+)
 
 
 def get_aqt_backend(n_qubits: int) -> MQPBackend:
@@ -165,6 +168,10 @@ def isa_circ_depth(isa_circ: list | QuantumCircuit, verbose: bool = False):
         )
 
     return depths
+
+
+def is_hardware_run(which_backend: str):
+    return which_backend == "real_backend"
 
 
 def compile_circuit_for_backend(

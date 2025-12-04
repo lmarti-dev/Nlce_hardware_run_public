@@ -17,6 +17,9 @@ from qcomp_nlce.utils import (
     backend_estimate,
     get_ground_energy,
     mean_std_tuples_from_res,
+    load_tmp_item,
+    save_tmp_item,
+    tmp_filename,
 )
 from data_manager import ExperimentDataManager
 from qiskit.primitives import StatevectorSampler
@@ -26,6 +29,9 @@ import os
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
 from typing import Literal
+
+
+from qcomp_nlce.utils.hardware import is_hardware_run
 
 
 def measure_ground_state_energy_estimator(
@@ -109,9 +115,26 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
     }
 
     for which_backend in which_backends:
-        item = measure_ground_state_energy_subspace_sampling_v2(
-            hamiltonian, ground_energy, circuit, which_backend, n_shots, provider_name
-        )
+        on_hardware = is_hardware_run(which_backend)
+        filename = f"measure_ground_energy_{tmp_filename(circuit,which_backend)}"
+
+        if on_hardware:
+            try:
+                item = load_tmp_item(filename)
+                print(f"Already Computed {circuit.metadata['tmpname']}")
+            except FileNotFoundError:
+                print(f"Starting from scratch (ground state)")
+                item = None
+        if item is None:
+            item = measure_ground_state_energy_subspace_sampling_v2(
+                hamiltonian,
+                ground_energy,
+                circuit,
+                which_backend,
+                n_shots,
+                provider_name,
+            )
+            save_tmp_item(item, filename)
         d[which_backend] = item[which_backend]
     return d
 
@@ -148,29 +171,23 @@ def measure_ground_state_energy_subspace_sampling_v2(
 
         bn = which_backend
 
-    elif which_backend == "fake_backend":
-        backend = get_appropriate_fake_backend(circuit.num_qubits, provider_name)
+    elif which_backend == "fake_backend" or which_backend == "real_backend":
 
-        fake_job = backend_sample(
+        if which_backend == "fake_backend":
+            backend = get_appropriate_fake_backend(circuit.num_qubits, provider_name)
+
+        elif which_backend == "real_backend":
+            backend = get_backend(circuit.num_qubits, provider_name)
+
+        job = backend_sample(
             backend=backend,
             circuit=circuit_to_sample,
             parameters=[],
             n_shots=n_shots,
         )
-        counts = get_counts_from_job(fake_job)
+        counts = get_counts_from_job(job)
 
         bn = backend.name
-
-    elif which_backend == "real_backend":
-        backend = get_backend(circuit.num_qubits, provider_name)
-        real_job = backend_sample(
-            backend=backend,
-            circuit=circuit_to_sample,
-            parameters=[],
-            n_shots=n_shots,
-        )
-        bn = backend.name
-        counts = get_counts_from_job(real_job)
 
     unique_bitstring = get_unique_bitstrings(counts)
     bitstring_prop = len(unique_bitstring) / (2**circuit.num_qubits)

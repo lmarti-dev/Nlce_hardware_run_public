@@ -10,7 +10,7 @@ from qcomp_nlce.utils.measure import (
     estimate_circuit,
     get_counts_from_job,
 )
-from qcomp_nlce.utils.hamiltonian import index_bits, projector_ham
+from qcomp_nlce.utils.hamiltonian import index_bits, projector_ham, trace_dist
 from qcomp_nlce.utils.circuit import (
     to_controlled_gate,
     apply_parameters,
@@ -20,13 +20,21 @@ from qcomp_nlce.utils.circuit import (
     circuit_to_matrix,
 )
 
+from qcomp_nlce.utils.save import (
+    tmp_entry_exists,
+    add_tmp_entry_and_save,
+    load_tmp_item,
+    rebuild_matrices_from_tmp,
+    tmp_filename,
+)
+
+from qcomp_nlce.utils.hardware import is_hardware_run, BACKEND_ALIAS
+
 from qcomp_nlce.utils.stats import sum_std
 
 from qiskit.primitives import EstimatorResult, PrimitiveResult
 
 from typing import Union, Tuple
-
-BACKEND_ALIAS = str | FakeBackendV2 | IBMBackend
 
 
 def custom_idx_groups_of_n(total_len: int, group_size: int = 2):
@@ -84,45 +92,6 @@ def iterative_hadamard_test_circuits(
 
         circuits.append(hadam_circuit)
     return circuits
-
-
-def iterative_hadamard_test_estimator(
-    circuit: QuantumCircuit,
-    parameters: np.ndarray,
-    n_shots: int,
-    backend: BACKEND_ALIAS = "statevector",
-    custom_idx: list[list[int]] = None,
-    handcraft: bool = True,
-):
-    # !!! This only works for initial state ket(0)
-
-    circuits = iterative_hadamard_test_circuits(
-        circuit=circuit,
-        parameters=parameters,
-        real_part="estimator",
-        custom_idx=custom_idx,
-        handcraft=handcraft,
-    )
-
-    proj = projector_ham(circuit.num_qubits)
-    hams = [
-        proj ^ SparsePauliOp("I"),
-        proj ^ SparsePauliOp("X"),
-        proj ^ SparsePauliOp("Y"),
-        proj ^ SparsePauliOp("Z"),
-    ]
-
-    jobs = estimate_circuit(
-        backend=backend,
-        observables=hams,
-        circuit=circuits,
-        parameters=None,
-        n_shots=n_shots,
-    )
-
-    final_g, _, _, std = get_overlaps_from_res(jobs.result())
-
-    return final_g, std
 
 
 def get_overlaps_from_res(
@@ -313,68 +282,6 @@ def iterative_hadamard_test_projecto_estimo(
     return final_g, std
 
 
-def iterative_hadamard_test(
-    circuit: QuantumCircuit,
-    parameters: np.ndarray,
-    n_shots: int,
-    backend: BACKEND_ALIAS = "statevector",
-    custom_idx: list[list[int]] = None,
-    handcraft: bool = True,
-) -> float:
-
-    # !!! This only works for initial state ket(0)
-    circuits_re = iterative_hadamard_test_circuits(
-        circuit=circuit,
-        parameters=parameters,
-        real_part=True,
-        custom_idx=custom_idx,
-        handcraft=handcraft,
-    )
-    circuits_im = iterative_hadamard_test_circuits(
-        circuit=circuit,
-        parameters=parameters,
-        real_part=False,
-        custom_idx=custom_idx,
-        handcraft=handcraft,
-    )
-    circuits = [*circuits_re, *circuits_im]
-    half_len = len(circuits_re)
-
-    jobs = sample_circuit(circuits, parameters, backend, n_shots)
-    gs = []
-    # the first qubit is the last in the bitstring
-    keys = {
-        "p0": "0" * (circuit.num_qubits) + "0",
-        "p1": "0" * (circuit.num_qubits) + "1",
-    }
-    for ind in range(0, half_len):
-        re_counts = get_counts_from_job(jobs, ind)
-        im_counts = get_counts_from_job(jobs, ind + half_len)
-        gl = hadam_diff(re_counts, keys=keys) + 1j * hadam_diff(im_counts, keys=keys)
-        gs.append(gl)
-
-    gs = np.array(gs)
-
-    if np.any(np.isclose(gs, 0.0)):
-        # the zeros cancel out
-        if np.sum(np.isclose(gs[::2], 0.0)) == np.sum(np.isclose(gs[1::2], 0.0)):
-            gs[(np.isclose(gs, 0.0))] = 1.0
-        else:
-            # technically, there also could be a mistake somewhere,
-            # but fuck this
-            return 0.0
-
-    if len(gs) == 1:
-        final_g = gs[0]
-    elif len(gs) % 2 == 0:
-        final_g = np.prod(gs[1::2]) / np.prod(np.conj(gs[0::2]))
-    elif len(gs) % 2 == 1:
-        final_g = np.prod(gs[0::2]) / np.prod(np.conj(gs[1::2]))
-
-    # assert np.isclose(np.abs(final_g), 1.0)
-    return final_g
-
-
 # computes the real part of overlap between psi and circuit(psi)
 def hadamard_test_circuit(
     circuit: QuantumCircuit,
@@ -399,42 +306,6 @@ def hadamard_test_circuit(
     return hadam_circuit
 
 
-def swap_test_circuit(
-    circuit: QuantumCircuit, init_circuit: QuantumCircuit = None
-) -> QuantumCircuit:
-    n_qubits = circuit.num_qubits
-    swap_circuit = QuantumCircuit(circuit.num_qubits * 2 + 1)
-    swap_circuit.h(0)
-    if init_circuit is not None:
-        swap_circuit = swap_circuit.compose(init_circuit, range(1, n_qubits + 1))
-        swap_circuit = swap_circuit.compose(
-            init_circuit, range(n_qubits + 1, swap_circuit.num_qubits)
-        )
-    swap_circuit = swap_circuit.compose(circuit, range(1, n_qubits + 1))
-    for x in range(1, n_qubits + 1):
-        swap_circuit.cswap(0, x, x + n_qubits)
-
-    swap_circuit.h(0)
-
-    return swap_circuit
-
-
-def swap_test(
-    circuit: QuantumCircuit,
-    init_circuit: QuantumCircuit = None,
-    parameters: np.ndarray = None,
-    backend: BACKEND_ALIAS = "statevector",
-    n_shots: int = 1000,
-):
-    circuit = apply_parameters(circuit, parameters)
-    swap_circuit = swap_test_circuit(circuit, init_circuit)
-    swap_circuit.add_register(ClassicalRegister(1, name="meas"))
-    swap_circuit.measure(0, 0)
-    counts = sample_counts_circuit(swap_circuit, backend, n_shots)
-    p0 = counts["0"] / n_shots
-    return 2 * p0 - 1
-
-
 def hadamard_test(
     circuit: QuantumCircuit,
     parameters: np.ndarray = None,
@@ -445,41 +316,6 @@ def hadamard_test(
     hadam_circuit = hadamard_test_circuit(circuit, parameters, real_part)
     counts = sample_counts_circuit(hadam_circuit, backend, n_shots)
     return hadam_diff(counts, n_shots)
-
-
-def measure_matrix_elements_merge_circuits(
-    circuit: QuantumCircuit,
-    comp_states: list[str],
-    parameters: np.ndarray,
-    backend: BACKEND_ALIAS,
-    n_shots: int,
-    handcraft: bool = True,
-):
-
-    circs: list[QuantumCircuit] = []
-    for state_x in comp_states:
-        for state_y in comp_states:
-            re_circ, im_circ = measure_matrix_element_circuits(
-                circuit=circuit,
-                x=state_x,
-                y=state_y,
-                parameters=parameters,
-                handcraft=handcraft,
-            )
-            circs.append(re_circ)
-            circs.append(im_circ)
-
-    jobs = sample_circuit(circs, parameters, backend, n_shots)
-    n_elems = len(comp_states) ** 2
-    out = []
-
-    for ind in range(0, 2 * n_elems - 1, 2):
-        re_counts = get_counts_from_job(jobs, ind)
-        im_counts = get_counts_from_job(jobs, ind + 1)
-        v = hadam_diff(re_counts, n_shots) + 1j * hadam_diff(im_counts, n_shots)
-        out.append(v)
-
-    return np.reshape(out, shape=(len(comp_states), len(comp_states)))
 
 
 def get_n0n1_hadam_counts(counts: dict, keys: dict[str, str] = {"p0": "0", "p1": "1"}):
@@ -530,23 +366,6 @@ def circuit_with_init(
     return circ_out
 
 
-def measure_matrix_element_circuits(
-    circuit: QuantumCircuit,
-    x: str,
-    y: str,
-    parameters: np.ndarray,
-    handcraft: bool = True,
-) -> tuple[QuantumCircuit, QuantumCircuit]:
-    circ_out = circuit_with_init(circuit, x, y)
-    re_circ = hadamard_test_circuit(
-        circ_out, parameters, real_part=True, handcraft=handcraft
-    )
-    im_circ = hadamard_test_circuit(
-        circ_out, parameters, real_part=False, handcraft=handcraft
-    )
-    return re_circ, im_circ
-
-
 def get_hadam_estimator(res: EstimatorResult):
     # qiskit developers competing with python developers to see who can make the most breaking changes with a version chanege
     # anyway, here's wonderwall
@@ -578,14 +397,14 @@ def measure_matrix_element(
     parameters: np.ndarray,
     backend: BACKEND_ALIAS,
     n_shots: int,
-    which="iterative",
+    which_hadamard_test="iterative",
     custom_idx: list[list[int]] = None,
     handcraft: bool = True,
 ) -> Union[complex, tuple[complex, complex]]:
 
     # This computes <x|U|y>
 
-    if which == "projecto-estimo":
+    if which_hadamard_test == "projecto-estimo":
 
         ol, std = iterative_hadamard_test_projecto_estimo(
             circuit,
@@ -599,7 +418,7 @@ def measure_matrix_element(
         )
         return ol, std
 
-    elif which == "off-diag":
+    elif which_hadamard_test == "off-diag":
 
         jUk, kUj, std = iterative_hadamard_test_off_diag(
             circuit,
@@ -613,7 +432,7 @@ def measure_matrix_element(
         )
         return jUk, kUj, std
 
-    elif which == "full":
+    elif which_hadamard_test == "full":
         circ_out = circuit_with_init(circuit, x, y)
         re_circ = hadamard_test_circuit(
             circ_out, parameters, real_part=True, handcraft=handcraft
@@ -634,7 +453,7 @@ def measure_matrix_element(
         ol = vals[0] + 1j * vals[1]
         std = stds[0] + 1j * stds[1]
         return ol, std
-    elif which == "estimator":
+    elif which_hadamard_test == "estimator":
         circ_out = circuit_with_init(circuit, x, y)
         if custom_idx is None:
             custom_idx = custom_idx_groups_of_n(len([c for c in circ_out]), 1)
@@ -658,8 +477,8 @@ def measure_matrix_element(
         res = job.result()
         return get_hadam_estimator(res)
 
-    elif which == "iterative":
-        raise ValueError("nuh huh")
+    elif which_hadamard_test == "iterative":
+        raise ValueError("This area is out of service chief")
         circ_out = circuit_with_init(circuit, x, y)
 
         ol = iterative_hadamard_test_estimator(
@@ -673,7 +492,9 @@ def measure_matrix_element(
         return ol
 
     else:
-        raise ValueError(f"Expected full, estimator, or iterative, got {which}")
+        raise ValueError(
+            f"Expected full, estimator, or iterative, got {which_hadamard_test}"
+        )
 
 
 def reorder_matrix_elems(vals: np.ndarray) -> np.ndarray:
@@ -692,9 +513,10 @@ def measure_matrix_elements(
     circuit: QuantumCircuit,
     comp_states: list[str],
     parameters: np.ndarray,
-    which_backend: BACKEND_ALIAS,
+    backend: BACKEND_ALIAS,
+    which_backend: str,
     n_shots: int,
-    which: str = "iterative",
+    which_hadamard_test: str = "full",
     custom_idx: list[list[int]] = None,
     handcraft: bool = True,
 ) -> np.ndarray:
@@ -702,51 +524,78 @@ def measure_matrix_elements(
     vals = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
     stds = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
 
-    if which != "off-diag":
+    on_hardware = is_hardware_run(which_backend)
+    filename = f"measure_matrix_elements_{tmp_filename(circuit,which_backend)}"
+
+    if on_hardware:
+        try:
+            computed_values = load_tmp_item(filename)
+        except FileNotFoundError:
+            print("Starting from scratch (hadamard test)")
+            computed_values = []
+
+    if which_hadamard_test != "off-diag":
         for ind_x, x in enumerate(comp_states):
             for ind_y, y in enumerate(comp_states):
-                vals[ind_x, ind_y], stds[ind_x, ind_y] = measure_matrix_element(
-                    circuit,
-                    x,
-                    y,
-                    parameters,
-                    which_backend,
-                    n_shots,
-                    which,
-                    custom_idx=custom_idx,
-                    handcraft=handcraft,
-                )
-                print(f"{ind_x} - {ind_y}: {vals[ind_x,ind_y]:.4f}")
-    elif which == "off-diag":
+                if on_hardware and tmp_entry_exists(computed_values, ind_x, ind_y):
+                    pass
+                    print(f"Already computed {ind_x}, {ind_y}")
+                else:
+                    jUk, std = measure_matrix_element(
+                        circuit,
+                        x,
+                        y,
+                        parameters,
+                        backend,
+                        n_shots,
+                        which_hadamard_test,
+                        custom_idx=custom_idx,
+                        handcraft=handcraft,
+                    )
+                    vals[ind_x, ind_y] = jUk
+                    stds[ind_x, ind_y] = std
+                    if on_hardware:
+                        computed_values = add_tmp_entry_and_save(
+                            filename, computed_values, jUk, std, ind_x, ind_y
+                        )
+                    print(f"{ind_x} - {ind_y}: {vals[ind_x,ind_y]:.4f}")
+    elif which_hadamard_test == "off-diag":
         for ind_x, x in enumerate(comp_states):
             for ind_y, y in enumerate(comp_states[ind_x:]):
                 ind_y = ind_x + ind_y
-                jUk, kUj, std = measure_matrix_element(
-                    circuit,
-                    x,
-                    y,
-                    parameters,
-                    which_backend,
-                    n_shots,
-                    which,
-                    custom_idx=custom_idx,
-                    handcraft=handcraft,
-                )
-                vals[ind_x, ind_y] = jUk
-                vals[ind_y, ind_x] = kUj
-                stds[ind_x, ind_y] = std
-                stds[ind_y, ind_x] = std
-                print(f"{ind_x} - {ind_y}: {jUk:.3f}, {kUj:.3f}")
-        # somehow indices are all messy
-        vals = reorder_matrix_elems(vals)
-        stds = reorder_matrix_elems(stds)
+                if on_hardware and tmp_entry_exists(computed_values, ind_x, ind_y):
+                    pass
+                    print(f"Already computed {ind_x}, {ind_y}")
+                else:
+                    jUk, kUj, std = measure_matrix_element(
+                        circuit,
+                        x,
+                        y,
+                        parameters,
+                        backend,
+                        n_shots,
+                        which_hadamard_test,
+                        custom_idx=custom_idx,
+                        handcraft=handcraft,
+                    )
+                    vals[ind_x, ind_y] = jUk
+                    vals[ind_y, ind_x] = kUj
+                    stds[ind_x, ind_y] = std
+                    stds[ind_y, ind_x] = std
+                    if on_hardware:
+                        computed_values = add_tmp_entry_and_save(
+                            filename, computed_values, jUk, std, ind_x, ind_y
+                        )
+                        computed_values = add_tmp_entry_and_save(
+                            filename, computed_values, kUj, std, ind_y, ind_x
+                        )
+                    print(f"{ind_x} - {ind_y}: {jUk:.3f}, {kUj:.3f}")
+    if on_hardware:
+        vals, stds = rebuild_matrices_from_tmp(computed_values, len(comp_states))
+    # somehow indices are all messy
+    vals = reorder_matrix_elems(vals)
+    stds = reorder_matrix_elems(stds)
     return vals, stds
-
-
-def trace_dist(u1: np.ndarray, u2: np.ndarray) -> float:
-    diff = u1 - u2
-    out = np.sqrt(diff.T.conj() @ diff)
-    return 0.5 * np.real(np.trace(out))
 
 
 def measure_hamiltonian_element(
@@ -807,38 +656,47 @@ def measure_hamiltonian_elements(
     states: list[str],
     parameters: np.ndarray,
     backend: BACKEND_ALIAS,
+    which_backend: str,
     n_shots: int,
 ):
 
-    out = np.zeros((len(states), len(states)), dtype=complex)
+    vals = np.zeros((len(states), len(states)), dtype=complex)
     stds = np.zeros((len(states), len(states)), dtype=complex)
+
+    on_hardware = is_hardware_run(which_backend)
+    filename = f"measure_hamiltonian_elements_{tmp_filename(circuit,which_backend)}"
+
+    if on_hardware:
+        try:
+            computed_values = load_tmp_item(filename)
+        except FileNotFoundError:
+            print("Starting from scratch (expectations)")
+            computed_values = []
+
     for ind_x, x in enumerate(states):
         for ind_y, y in enumerate(states[ind_x:]):
             ind_y = ind_x + ind_y
-            val, std = measure_hamiltonian_element(
-                hamiltonian, circuit, x, y, parameters, backend, n_shots
-            )
-            out[ind_x, ind_y] = val.conj()
-            out[ind_y, ind_x] = val
-            stds[ind_x, ind_y] = std
-            stds[ind_y, ind_x] = std
+            if on_hardware and tmp_entry_exists(computed_values, ind_x, ind_y):
+                pass
+                print(f"Already computed {ind_x}, {ind_y}")
+            else:
+                val, std = measure_hamiltonian_element(
+                    hamiltonian, circuit, x, y, parameters, backend, n_shots
+                )
+                vals[ind_x, ind_y] = val.conj()
+                vals[ind_y, ind_x] = val
+                stds[ind_x, ind_y] = std
+                stds[ind_y, ind_x] = std
+                if on_hardware:
+                    computed_values = add_tmp_entry_and_save(
+                        filename, computed_values, val.conj(), std, ind_x, ind_y
+                    )
+                    computed_values = add_tmp_entry_and_save(
+                        filename, computed_values, val, std, ind_y, ind_x
+                    )
     # this is correct!
-    out = reorder_matrix_elems(out)[::-1, ::-1]
+    if on_hardware:
+        vals, stds = rebuild_matrices_from_tmp(computed_values, len(states))
+    vals = reorder_matrix_elems(vals)[::-1, ::-1]
     stds = reorder_matrix_elems(stds)[::-1, ::-1]
-    return out, stds
-
-
-def circ_ham_expectation_values(
-    hamiltonian: SparsePauliOp, circuit: QuantumCircuit, states: list[str]
-) -> np.ndarray:
-    # this returns the hamiltonian matrix for the 1 to n+1 first eigenstates
-    # this is for the 1qp thing mostly
-    out = np.zeros((len(states), len(states)), dtype=complex)
-    inds = []
-    for state in states:
-        inds.append(from_bitstring(state, hamiltonian.num_qubits, right_to_left=True))
-
-    umat = circuit_to_matrix(circuit)
-    mat = umat.T.conj() @ hamiltonian.to_matrix() @ umat
-
-    return mat[np.ix_(inds, inds)]
+    return vals, stds

@@ -35,6 +35,14 @@ def measure_1qp_expectations(
     run_on_hardware: bool = False,
 ) -> np.ndarray:
 
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
+
     n_qubits = circuit.num_qubits
     print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
     comp_states = hamming_weight_states(n_qubits, 1)
@@ -44,12 +52,15 @@ def measure_1qp_expectations(
     # from the circuit-to-matrix qiskit function
     # true_comp_vals = true_comp_vals[::-1, ::-1]
 
+    which_backend = "statevector"
+
     sv_comp_vals = measure_hamiltonian_elements(
         hamiltonian,
         circuit,
         comp_states,
         None,
-        "statevector",
+        which_backend,
+        which_backend,
         n_shots,
     )
     sv_trace_dist = trace_dist(true_comp_vals, sv_comp_vals)
@@ -65,6 +76,7 @@ def measure_1qp_expectations(
         comp_states,
         None,
         fake_backend,
+        which_backend,
         n_shots,
     )
     print(np.round(fake_comp_vals, 3))
@@ -80,6 +92,7 @@ def measure_1qp_expectations(
             comp_states,
             None,
             real_backend,
+            which_backend,
             n_shots,
         )
         real_trace_dist = trace_dist(true_comp_vals, real_comp_vals)
@@ -148,44 +161,39 @@ def measure_1qp_expectations_v2(
     comp_states = hamming_weight_states(n_qubits, 1)
 
     if which_backend == "statevector":
+        bn = which_backend
 
         comp_vals, stds = measure_hamiltonian_elements(
             hamiltonian,
             circuit,
             comp_states,
             None,
-            "statevector",
+            bn,
+            which_backend,
             n_shots,
         )
 
         td = compare_with_true(true_comp_vals, comp_vals, which_backend)
-        bn = "Statevector"
 
-    elif which_backend == "fake_backend":
+    elif which_backend == "fake_backend" or which_backend == "real_backend":
 
-        backend = get_appropriate_fake_backend(circuit.num_qubits, which=provider_name)
+        if which_backend == "fake_backend":
+            backend = get_appropriate_fake_backend(
+                circuit.num_qubits, which=provider_name
+            )
+        elif which_backend == "real_backend":
+            backend = get_backend(circuit.num_qubits, provider_name)
+
         comp_vals, stds = measure_hamiltonian_elements(
             hamiltonian,
             circuit,
             comp_states,
             None,
             backend,
+            which_backend,
             n_shots,
         )
-        print(f"Fake Backend ({backend.name})")
-        td = compare_with_true(true_comp_vals, comp_vals, backend.name)
-        bn = backend.name
-    elif which_backend == "real_backend":
-        backend = get_backend(circuit.num_qubits, provider_name)
-        comp_vals, stds = measure_hamiltonian_elements(
-            hamiltonian,
-            circuit,
-            comp_states,
-            None,
-            backend,
-            n_shots,
-        )
-        print(f"RealBackend ({backend.name})")
+        print(f"{which_backend} ({backend.name})")
         td = compare_with_true(true_comp_vals, comp_vals, backend.name)
         bn = backend.name
 

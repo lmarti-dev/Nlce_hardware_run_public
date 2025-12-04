@@ -84,46 +84,40 @@ def measure_1qp_elements_v2(
         custom_idx = None
 
     if which_backend == "statevector":
-        bn = "statevector"
+        bn = which_backend
         comp_vals, stds = measure_matrix_elements(
             circuit,
             comp_states,
             circuit.parameters,
             bn,
+            which_backend,
             n_shots,
             custom_idx=custom_idx,
-            which=which_hadamard_test,
+            which_hadamard_test=which_hadamard_test,
         )
 
         td = compare_with_true(true_comp_vals, comp_vals, which_backend)
 
-    elif which_backend == "fake_backend":
+    elif which_backend == "fake_backend" or which_backend == "real_backend":
 
-        backend = get_appropriate_fake_backend(circuit.num_qubits, which=provider_name)
+        if which_backend == "fake_backend":
+            backend = get_appropriate_fake_backend(
+                circuit.num_qubits, which=provider_name
+            )
+        elif which_backend == "real_backend":
+            backend = get_backend(circuit.num_qubits, provider_name)
+
         comp_vals, stds = measure_matrix_elements(
             circuit,
             comp_states,
             circuit.parameters,
             backend,
+            which_backend,
             n_shots,
             custom_idx=custom_idx,
-            which=which_hadamard_test,
+            which_hadamard_test=which_hadamard_test,
         )
-        print(f"Fake Backend ({backend.name})")
-        td = compare_with_true(true_comp_vals, comp_vals, backend.name)
-        bn = backend.name
-    elif which_backend == "real_backend":
-        backend = get_backend(circuit.num_qubits, provider_name)
-        comp_vals, stds = measure_matrix_elements(
-            circuit,
-            comp_states,
-            circuit.parameters,
-            backend,
-            n_shots,
-            custom_idx=custom_idx,
-            which=which_hadamard_test,
-        )
-        print(f"RealBackend ({backend.name})")
+        print(f"{which_backend} ({backend.name})")
         td = compare_with_true(true_comp_vals, comp_vals, backend.name)
         bn = backend.name
 
@@ -145,6 +139,15 @@ def measure_1qp_elements(
     group_size: int = None,
     which: str = "full",
 ) -> np.ndarray:
+
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
+    # DEPRECATED
 
     mme_func = measure_matrix_elements
 
@@ -170,7 +173,7 @@ def measure_1qp_elements(
         "statevector",
         n_shots,
         custom_idx=custom_idx,
-        which=which,
+        which_hadamard_test=which,
     )
     sv_trace_dist = trace_dist(true_comp_vals, sv_comp_vals)
     print(f"Statevector {sv_trace_dist:.5e}")
@@ -186,7 +189,7 @@ def measure_1qp_elements(
         fake_backend,
         n_shots,
         custom_idx=custom_idx,
-        which=which,
+        which_hadamard_test=which,
     )
     print(np.round(fake_comp_vals, 3))
     fake_trace_dist = trace_dist(true_comp_vals, fake_comp_vals)
@@ -202,7 +205,7 @@ def measure_1qp_elements(
             real_backend,
             n_shots,
             custom_idx=custom_idx,
-            which=which,
+            which_hadamard_test=which,
         )
         real_trace_dist = trace_dist(true_comp_vals, real_comp_vals)
         print(f"RealBackend ({real_backend.name}) {real_trace_dist:.5e}")

@@ -4,12 +4,10 @@ from qcomp_nlce.utils import (
     circuit_matrix_elements,
     measure_matrix_elements,
     get_appropriate_fake_backend,
-    get_backend,
     get_min_gap,
     TFIM,
     hamming_weight_states,
     get_tfim_sweep_circuit,
-    measure_matrix_elements_merge_circuits,
     load_optimized_vqe,
     apply_parameters,
     get_tfim_ratio,
@@ -50,7 +48,7 @@ def measure_1qp_elements(
         "statevector",
         n_shots,
         custom_idx=None,
-        which=which,
+        which_hadamard_test=which,
         handcraft=True,
     )
     sv_fidelity = trace_dist(true_comp_vals, sv_comp_vals)
@@ -66,7 +64,7 @@ def measure_1qp_elements(
             fake_backend,
             n_shots,
             custom_idx=None,
-            which=which,
+            which_hadamard_test=which,
             handcraft=handcraft,
         )
         fake_fidelity = trace_dist(true_comp_vals, fake_comp_vals_hc)

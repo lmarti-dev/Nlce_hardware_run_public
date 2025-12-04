@@ -12,4 +12,5 @@ from .circuit import *
 from .effective_hamiltonian import *
 from .dispersion import *
 from .folders import *
+from .workflow import *
 from .stats import *
