@@ -7,12 +7,35 @@ import matplotlib.pyplot as plt
 from qcomp_nlce.utils import u_H_effective, H_effective, dispersion_1d_thermodynamic
 
 
+def test_func(arr, k):
+
+    y = np.linspace(0.1, 0.2, len(arr))
+
+    return np.dot(arr, y) * np.cos(k)
+
+
 def arr_to_vec(m: np.ndarray) -> np.ndarray:
-    return np.reshape(m, np.size(m))
+
+    v1 = m.real
+    v2 = m.imag
+
+    return np.concatenate([np.reshape(v1, np.size(v1)), np.reshape(v2, np.size(v2))])
 
 
 def vec_to_arr(m: np.ndarray) -> np.ndarray:
-    return np.reshape(m, (int(np.sqrt(len(m))), int(np.sqrt(len(m)))))
+
+    n = int(len(m) / 2)
+
+    assert len(m) % 2 == 0
+    assert np.isclose(np.sqrt(n), np.round(np.sqrt(n)))
+
+    v1 = m[:n]
+    v2 = m[n:]
+
+    a = np.reshape(v1, (int(np.sqrt(len(v1))), int(np.sqrt(len(v1)))))
+    b = np.reshape(v2, (int(np.sqrt(len(v2))), int(np.sqrt(len(v2)))))
+
+    return a + 1j * b
 
 
 def to_mega_arrays(
@@ -63,8 +86,8 @@ def to_mega_arrays(
 
 def unroll_arr(arr, nqm: int):
 
-    sml = int(nqm**2)
-    sms = int((nqm - 1) ** 2)
+    sml = int(2 * (nqm**2))
+    sms = int(2 * ((nqm - 1) ** 2))
 
     overlap_l = vec_to_arr(arr[0:sml])
     expectations_l = vec_to_arr(arr[sml : 2 * sml])
@@ -157,14 +180,14 @@ def unscented_transform(
     Pmat = np.zeros((ll, ll), dtype=complex)
     for m in range(2 * L + 1):
         Pmat += Wcs[m] * (np.outer(Ys[:, m] - ymean, Ys[:, m] - ymean))
-    return ymean, Pmat
 
+    ymean = ymean.flatten()
+    Pmat = Pmat.flatten()
 
-def test_func(arr, k):
+    assert np.all(ymean.real == ymean)
+    assert np.all(Pmat.real == Pmat)
 
-    y = np.linspace(0.1, 0.2, len(arr))
-
-    return np.dot(arr, y) * np.cos(k)
+    return ymean.real, Pmat.real
 
 
 def uf_dispersion_1d_thermodynamic_ks(
@@ -196,6 +219,8 @@ def uf_dispersion_1d_thermodynamic_ks(
         gs_expectation_s,
         gs_expectation_std_s,
     )
+
+    assert np.all(arr.real == arr)
     means = []
     Pmats = []
 
@@ -219,6 +244,7 @@ def uf_dispersion_1d_thermodynamic_ks(
         H_eff_Nb = H_effective(gs_expectation_l, expectations_l, overlap_l)
         H_eff_Ns = H_effective(gs_expectation_s, expectations_s, overlap_s)
         vals.append(dispersion_1d_thermodynamic(k, H_eff_Nb, H_eff_Ns))
+        # vals.append(test_func(arr, k))
     return np.array(vals), np.array(means), np.array(Pmats)
 
 
@@ -236,17 +262,15 @@ def monte_carlo_like(n_samples: int, n_qubits_max: int):
 
 
 def random_heff_err(n_qubits):
-    expec = np.random.rand(
-        n_qubits, n_qubits
-    )  # + 1j * np.random.rand(n_qubits, n_qubits)
-    overl = np.random.rand(
-        n_qubits, n_qubits
-    )  # + 1j * np.random.rand(n_qubits, n_qubits)
+    expec = np.random.rand(n_qubits, n_qubits) + 1j * np.random.rand(n_qubits, n_qubits)
+    overl = np.random.rand(n_qubits, n_qubits) + 1j * np.random.rand(n_qubits, n_qubits)
     gs = np.random.rand(1)
 
-    expec_std = np.random.normal(size=(n_qubits, n_qubits)) / 1000
-    overl_std = np.random.normal(size=(n_qubits, n_qubits)) / 1000
-    gs_std = np.random.normal() / 1000
+    fac = 1e15
+
+    expec_std = np.random.normal(size=(n_qubits, n_qubits)) / fac
+    overl_std = np.random.normal(size=(n_qubits, n_qubits)) / fac
+    gs_std = np.random.normal() / fac
 
     return expec, expec_std, overl, overl_std, gs, gs_std
 

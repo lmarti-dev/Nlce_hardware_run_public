@@ -39,3 +39,18 @@ def dispersion_1d_thermodynamic(
 
 def exact_dispersion_1qp_1d(j: float, k: np.ndarray):
     return 2 * np.sqrt(1 + j**2 - 2 * j * np.cos(k))
+
+
+def amount_of_vals_needed(n_qubits: int) -> int:
+
+    total = 0
+
+    for q in (n_qubits - 1, n_qubits):
+
+        # 2 per overlap element
+        overlap = 2 * q**2
+        # 1 per diagonal, 4 per nondiagonal element
+        expectations = q + 4 * sum(range(1, q))
+        gs = 1
+        total += sum([overlap, expectations, gs])
+    return total

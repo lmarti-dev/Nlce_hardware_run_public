@@ -25,6 +25,8 @@ from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
 from qcomp_nlce.utils.effective_hamiltonian import H_effective, H_effective_ed
 
+from qcomp_nlce.utils.unscented_transform import disp_from_res_dict
+
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
@@ -205,7 +207,7 @@ def sweep_heff(
 def load_and_plot(fpath: Path):
     with io.open(fpath, "r", encoding="utf8") as f:
         d = json.loads(f.read())
-    plot_all_dispersions(d)
+    plot_all_backends_dispersions(d)
 
 
 def heff_backend_type(eld: dict, gsd: dict, exd: dict, which_backend: BACKEND_TYPES):
@@ -293,7 +295,7 @@ def ed_dispersion(
     return [dispersion_1d_thermodynamic(k, heff_l, heff_s) for k in ks]
 
 
-def plot_all_dispersions(_d: dict) -> plt.Figure:
+def plot_all_backends_dispersions(_d: dict) -> plt.Figure:
     ks = _d["inputs"]["ks"]
     j = _d["inputs"]["J"]
     fig, ax = plt.subplots()
@@ -302,6 +304,32 @@ def plot_all_dispersions(_d: dict) -> plt.Figure:
         disp = res[k]["disp"]
         for be in disp:
             ax.plot(ks, disp[be], label=f"{k} - {be}")
+    ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="analytic")
+    ax.legend()
+    return fig
+
+
+def plot_all_backends_dispersions_UT(_d: dict) -> plt.Figure:
+    ks = _d["inputs"]["ks"]
+    j = _d["inputs"]["J"]
+    fig, ax = plt.subplots()
+    res = _d["results"]
+
+    for circ in res:
+        if circ == "ed":
+            disp = res[circ]["disp"]
+            for be in disp:
+                ax.plot(ks, disp[be], label=f"{circ} - {be}")
+        else:
+            err = disp_from_res_dict(ks, _d, circ)
+            disp = res[circ]["disp"]
+            for be in disp:
+                ax.errorbar(ks, disp[be], err[be]["pmat"], label=f"{circ} - {be}")
+                ax.plot(
+                    ks,
+                    err[be]["means"],
+                    label=f"{circ} - {be} (UT mean)",
+                )
     ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="analytic")
     ax.legend()
     return fig
@@ -322,18 +350,16 @@ def plot_multiple_dispersions(_l: list[dict]) -> plt.Figure:
     return fig
 
 
-def u_plot_all_dispersions(d: dict) -> plt.Figure:
-    ks = d["inputs"]["ks"]
-    j = d["inputs"]["J"]
+def plot_multiple_dispersions(_l: list[dict]) -> plt.Figure:
     fig, ax = plt.subplots()
-    res = d["results"]
-    for k in res:
-        disp = res[k]["disp"]
-        for be in disp:
-
-            ax.errorbar(ks, disp[be][0][:], yerr=disp[be][1][:], label=f"{k} - {be}")
-            ax.legend()
-
+    for ind, _d in enumerate(_l):
+        ks = _d["inputs"]["ks"]
+        j = _d["inputs"]["J"]
+        res = _d["results"]
+        for k in res:
+            disp = res[k]["disp"]
+            for be in disp:
+                ax.plot(ks, disp[be], label=f"{k} - {be} ({ind})")
     ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="analytic")
     ax.legend()
     return fig

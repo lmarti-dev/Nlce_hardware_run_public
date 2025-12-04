@@ -1,5 +1,13 @@
 import copy
 from data_manager import ExperimentDataManager
+from qcomp_nlce.utils import (
+    heff_backend_type,
+    dispersion_all_backends,
+    plot_multiple_dispersions,
+    plot_all_backends_dispersions_UT,
+)
+
+import matplotlib.pyplot as plt
 
 
 def average_matrices(dicts: list[dict]) -> dict:
@@ -76,5 +84,14 @@ def average_over_runs():
     plt.show()
 
 
+def load_and_plot(fpath):
+    edm = ExperimentDataManager.load(fpath)
+    d = edm.load_last_saved_data_file
+    fig = plot_all_backends_dispersions_UT(d)
+    plt.show()
+
+
 if __name__ == "__main__":
-    average_over_runs()
+
+    fpath = r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test_00005"
+    load_and_plot(fpath)

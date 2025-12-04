@@ -8,7 +8,7 @@ from qcomp_nlce.utils.folders import res_sim_dir
 from qcomp_nlce.utils.workflow import (
     vqe_dispersion,
     tfim_ed_dispersion,
-    plot_all_dispersions,
+    plot_all_backends_dispersions,
 )
 import matplotlib.pyplot as plt
 from data_manager import ExperimentDataManager
@@ -20,12 +20,11 @@ def workflow_5q():
     J = 1
     mult = 1
     which_backends = [
-        "real_backend",
         "fake_backend",
         "statevector",
     ]
-    provider_name = "AQT"
-    n_shots = int(2e2)
+    provider_name = "IQM"
+    n_shots = int(2e4)
     ks = np.linspace(0, np.pi, 21)
     group_size = None
     which_hadamard_test = "estimator"
@@ -35,7 +34,7 @@ def workflow_5q():
     elem_dirname_l = Path(res_sim_dir(), "elem_vqe_1j/vqe/cost_offdiag/5q_3l")
     elem_dirname_s = Path(res_sim_dir(), "elem_vqe_1j/vqe/cost_offdiag/4q_2l")
 
-    dry_run = False
+    dry_run = True
 
     edm = ExperimentDataManager(
         "workflow_tfim_real_backend_vqe_REALDATA", dry_run=dry_run
@@ -100,7 +99,7 @@ def workflow_5q():
     out_dict["results"]["ed"] = {"disp": {"statevector": ed_disp}}
     edm.save_dict(out_dict)
 
-    fig = plot_all_dispersions(out_dict)
+    fig = plot_all_backends_dispersions(out_dict)
 
     edm.save_figure(fig, fig_shape="double-y")
     plt.show()
