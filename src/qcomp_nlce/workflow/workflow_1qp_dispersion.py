@@ -26,16 +26,18 @@ def workflow_5q():
     n_shots = int(2e3)
     ks = np.linspace(0, np.pi, 21)
     group_size = 6
-    which_hadamard_test = "full"
+    which_hadamard_test = "estimator"
 
     gs_dirname_l = Path(res_sim_dir(), "gs_vqe_1j/vqe/5q_3l")
     gs_dirname_s = Path(res_sim_dir(), "gs_vqe_1j/vqe/4q_2l")
     elem_dirname_l = Path(res_sim_dir(), "elem_vqe_1j/vqe/cost_offdiag/5q_3l")
     elem_dirname_s = Path(res_sim_dir(), "elem_vqe_1j/vqe/cost_offdiag/4q_2l")
 
-    dry_run = True
+    dry_run = False
 
-    edm = ExperimentDataManager("workflow_tfim_real_backend_vqe", dry_run=dry_run)
+    edm = ExperimentDataManager(
+        "workflow_tfim_real_backend_vqe_REALDATA", dry_run=dry_run
+    )
 
     out_dict = {
         "results": {},

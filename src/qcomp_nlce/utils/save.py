@@ -124,4 +124,4 @@ def rebuild_matrices_from_tmp(l: TempListType, n: int) -> tuple[np.array, np.arr
 
 
 def tmp_filename(circuit: QuantumCircuit, which_backend: str):
-    return f"{circuit.metadata['tmpname']}_{which_backend}"
+    return f"{circuit.metadata['tmpname']}_{which_backend}.json"

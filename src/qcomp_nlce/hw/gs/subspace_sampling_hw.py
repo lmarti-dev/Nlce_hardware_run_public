@@ -134,7 +134,8 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
                 n_shots,
                 provider_name,
             )
-            save_tmp_item(item, filename)
+            if on_hardware:
+                save_tmp_item(item, filename)
         d[which_backend] = item[which_backend]
     return d
 
