@@ -117,14 +117,14 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
     for which_backend in which_backends:
         on_hardware = is_hardware_run(which_backend)
         filename = f"measure_ground_energy_{tmp_filename(circuit,which_backend)}"
-
+        item = None
         if on_hardware:
             try:
                 item = load_tmp_item(filename)
                 print(f"Already Computed {circuit.metadata['tmpname']}")
             except FileNotFoundError:
-                print(f"Starting from scratch (ground state)")
-                item = None
+                print("Starting from scratch (ground state)")
+
         if item is None:
             item = measure_ground_state_energy_subspace_sampling_v2(
                 hamiltonian,
