@@ -3,7 +3,8 @@ import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
-from qiskit_ibm_runtime import EstimatorV2, RuntimeJob, SamplerV2
+from qiskit_ibm_runtime import EstimatorV2, SamplerV2
+from qiskit_ibm_runtime.base_runtime_job import BaseRuntimeJob
 from qiskit.primitives import EstimatorResult, PrimitiveResult
 
 
@@ -194,10 +195,22 @@ def circuits_to_payload(
 ) -> list[tuple[QuantumCircuit, dict]]:
     if isinstance(circuit, QuantumCircuit):
         circuit = [circuit]
-    isa_circuit = compile_circuit_for_backend(
-        circuit, backend, {"optimization_level": 3}
-    )
+
+    if isinstance(backend, MQPBackend):
+        initial_layout = list(range(circuit[0].num_qubits))
+        isa_circuit = transpile(
+            circuit,
+            backend=backend,
+            initial_layout=initial_layout,
+            optimization_level=3,
+            coupling_map=backend.coupling_map,
+        )
+    else:
+        isa_circuit = compile_circuit_for_backend(
+            circuit, backend, {"optimization_level": 3}
+        )
     if which == "v1":
+
         payload = [[], [], []]
         # assume that for each circuit you want to measure each parameters
         if isinstance(isa_circuit, QuantumCircuit):
@@ -240,7 +253,7 @@ def backend_sample(
     circuit,
     parameters: np.ndarray,
     n_shots: int,
-) -> RuntimeJob:
+) -> BaseRuntimeJob:
     if isinstance(backend, (IBMBackend, FakeBackendV2)):
         sampler = SamplerV2(mode=backend)
 
@@ -266,7 +279,7 @@ def backend_sample(
             circuit,
             backend=backend,
             initial_layout=initial_layout,
-            optimization_level=1,
+            optimization_level=3,
             coupling_map=backend.coupling_map,
         )
         sampler = SamplerV2(mode=backend)
@@ -282,9 +295,9 @@ def backend_estimate(
     circuit: Union[QuantumCircuit | list[QuantumCircuit]],
     parameters: np.ndarray,
     n_shots: int,
-) -> RuntimeJob:
+) -> BaseRuntimeJob:
 
-    if isinstance(backend, AQTResource):
+    if isinstance(backend, (AQTResource, MQPBackend)):
         estimator = AQTEstimator(backend)
         (circuit, observables, parameters) = circuits_to_payload(
             backend, circuit, parameters, observables, which="v1"
@@ -300,7 +313,7 @@ def backend_estimate(
         if parameters != []:
             kwargs.update({"parameters": parameters})
 
-        job = estimator.run(**kwargs)
+        job = estimator.run(qasm3=True, queued=True, **kwargs)
     else:
         options = {}
         # avoid the warning when using a fakebackend

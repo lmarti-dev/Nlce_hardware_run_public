@@ -20,12 +20,14 @@ def workflow_5q():
     J = 1
     mult = 1
     which_backends = [
+        "real_backend",
         "fake_backend",
+        "statevector",
     ]
     provider_name = "AQT"
-    n_shots = int(2e3)
+    n_shots = int(2e2)
     ks = np.linspace(0, np.pi, 21)
-    group_size = 6
+    group_size = None
     which_hadamard_test = "estimator"
 
     gs_dirname_l = Path(res_sim_dir(), "gs_vqe_1j/vqe/5q_3l")

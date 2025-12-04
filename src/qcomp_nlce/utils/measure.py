@@ -1,7 +1,8 @@
 from qiskit.primitives import StatevectorSampler, PrimitiveJob, StatevectorEstimator
 from qcomp_nlce.utils.hardware import backend_sample, backend_estimate, BACKEND_ALIAS
 from qcomp_nlce.utils.circuit import parameters_exist
-from qiskit_ibm_runtime import IBMBackend, RuntimeJob
+from qiskit_ibm_runtime import IBMBackend
+from qiskit_ibm_runtime.base_runtime_job import BaseRuntimeJob
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
 from qiskit import ClassicalRegister, QuantumCircuit
 from typing import Union
@@ -75,14 +76,14 @@ def sample_counts_circuit(
     return counts
 
 
-def get_counts_from_res(res: Union[RuntimeJob, PrimitiveJob, MQPJob]) -> dict:
+def get_counts_from_res(res: Union[BaseRuntimeJob, PrimitiveJob, MQPJob]) -> dict:
     return res.join_data().get_counts()
 
 
 def get_counts_from_job(
-    job: Union[RuntimeJob, PrimitiveJob, MQPJob], ind: int = 0
+    job: Union[BaseRuntimeJob, PrimitiveJob, MQPJob], ind: int = 0
 ) -> dict:
-    if isinstance(job, RuntimeJob):
+    if isinstance(job, BaseRuntimeJob):
         key = list(job.result()[ind].data.keys())[0]
         counts = job.result()[ind].data[key].get_counts()
     elif isinstance(job, PrimitiveJob):

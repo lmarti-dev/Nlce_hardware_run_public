@@ -178,6 +178,7 @@ cython_debug/
 
 ibm_token.dat
 lrz_token.dat
+iqm_token.dat
 
 data_folder/
 hardware/
