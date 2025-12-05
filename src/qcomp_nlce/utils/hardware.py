@@ -7,10 +7,19 @@ from qiskit_ibm_runtime import EstimatorV2, SamplerV2
 from qiskit_ibm_runtime.base_runtime_job import BaseRuntimeJob
 from qiskit.primitives import EstimatorResult, PrimitiveResult
 
+try:
+    from iqm.qiskit_iqm.fake_backends.fake_deneb import (
+        IQMFakeDeneb as IQMSmallFakeBackend,
+    )
+except Exception:
 
-from iqm.qiskit_iqm.fake_backends.fake_apollo import IQMFakeApollo
+    from iqm.qiskit_iqm.fake_backends.fake_adonis import (
+        IQMFakeAdonis as IQMSmallFakeBackend,
+    )
+from iqm.qiskit_iqm.fake_backends.fake_garnet import (
+    IQMFakeGarnet,
+)
 from iqm.qiskit_iqm.fake_backends.fake_aphrodite import IQMFakeAphrodite
-from iqm.qiskit_iqm.fake_backends.fake_adonis import IQMFakeAdonis
 from iqm.qiskit_iqm.fake_backends.iqm_fake_backend import IQMFakeBackend
 from iqm.qiskit_iqm import IQMProvider, IQMBackend, IQMJob
 
@@ -25,12 +34,29 @@ from qiskit_ibm_runtime.fake_provider import (
 from typing import Literal, Union
 
 from qiskit import transpile
-from qiskit.primitives.base.sampler_result import SamplerResult
+from qiskit.primitives.base import SamplerResult
 from qiskit.circuit.parametertable import ParameterView
-from qiskit_aqt_provider import AQTProvider
-from qiskit_aqt_provider.primitives import AQTSampler, AQTEstimator
-from qiskit_aqt_provider.aqt_resource import AQTResource
-from mqp.qiskit_provider import MQPProvider, MQPBackend
+
+
+try:
+    from qiskit_aqt_provider import AQTProvider
+    from qiskit_aqt_provider.primitives import AQTSampler, AQTEstimator
+    from qiskit_aqt_provider.aqt_resource import AQTResource
+    from mqp.qiskit_provider import MQPProvider, MQPBackend
+except ModuleNotFoundError:
+    # watch this
+    class MQPProvider: ...
+
+    class MQPBackend: ...
+
+    class AQTResource: ...
+
+    class AQTSampler: ...
+
+    class AQTEstimator: ...
+
+    class AQTProvider: ...
+
 
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
 
@@ -119,10 +145,12 @@ def get_appropriate_fake_backend(
             "offline_simulator_noise"
         )
     elif which == "IQM":
+        n_qubits += 2
+        # counting ancillas and resonators!
         if n_qubits <= 5:
-            return IQMFakeAdonis()
+            return IQMSmallFakeBackend()
         elif n_qubits <= 20:
-            return IQMFakeApollo()
+            return IQMFakeGarnet()
         else:
             return IQMFakeAphrodite()
     else:

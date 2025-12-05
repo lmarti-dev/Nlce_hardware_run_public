@@ -76,7 +76,33 @@ def to_mega_arrays(
     return arr, stds
 
 
-def unroll_arr(arr, nqm: int):
+def complex_to_double_real(z: np.ndarray) -> np.ndarray:
+    x = z.real
+    y = z.imag
+
+    if isinstance(x, float) and isinstance(y, float):
+        return np.array([x, y])
+
+    return np.concatenate([x, y])
+
+
+def double_real_to_complex(r: np.ndarray) -> np.ndarray:
+    assert len(r) % 2 == 0
+    ll = int(len(r) / 2)
+    v1 = r[:ll]
+    v2 = r[ll:]
+    return v1 + 1j * v2
+
+
+def vectorize_complex_func(func: callable) -> np.ndarray:
+    def vfunc(arr):
+        out = func(double_real_to_complex(arr))
+        return complex_to_double_real(out)
+
+    return vfunc
+
+
+def rebuild_matrices(arr: np.ndarray, nqm: int):
 
     sml = int(2 * (nqm**2))
     sms = int(2 * ((nqm - 1) ** 2))
@@ -109,7 +135,7 @@ def dispersion_from_mats(arr, k, nqm: int) -> float:
         overlap_s,
         expectations_s,
         gs_expectation_s,
-    ) = unroll_arr(arr, nqm)
+    ) = rebuild_matrices(arr, nqm)
 
     H_eff_Nb = H_effective(gs_expectation_l, expectations_l, overlap_l)
     H_eff_Ns = H_effective(gs_expectation_s, expectations_s, overlap_s)
@@ -124,7 +150,7 @@ def unscented_transform(
     alpha: float = 1e-2,
     kappa: float = 0,
     beta: float = 2,
-):
+) -> tuple[np.ndarray, np.ndarray]:
     # brought to you by
     # The Unscented Kalman Filter for Nonlinear Estimation
     # Eric A. Wan and Rudolph van der Merwe
@@ -136,6 +162,8 @@ def unscented_transform(
     ll = test.shape
     if ll == ():
         ll = 1
+    else:
+        ll = ll[0]
     L = len(vals)
     lam = (alpha**2) * (L + kappa)
 
@@ -178,6 +206,8 @@ def unscented_transform(
 
     assert np.all(ymean.real == ymean)
     assert np.all(Pmat.real == Pmat)
+
+    raise ValueError("Pmat is 4 x 1 why?")
 
     return ymean.real, Pmat.real
 
@@ -243,12 +273,18 @@ def dispersion_1d_thermodynamic_ks_UT(
     )
 
 
-def disp_from_res_dict(ks: np.ndarray, _d: dict, circ: Literal["vqe", "sweep"]) -> dict:
+def disp_from_res_dict(
+    ks: np.ndarray,
+    _d: dict,
+    circ: Literal["vqe", "sweep"],
+    improvement_needed: int = 10,
+) -> dict:
     res = _d["results"][circ]
     disps = {}
     # tweak this to see how much better we need to get
     # 1 for actual values
-    improvement_needed = 1
+    if improvement_needed != 1:
+        print(f"Fictional scenario with std divided by {improvement_needed}")
     for be in res["dict_l"]["eld"]:
         if be != "system":
             overlap_l = res["dict_l"]["eld"][be]["values"]

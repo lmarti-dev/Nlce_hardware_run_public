@@ -1,14 +1,9 @@
 from qiskit import QuantumCircuit, ClassicalRegister
 from qiskit.quantum_info import SparsePauliOp
 import numpy as np
-from qiskit_ibm_runtime import IBMBackend
-from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
-from qiskit_aqt_provider.aqt_resource import OfflineSimulatorResource
 from qcomp_nlce.utils.measure import (
     sample_counts_circuit,
-    sample_circuit,
     estimate_circuit,
-    get_counts_from_job,
 )
 from qcomp_nlce.utils.hamiltonian import index_bits, projector_ham, trace_dist
 from qcomp_nlce.utils.circuit import (
@@ -16,8 +11,6 @@ from qcomp_nlce.utils.circuit import (
     apply_parameters,
     circuit_instruction_to_circuit,
     prep_circ_superpos,
-    from_bitstring,
-    circuit_to_matrix,
 )
 
 from qcomp_nlce.utils.save import (
@@ -26,6 +19,12 @@ from qcomp_nlce.utils.save import (
     load_tmp_item,
     rebuild_matrices_from_tmp,
     tmp_filename,
+)
+
+from qcomp_nlce.utils.unscented_transform import (
+    unscented_transform,
+    complex_to_double_real,
+    vectorize_complex_func,
 )
 
 from qcomp_nlce.utils.hardware import is_hardware_run, BACKEND_ALIAS
@@ -132,16 +131,24 @@ def get_overlaps_from_res(
     if len(gs) == 1:
         final_g = gs[0]
     elif len(gs) % 2 == 0:
-        final_g = np.prod(gs[1::2]) / np.prod(np.conj(gs[0::2]))
-    elif len(gs) % 2 == 1:
-        final_g = np.prod(gs[0::2]) / np.prod(np.conj(gs[1::2]))
 
+        def prodfunc(gs: np.ndarray) -> np.ndarray:
+            return np.prod(gs[1::2]) / np.prod(np.conj(gs[0::2]))
+
+    elif len(gs) % 2 == 1:
+
+        def prodfunc(gs: np.ndarray) -> np.ndarray:
+            return np.prod(gs[0::2]) / np.prod(np.conj(gs[1::2]))
+
+    final_g = prodfunc(gs)
+    _, pmat = unscented_transform(
+        vectorize_complex_func(prodfunc),
+        complex_to_double_real(gs),
+        complex_to_double_real(stds),
+    )
     # first order error prop
 
-    raise NotImplementedError(
-        "This can be implemented via a UT, but I first need to get it to work"
-    )
-    final_std = ...
+    final_std = pmat
 
     return final_g, gs, g_abs, final_std
 

@@ -179,8 +179,8 @@ def sweep_heff(
     # the most important thing is to have enough steps!!!
     # the total time can be low-ish
 
-    total_time = mult / (min_gap**2)
     n_steps = int(mult * n_qubits**2)
+    total_time = mult / (min_gap**2)
     circuit = get_tfim_sweep_circuit(
         ham_h,
         ham_j + ham_h,
@@ -228,7 +228,7 @@ def get_heff_values(
     provider_name: str = "IBM",
     n_shots: int = 1000,
     group_size: int = None,
-    which_hadamard_test: str = "estimator",
+    which_hadamard_test: str = "off-diag",
     solve: bool = True,
 ):
 

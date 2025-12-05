@@ -8,7 +8,8 @@ from qcomp_nlce.utils.folders import res_sim_dir
 from qcomp_nlce.utils.workflow import (
     vqe_dispersion,
     tfim_ed_dispersion,
-    plot_all_backends_dispersions,
+    sweep_dispersion,
+    plot_all_backends_dispersions_UT,
 )
 import matplotlib.pyplot as plt
 from data_manager import ExperimentDataManager
@@ -18,7 +19,6 @@ def workflow_5q():
 
     n_qubits_max = 5
     J = 1
-    mult = 1
     which_backends = [
         "fake_backend",
         "statevector",
@@ -26,8 +26,8 @@ def workflow_5q():
     provider_name = "IQM"
     n_shots = int(2e4)
     ks = np.linspace(0, np.pi, 21)
-    group_size = None
-    which_hadamard_test = "estimator"
+    group_size = 4
+    which_hadamard_test = "off-diag"
 
     gs_dirname_l = Path(res_sim_dir(), "gs_vqe_1j/vqe/5q_3l")
     gs_dirname_s = Path(res_sim_dir(), "gs_vqe_1j/vqe/4q_2l")
@@ -37,7 +37,7 @@ def workflow_5q():
     dry_run = True
 
     edm = ExperimentDataManager(
-        "workflow_tfim_real_backend_vqe_REALDATA", dry_run=dry_run
+        f"workflow_tfim_real_backend_{provider_name}_{n_shots}shots", dry_run=dry_run
     )
 
     out_dict = {
@@ -51,7 +51,7 @@ def workflow_5q():
         },
     }
 
-    print("== Sweep ==")
+    # print("== Sweep ==")
     # sweep_dict_l, sweep_dict_s, sweep_disp = sweep_dispersion(
     #     n_qubits_max,
     #     J,
@@ -99,7 +99,7 @@ def workflow_5q():
     out_dict["results"]["ed"] = {"disp": {"statevector": ed_disp}}
     edm.save_dict(out_dict)
 
-    fig = plot_all_backends_dispersions(out_dict)
+    fig = plot_all_backends_dispersions_UT(out_dict)
 
     edm.save_figure(fig, fig_shape="double-y")
     plt.show()

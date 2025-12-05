@@ -6,7 +6,14 @@ from qiskit_ibm_runtime.base_runtime_job import BaseRuntimeJob
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
 from qiskit import ClassicalRegister, QuantumCircuit
 from typing import Union
-from mqp.qiskit_provider.job import MQPJob
+
+try:
+    from mqp.qiskit_provider.job import MQPJob
+except ModuleNotFoundError:
+
+    class MQPJob: ...
+
+
 from qiskit.quantum_info import SparsePauliOp
 import numpy as np
 from qiskit_aer import AerJob
