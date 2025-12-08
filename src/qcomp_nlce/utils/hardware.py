@@ -213,7 +213,57 @@ def compile_circuit_for_backend(
     return isa_circuit
 
 
-def circuits_to_payload(
+def circuits_to_sampler_payload(
+    backend,
+    circuit: Union[QuantumCircuit, list[QuantumCircuit]],
+    parameters: np.ndarray,
+    which: str = "v2",
+):
+    if isinstance(circuit, QuantumCircuit):
+        circuit = [circuit]
+
+    if isinstance(backend, MQPBackend | IQMBackend):
+        initial_layout = list(range(circuit[0].num_qubits))
+        isa_circuit = transpile(
+            circuit,
+            backend=backend,
+            initial_layout=initial_layout,
+            optimization_level=3,
+            coupling_map=backend.coupling_map,
+        )
+    else:
+        isa_circuit = compile_circuit_for_backend(
+            circuit, backend, {"optimization_level": 3}
+        )
+    if which == "v1":
+
+        payload = []
+        if isinstance(isa_circuit, QuantumCircuit):
+            isa_circuit = [isa_circuit]
+        for c in isa_circuit:
+            # no parameters allowed!
+            payload.append(c)
+        return payload
+
+    elif which == "v2":
+        payload = []
+
+        if isinstance(isa_circuit, QuantumCircuit):
+            isa_circuit = [isa_circuit]
+
+        for idx in range(len(isa_circuit)):
+            toadd = []
+            if parameters_exist(parameters):
+                isa_params = isa_circuit_param_dict(
+                    isa_circuit[idx], circuit[idx], parameters
+                )
+                toadd.append(isa_params)
+            payload.append((isa_circuit[idx], *toadd))
+
+    return payload
+
+
+def circuits_to_estimator_payload(
     backend,
     circuit: Union[QuantumCircuit, list[QuantumCircuit]],
     parameters: np.ndarray,
@@ -284,23 +334,21 @@ def backend_sample(
     if isinstance(backend, (IBMBackend, FakeBackendV2)):
         sampler = SamplerV2(mode=backend)
 
-        payload = circuits_to_payload(backend, circuit, parameters, None)
+        payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v2")
         job = sampler.run(
             payload,
             shots=int(n_shots),
         )
 
     elif isinstance(backend, AQTResource):
-        circuit = circuit.assign_parameters(parameters_dict(circuit, parameters))
+        payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
         sampler = AQTSampler(backend)
-        job = sampler.run([circuit], parameter_values=None, shots=n_shots)
+        job = sampler.run(payload, parameter_values=None, shots=n_shots)
     elif isinstance(backend, MQPBackend):
-        circuit = circuit.assign_parameters(parameters_dict(circuit, parameters))
-        job = backend.run(circuit, shots=n_shots, qasm3=True, queued=True)
+        payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
+        job = backend.run(payload, shots=n_shots, qasm3=True, queued=True)
 
     elif isinstance(backend, (IQMFakeBackend, IQMBackend)):
-        circuit = circuit.assign_parameters(parameters_dict(circuit, parameters))
-
         initial_layout = list(range(circuit.num_qubits))
         isa_circuits = transpile(
             circuit,
@@ -326,7 +374,7 @@ def backend_estimate(
 
     if isinstance(backend, (AQTResource, MQPBackend)):
         estimator = AQTEstimator(backend)
-        (circuit, observables, parameters) = circuits_to_payload(
+        (circuit, observables, parameters) = circuits_to_estimator_payload(
             backend, circuit, parameters, observables, which="v1"
         )
         # lose yourself in the moment, the music
@@ -347,7 +395,9 @@ def backend_estimate(
         if not isinstance(backend, FakeBackendV2):
             options.update({"resilience_level": 2})
         estimator = EstimatorV2(backend, options=options)
-        payload = circuits_to_payload(backend, circuit, parameters, observables)
+        payload = circuits_to_estimator_payload(
+            backend, circuit, parameters, observables
+        )
         job = estimator.run(
             payload,
             precision=1 / np.sqrt(n_shots),

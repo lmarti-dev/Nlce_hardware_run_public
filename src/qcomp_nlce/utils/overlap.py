@@ -4,6 +4,8 @@ import numpy as np
 from qcomp_nlce.utils.measure import (
     sample_counts_circuit,
     circuit_estimation_job,
+    circuit_sampling_job,
+    get_counts_from_res,
 )
 from qcomp_nlce.utils.hamiltonian import index_bits, projector_ham, trace_dist
 from qcomp_nlce.utils.circuit import (
@@ -291,7 +293,7 @@ def iterative_hadamard_test_projecto_estimo(
     return final_g, std
 
 
-def build_stefan_circuit(
+def build_stefan_circuit_estimator(
     circuit: QuantumCircuit, parameters: np.ndarray, x: str, y: str
 ) -> QuantumCircuit:
     n_qubits = circuit.num_qubits + 1
@@ -311,6 +313,33 @@ def build_stefan_circuit(
     return hadam_circuit
 
 
+def build_stefan_circuits_sample(
+    circuit: QuantumCircuit, parameters: np.ndarray, x: str, y: str
+) -> QuantumCircuit:
+    hadam_circuits = []
+    n_qubits = circuit.num_qubits + 1
+    for t in ("real", "imag"):
+        hadam_circuit = QuantumCircuit(n_qubits)
+        hadam_circuit.h(0)
+
+        x_inds = index_bits(x, circuit.num_qubits, right_to_left=True)
+        y_inds = index_bits(y, circuit.num_qubits, right_to_left=True)
+
+        for y in y_inds:
+            hadam_circuit.cx(0, y + 1)
+        hadam_circuit.append(apply_parameters(circuit, parameters), range(1, n_qubits))
+        for x in x_inds:
+            hadam_circuit.cx(0, x + 1)
+        if t == "imag":
+            hadam_circuit.s(0)
+        hadam_circuit.x(0)
+        hadam_circuits.append(hadam_circuit)
+
+        hadam_circuit.measure_all()
+
+    return hadam_circuits
+
+
 def stefan_hadamard_test(
     circuit: QuantumCircuit,
     parameters: np.ndarray,
@@ -318,6 +347,7 @@ def stefan_hadamard_test(
     x: str,
     y: str,
     backend: BACKEND_ALIAS = "statevector",
+    counting_method: str = "estimator",
 ):
 
     # this is Stefan Wolf's test, a bit modified though
@@ -327,24 +357,37 @@ def stefan_hadamard_test(
     # oUo = circuit_to_matrix(circuit)[0, 0]
     # print(f"Uncomputed overlap is {oUo:.5e}")
 
-    stef_circuit = build_stefan_circuit(circuit, parameters, x, y)
+    if counting_method == "estimator":
+        stef_circuit = build_stefan_circuit_estimator(circuit, parameters, x, y)
+        proj = projector_ham(circuit.num_qubits, bitstring="0" * len(x))
+        hams = [
+            proj ^ SparsePauliOp("X"),
+            proj ^ SparsePauliOp("Y"),
+        ]
+        jobs = circuit_estimation_job(
+            backend=backend,
+            observables=hams,
+            circuit=stef_circuit,
+            parameters=None,
+            n_shots=n_shots,
+        )
 
-    proj = projector_ham(circuit.num_qubits, bitstring="0" * len(x))
-    hams = [
-        proj ^ SparsePauliOp("X"),
-        proj ^ SparsePauliOp("Y"),
-    ]
-    jobs = circuit_estimation_job(
-        backend=backend,
-        observables=hams,
-        circuit=stef_circuit,
-        parameters=None,
-        n_shots=n_shots,
-    )
+        ol, std = get_hadam_estimator(jobs.result())
+        return ol, std
 
-    ol, std = get_hadam_estimator(jobs.result())
+    elif counting_method == "samples":
+        stef_circuits = build_stefan_circuits_sample(circuit, parameters, x, y)
+        jobs = circuit_sampling_job(stef_circuits, parameters, backend, n_shots)
+        if backend == "statevector":
+            keys = {"p0": "0" * (len(x) + 1), "p1": "0" * (len(x)) + "1"}
+        else:
+            # weep
+            keys = {"p0": "0", "p1": "1"}
+        res = jobs.result()
+        re, rstd = hadam_diff(get_counts_from_res(res, 0), keys=keys)
+        im, imstd = hadam_diff(get_counts_from_res(res, 1), keys=keys)
 
-    return ol, std
+        return re + 1j * im, rstd + 1j * imstd
 
 
 # computes the real part of overlap between psi and circuit(psi)
@@ -380,7 +423,8 @@ def hadamard_test(
 ):
     hadam_circuit = hadamard_test_circuit(circuit, parameters, real_part)
     counts = sample_counts_circuit(hadam_circuit, backend, n_shots)
-    return hadam_diff(counts, n_shots)
+    val, std = hadam_diff(counts, n_shots)
+    return val
 
 
 def get_n0n1_hadam_counts(counts: dict, keys: dict[str, str] = {"p0": "0", "p1": "1"}):
@@ -406,9 +450,15 @@ def hadam_diff(
 ) -> float:
 
     n0, n1 = get_n0n1_hadam_counts(counts, keys)
+    if n0 == 0 and n1 == 0:
+        return 0, 0
+
     if n_shots is None:
         n_shots = n0 + n1
-    return (n0 - n1) / n_shots
+
+    std = full_hadamard_std(n1, n0)
+
+    return (n0 - n1) / n_shots, std
 
 
 def circuit_with_init(
@@ -443,12 +493,13 @@ def get_hadam_estimator(res: EstimatorResult) -> tuple[complex, complex]:
 
     except Exception:
         return res.values[0] + 1j * res.values[1], np.sqrt(
-            np.sqrt(res.metadata[0]["variance"])
-            + 1j * +np.sqrt(res.metadata[1]["variance"])
-        )
+            res.metadata[0]["variance"]
+        ) + 1j * +np.sqrt(res.metadata[1]["variance"])
 
 
 def full_hadamard_std(n_1: int, n_0: int) -> float:
+    if n_1 == 0 and n_0 == 0:
+        return 0
     N = n_1 + n_0
     mu = n_1 / N
     sigma = np.sqrt((n_1 * ((mu - 1) ** 2)) / N)
@@ -521,8 +572,7 @@ def measure_matrix_element(
         stds = []
         for tmp_circ in (re_circ, im_circ):
             counts = sample_counts_circuit(tmp_circ, parameters, backend, n_shots)
-            v = hadam_diff(counts, n_shots)
-            std = full_hadamard_std(*get_n0n1_hadam_counts(counts))
+            v, std = hadam_diff(counts, n_shots)
             stds.append(std)
             vals.append(v)
 
@@ -766,7 +816,7 @@ def measure_hamiltonian_elements(
                 stds[ind_x, ind_y] = std
                 stds[ind_y, ind_x] = std
 
-                print(f"{ind_x} - {ind_y} - {val:.5f}")
+                print(f"{ind_x} - {ind_y} - {val}")
                 if on_hardware:
                     computed_values = add_tmp_entry_and_save(
                         filename, computed_values, val.conj(), std, ind_x, ind_y

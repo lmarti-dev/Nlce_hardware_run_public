@@ -11,12 +11,16 @@ from qiskit_ibm_runtime.base_runtime_job import BaseRuntimeJob
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
 from qiskit import ClassicalRegister, QuantumCircuit
 from typing import Union
+from qiskit.primitives import PrimitiveResult
 
 try:
     from mqp.qiskit_provider.job import MQPJob
+    from qiskit.result import Result
 except ModuleNotFoundError:
 
     class MQPJob: ...
+
+    class Result: ...
 
 
 from qiskit.quantum_info import SparsePauliOp
@@ -82,8 +86,31 @@ def sample_counts_circuit(
     return counts
 
 
-def get_counts_from_res(res: Union[BaseRuntimeJob, PrimitiveJob, MQPJob]) -> dict:
-    return res.join_data().get_counts()
+def get_counts_from_res(res: Union[PrimitiveResult, Result], ind: int = 0) -> dict:
+    # you get them at some point
+    try:
+        key = list(res[ind].data.keys())[0]
+        counts = res[ind].data[key].get_counts()
+        return counts
+    except Exception:
+        pass
+    try:
+        qd = res.quasi_dists[ind]
+        n_shots = res.metadata[ind]["shots"]
+        counts = {k: int(qd[k] * n_shots) for k in qd.keys()}
+        return counts
+    except Exception:
+        pass
+    try:
+        counts = res[ind].join_data().get_counts()
+        return counts
+    except Exception:
+        pass
+    try:
+        counts = res.get_counts(ind)
+        return counts
+    except Exception as e:
+        raise RuntimeError(f"Unknown result: {res}")
 
 
 def get_counts_from_job(

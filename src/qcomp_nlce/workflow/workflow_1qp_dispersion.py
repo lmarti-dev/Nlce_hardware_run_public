@@ -11,6 +11,8 @@ from qcomp_nlce.utils.workflow import (
 )
 from data_manager import ExperimentDataManager
 
+import matplotlib.pyplot as plt
+
 
 def workflow_5q():
 
@@ -20,8 +22,8 @@ def workflow_5q():
         "fake_backend",
         "statevector",
     ]
-    provider_name = "IQM"
-    n_shots = int(1e7)
+    provider_name = "AQT"
+    n_shots = int(2e3)
     ks = np.linspace(0, np.pi, 21)
     group_size = None
     which_hadamard_test = "stefan"
@@ -99,6 +101,8 @@ def workflow_5q():
 
     fig = plot_all_backends_dispersions_UT(out_dict)
 
+    plt.show()
+
     edm.save_figure(fig, fig_shape="double-y")
 
 
@@ -108,8 +112,8 @@ def worflow_sweep_test():
         n_qubits_max = 5
         J = 1
         which_backends = ["statevector", "fake_backend"]
-        provider_name = "IQM"
-        n_shots = int(1e4)
+        provider_name = "AQT"
+        n_shots = int(2e3)
         ks = np.linspace(0, np.pi, 21)
         group_size = None
         which_hadamard_test = "stefan"
@@ -164,4 +168,4 @@ def worflow_sweep_test():
 
 
 if __name__ == "__main__":
-    worflow_sweep_test()
+    workflow_5q()

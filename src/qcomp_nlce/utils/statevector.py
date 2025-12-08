@@ -10,7 +10,7 @@ from qcomp_nlce.utils.circuit import (
     circuit_to_matrix,
     parameters_exist,
 )
-from qcomp_nlce.utils.hardware import circuits_to_payload
+from qcomp_nlce.utils.hardware import circuits_to_estimator_payload
 from qcomp_nlce.utils.hamiltonian import from_bitstring
 from typing import Literal
 
