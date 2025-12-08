@@ -61,7 +61,7 @@ def test_UT_with_normal():
 
     fig, ax = plt.subplots()
     ax.plot(func(x + 1j * y).real, func(x + 1j * y).imag, ".", label="data")
-    ax.plot(mc_data[0, :], mc_data[1, :], "g.", alpha=0.5, label="mc data")
+    ax.plot(mc_data[0, :], mc_data[1, :], "g.", alpha=0.01, label="mc data")
     ax.errorbar(fmean.real, fmean.imag, fstd.real, fstd.imag, "rx", label="fmean")
     ax.errorbar(mcf_mean[0], mcf_mean[1], mcf_std[0], mcf_std[1], "bd", label="mc")
     ax.errorbar(ymean[0], ymean[1], ystd[0], ystd[1])
