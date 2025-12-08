@@ -128,10 +128,9 @@ def train_and_save(
 
 # input here "offdiag" or "sweep"
 if __name__ == "__main__":
-
     dry_run = False
     which_cost = "offdiag"
-    dirname = "elem_vqe_1j"
     for n_qubits in (4, 5):
-        for J in (1.0,):
+        for J in (0.8,):
+            dirname = f"elem_vqe_{int(J*100)}j"
             train_and_save(n_qubits, J, dirname, which_cost, dry_run)
