@@ -14,6 +14,7 @@ from qcomp_nlce.utils import (
     get_tfim_sweep_circuit,
     load_optimized_vqe,
     get_tfim_ratio,
+    sweep_time_from_steps,
 )
 from qcomp_nlce.utils.dispersion import (
     dispersion_1d_thermodynamic,
@@ -81,7 +82,7 @@ def vqe_dispersion(
 def sweep_dispersion(
     n_qubits_max: int,
     J: float,
-    mult: float,
+    n_steps: int,
     which_backends: list[str],
     provider_name: str,
     n_shots: int,
@@ -92,7 +93,7 @@ def sweep_dispersion(
     dict_l = sweep_heff(
         n_qubits_max,
         J,
-        mult,
+        n_steps,
         which_backends,
         provider_name,
         n_shots,
@@ -102,7 +103,7 @@ def sweep_dispersion(
     dict_s = sweep_heff(
         n_qubits_max - 1,
         J,
-        mult,
+        n_steps,
         which_backends,
         provider_name,
         n_shots,
@@ -166,7 +167,7 @@ def vqe_heff(
 def sweep_heff(
     n_qubits: int,
     J: float,
-    mult: float,
+    n_steps: int,
     which_backends: list[str],
     provider_name: str,
     n_shots: int,
@@ -179,8 +180,7 @@ def sweep_heff(
     # the most important thing is to have enough steps!!!
     # the total time can be low-ish
 
-    n_steps = int(mult * n_qubits**2)
-    total_time = mult / (min_gap**2)
+    total_time = sweep_time_from_steps(ham_h, hamiltonian, n_steps)
     circuit = get_tfim_sweep_circuit(
         ham_h,
         ham_j + ham_h,
@@ -228,10 +228,11 @@ def get_heff_values(
     provider_name: str = "IBM",
     n_shots: int = 1000,
     group_size: int = None,
-    which_hadamard_test: str = "off-diag",
+    which_hadamard_test: str = "stefan",
     solve: bool = True,
 ):
 
+    print(f"Using {which_hadamard_test} hadamard test")
     print("-- Computing <j|U|k> --")
     elements_dict = loop_measure_1qp_elements_v2(
         circuit=elem_circuit,
@@ -309,7 +310,9 @@ def plot_all_backends_dispersions(_d: dict) -> plt.Figure:
     return fig
 
 
-def plot_all_backends_dispersions_UT(_d: dict) -> plt.Figure:
+def plot_all_backends_dispersions_UT(
+    _d: dict, plot_ut_means: bool = False
+) -> plt.Figure:
     ks = _d["inputs"]["ks"]
     j = _d["inputs"]["J"]
     fig, ax = plt.subplots()
@@ -324,27 +327,15 @@ def plot_all_backends_dispersions_UT(_d: dict) -> plt.Figure:
             err = disp_from_res_dict(ks, _d, circ)
             disp = res[circ]["disp"]
             for be in disp:
-                ax.errorbar(ks, disp[be], err[be]["pmat"], label=f"{circ} - {be}")
-                ax.plot(
-                    ks,
-                    err[be]["means"],
-                    label=f"{circ} - {be} (UT mean)",
+                ax.errorbar(
+                    ks, disp[be], err[be]["pmat"] ** (1 / 2), label=f"{circ} - {be}"
                 )
-    ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="analytic")
-    ax.legend()
-    return fig
-
-
-def plot_multiple_dispersions(_l: list[dict]) -> plt.Figure:
-    fig, ax = plt.subplots()
-    for ind, _d in enumerate(_l):
-        ks = _d["inputs"]["ks"]
-        j = _d["inputs"]["J"]
-        res = _d["results"]
-        for k in res:
-            disp = res[k]["disp"]
-            for be in disp:
-                ax.plot(ks, disp[be], label=f"{k} - {be} ({ind})")
+                if plot_ut_means:
+                    ax.plot(
+                        ks,
+                        err[be]["means"],
+                        label=f"{circ} - {be} (UT mean)",
+                    )
     ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="analytic")
     ax.legend()
     return fig

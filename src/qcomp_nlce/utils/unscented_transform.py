@@ -147,7 +147,7 @@ def unscented_transform(
     func: callable,
     vals: np.ndarray,
     stds: np.ndarray,
-    alpha: float = 1e-2,
+    alpha: float = 1e-3,
     kappa: float = 0,
     beta: float = 2,
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -165,7 +165,7 @@ def unscented_transform(
     else:
         ll = ll[0]
     L = len(vals)
-    lam = (alpha**2) * (L + kappa)
+    lam = (alpha**2) * (L + kappa) - L
 
     Xs = np.zeros((len(vals), 2 * L + 1), dtype=complex)
     Ys = np.zeros((ll, 2 * L + 1), dtype=complex)
@@ -190,10 +190,10 @@ def unscented_transform(
 
         Ys[:, m + 1] = func(Xs[:, m + 1])
 
-    for m in range(L, 2 * L):
-        Xs[:, m + 1] = vals
-        Xs[m - L, m + 1] -= stdsscaled[m - L]
-        Ys[:, m + 1] = func(Xs[:, m + 1])
+    for m in range(L):
+        Xs[:, L + m + 1] = vals
+        Xs[m, L + m + 1] -= stdsscaled[m]
+        Ys[:, L + m + 1] = func(Xs[:, L + m + 1])
 
     ymean = Ys @ Wms
 
@@ -201,13 +201,19 @@ def unscented_transform(
     for m in range(2 * L + 1):
         Pmat += Wcs[m] * (np.outer(Ys[:, m] - ymean, Ys[:, m] - ymean))
 
+    if len(Pmat.shape) == 2:
+        off = np.copy(Pmat)
+        off -= np.diag(np.diag(off))
+        print(f"Pmat has covariances, max abs off diag {np.max(np.abs(off))}")
+        print(f"Max variance: {np.max(np.diag(Pmat))}")
+        print("Ignoring covariances.")
+        Pmat = np.diag(Pmat)
+
     ymean = ymean.flatten()
     Pmat = Pmat.flatten()
 
     assert np.all(ymean.real == ymean)
     assert np.all(Pmat.real == Pmat)
-
-    raise ValueError("Pmat is 4 x 1 why?")
 
     return ymean.real, Pmat.real
 
@@ -277,7 +283,7 @@ def disp_from_res_dict(
     ks: np.ndarray,
     _d: dict,
     circ: Literal["vqe", "sweep"],
-    improvement_needed: int = 10,
+    improvement_needed: int = 1,
 ) -> dict:
     res = _d["results"][circ]
     disps = {}

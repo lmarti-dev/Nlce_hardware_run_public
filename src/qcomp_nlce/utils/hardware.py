@@ -35,7 +35,6 @@ from typing import Literal, Union
 
 from qiskit import transpile
 from qiskit.primitives.base import SamplerResult
-from qiskit.circuit.parametertable import ParameterView
 
 
 try:
@@ -72,6 +71,8 @@ BACKEND_ALIAS = (
     Literal["statevector"] | FakeBackendV2 | IBMBackend | MQPBackend | IQMBackend
 )
 
+PROVIDER_ALIAS = Literal["IBM", "AQT", "IQM", "QEXA"]
+
 
 def get_aqt_backend(n_qubits: int) -> MQPBackend:
     if n_qubits > 12:
@@ -82,15 +83,13 @@ def get_aqt_backend(n_qubits: int) -> MQPBackend:
     return backend
 
 
-def sampler_result_to_json(sampler: SamplerResult):
-    d = {}
-
-    d["quasi_dists"] = [
-        dict(sampler.quasi_dists[m]) for m in range(len(sampler.quasi_dists))
-    ]
-    d["metadata"] = sampler.metadata
-
-    return d
+def get_qexa_backend(n_qubits: int) -> MQPBackend:
+    if n_qubits > 20:
+        raise ValueError(f"Maximum number of qubits is 20, requested: {n_qubits}")
+    token = get_token("LRZ")
+    provider = MQPProvider(token)
+    backend = provider.get_backend("QExa20")
+    return backend
 
 
 def get_iqm_backend(n_qubits: int) -> "IQMBackend":
@@ -111,22 +110,22 @@ def get_ibm_backend(n_qubits: int) -> IBMBackend:
     return real_backend
 
 
-def get_backend(
-    n_qubits: int, which: Literal["IBM", "AQT", "IQM"]
-) -> Union[IBMBackend, MQPBackend]:
+def get_backend(n_qubits: int, which: PROVIDER_ALIAS) -> Union[IBMBackend, MQPBackend]:
     if which == "IBM":
         return get_ibm_backend(n_qubits)
     elif which == "AQT":
         return get_aqt_backend(n_qubits)
     elif which == "IQM":
         return get_iqm_backend(n_qubits)
+    elif which == "QEXA":
+        return get_qexa_backend(n_qubits)
 
     else:
         raise ValueError(f"Requested invalid backend: {which}")
 
 
 def get_appropriate_fake_backend(
-    n_qubits: int, which: Literal["IBM", "AQT", "IQM"]
+    n_qubits: int, which: PROVIDER_ALIAS
 ) -> Union[FakeBackendV2, AQTResource]:
 
     if which == "IBM":
@@ -144,7 +143,7 @@ def get_appropriate_fake_backend(
         return AQTProvider("ANY_TOKEN_WORKS_FOR_OFFLINE_SIM").get_backend(
             "offline_simulator_noise"
         )
-    elif which == "IQM":
+    elif which == "IQM" or which == "QEXA":
         n_qubits += 2
         # counting ancillas and resonators!
         if n_qubits <= 5:
@@ -184,7 +183,7 @@ def isa_circ_depth(isa_circ: list | QuantumCircuit, verbose: bool = False):
             max_depth = np.max(depths)
             if verbose:
                 print(
-                    f"Mean circuit depth ({len(isa_circ)}): {mean_depth}, max: {max_depth}"
+                    f"Mean circuit depth ({len(isa_circ)} circuits): {mean_depth}, max: {max_depth}"
                 )
 
     elif isinstance(isa_circ, QuantumCircuit):
@@ -373,6 +372,17 @@ def get_token(which: Literal["IBM", "LRZ"]):
     ).read()
 
     return token
+
+
+def sampler_result_to_json(sampler: SamplerResult):
+    d = {}
+
+    d["quasi_dists"] = [
+        dict(sampler.quasi_dists[m]) for m in range(len(sampler.quasi_dists))
+    ]
+    d["metadata"] = sampler.metadata
+
+    return d
 
 
 def encode_sampler_result(job):

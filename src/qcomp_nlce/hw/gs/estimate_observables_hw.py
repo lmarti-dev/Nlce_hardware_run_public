@@ -55,7 +55,10 @@ def get_expectations_from_sources(
     fake_backend_energy = job.result()[0].data.evs
 
     statevector_energy = sv_estimate_observables(
-        circuit=circuit, observables=hamiltonian, param_sweep=parameters
+        circuit=circuit,
+        observables=hamiltonian,
+        param_sweep=parameters,
+        n_shots=n_shots,
     ).data.evs
 
     if run_on_ibmq:

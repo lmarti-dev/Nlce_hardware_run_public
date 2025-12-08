@@ -1,6 +1,4 @@
 from pathlib import Path
-from typing import Literal
-
 
 import numpy as np
 
@@ -11,7 +9,6 @@ from qcomp_nlce.utils.workflow import (
     sweep_dispersion,
     plot_all_backends_dispersions_UT,
 )
-import matplotlib.pyplot as plt
 from data_manager import ExperimentDataManager
 
 
@@ -24,10 +21,10 @@ def workflow_5q():
         "statevector",
     ]
     provider_name = "IQM"
-    n_shots = int(2e4)
+    n_shots = int(1e7)
     ks = np.linspace(0, np.pi, 21)
-    group_size = 4
-    which_hadamard_test = "off-diag"
+    group_size = None
+    which_hadamard_test = "stefan"
 
     gs_dirname_l = Path(res_sim_dir(), "gs_vqe_1j/vqe/5q_3l")
     gs_dirname_s = Path(res_sim_dir(), "gs_vqe_1j/vqe/4q_2l")
@@ -37,7 +34,8 @@ def workflow_5q():
     dry_run = True
 
     edm = ExperimentDataManager(
-        f"workflow_tfim_real_backend_{provider_name}_{n_shots}shots", dry_run=dry_run
+        f"workflow_tfim_group_size{group_size}_{provider_name}_{n_shots}shots",
+        dry_run=dry_run,
     )
 
     out_dict = {
@@ -102,8 +100,68 @@ def workflow_5q():
     fig = plot_all_backends_dispersions_UT(out_dict)
 
     edm.save_figure(fig, fig_shape="double-y")
-    plt.show()
+
+
+def worflow_sweep_test():
+
+    for n_steps in range(4, 30, 5):
+        n_qubits_max = 5
+        J = 1
+        which_backends = ["statevector", "fake_backend"]
+        provider_name = "IQM"
+        n_shots = int(1e4)
+        ks = np.linspace(0, np.pi, 21)
+        group_size = None
+        which_hadamard_test = "stefan"
+
+        dry_run = False
+
+        edm = ExperimentDataManager(
+            f"workflow_tfim_sweep_nsteps_{provider_name}_{n_shots}shots",
+            dry_run=dry_run,
+        )
+
+        out_dict = {
+            "results": {},
+            "inputs": {
+                "ks": ks,
+                "J": J,
+                "provider_name": provider_name,
+                "group_size": group_size,
+                "n_qubits": n_qubits_max,
+                "n_steps": n_steps,
+            },
+        }
+
+        print("== Sweep ==")
+        sweep_dict_l, sweep_dict_s, sweep_disp = sweep_dispersion(
+            n_qubits_max,
+            J,
+            n_steps,
+            which_backends,
+            provider_name,
+            n_shots,
+            ks,
+            group_size,
+            which_hadamard_test,
+        )
+
+        out_dict["results"]["sweep"] = {
+            "dict_l": sweep_dict_l,
+            "dict_s": sweep_dict_s,
+            "disp": sweep_disp,
+        }
+
+        ed_disp = tfim_ed_dispersion(n_qubits_max, J, ks)
+        out_dict["results"]["ed"] = {"disp": {"statevector": ed_disp}}
+        edm.save_dict(out_dict)
+
+        edm.var_dump(n_steps=n_steps, provider_name=provider_name)
+
+        fig = plot_all_backends_dispersions_UT(out_dict)
+
+        edm.save_figure(fig, fig_shape="double-y")
 
 
 if __name__ == "__main__":
-    workflow_5q()
+    worflow_sweep_test()

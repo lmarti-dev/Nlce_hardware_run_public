@@ -162,18 +162,7 @@ def measure_1qp_expectations_v2(
 
     if which_backend == "statevector":
         bn = which_backend
-
-        comp_vals, stds = measure_hamiltonian_elements(
-            hamiltonian,
-            circuit,
-            comp_states,
-            None,
-            bn,
-            which_backend,
-            n_shots,
-        )
-
-        td = compare_with_true(true_comp_vals, comp_vals, which_backend)
+        backend = which_backend
 
     elif which_backend == "fake_backend" or which_backend == "real_backend":
 
@@ -183,19 +172,19 @@ def measure_1qp_expectations_v2(
             )
         elif which_backend == "real_backend":
             backend = get_backend(circuit.num_qubits, provider_name)
-
-        comp_vals, stds = measure_hamiltonian_elements(
-            hamiltonian,
-            circuit,
-            comp_states,
-            None,
-            backend,
-            which_backend,
-            n_shots,
-        )
-        print(f"{which_backend} ({backend.name})")
-        td = compare_with_true(true_comp_vals, comp_vals, backend.name)
         bn = backend.name
+
+    comp_vals, stds = measure_hamiltonian_elements(
+        hamiltonian,
+        circuit,
+        comp_states,
+        None,
+        backend,
+        which_backend,
+        n_shots,
+    )
+    print(f"{which_backend} ({bn})")
+    td = compare_with_true(true_comp_vals, comp_vals, bn)
 
     return {
         which_backend: {

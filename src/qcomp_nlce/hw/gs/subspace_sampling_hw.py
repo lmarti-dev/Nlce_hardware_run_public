@@ -11,6 +11,7 @@ from qcomp_nlce.utils.hardware import (
 )
 from qcomp_nlce.utils.statevector import (
     sv_estimate_observables,
+    sv_expectation_observables,
 )
 from qcomp_nlce.utils.measure import (
     get_counts_from_job,
@@ -66,12 +67,26 @@ def measure_ground_state_energy_estimator(
         )
         energy, std = mean_std_tuples_from_res(job.result())
         bn = backend.name
-    elif which_backend == "statevector":
+    elif which_backend == "statevector_shots":
         res0 = sv_estimate_observables(
-            circuit=circuit, observables=[hamiltonian], param_sweep=None
+            circuit=circuit,
+            observables=[hamiltonian],
+            param_sweep=None,
+            n_shots=n_shots,
         )
         energy = res0.data.evs[0]
         std = res0.data.stds[0]
+        bn = which_backend
+
+    elif which_backend == "statevector":
+        res0 = sv_expectation_observables(
+            circuit=circuit,
+            observables=[hamiltonian],
+            parameters=None,
+        )
+        energy = res0[0]
+        std = 0
+
         bn = which_backend
 
     elif which_backend == "real_hardware":
@@ -165,9 +180,9 @@ def measure_ground_state_energy_subspace_sampling_v2(
     # assume that the std is sample dependent ish.
     # TODO: derive a better expression!!
     std = 1 / np.sqrt(n_shots)
-    if which_backend == "statevector":
+    if which_backend == "statevector_shots" or which_backend == "statevector":
         sv_energy = sv_estimate_observables(
-            circuit=circuit, observables=[hamiltonian], param_sweep=[]
+            circuit=circuit, observables=[hamiltonian], param_sweep=[], n_shots=n_shots
         ).data.evs[0]
         print(f"Statevector {relerr(sv_energy):.5e}")
 
@@ -255,7 +270,7 @@ def measure_ground_state_energy_subspace_sampling(
     )
 
     statevector_energy = sv_estimate_observables(
-        circuit=circuit, observables=[hamiltonian], param_sweep=[]
+        circuit=circuit, observables=[hamiltonian], param_sweep=[], n_shots=n_shots
     ).data.evs[0]
 
     if run_on_hardware:

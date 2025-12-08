@@ -3,7 +3,7 @@ from qiskit.quantum_info import SparsePauliOp
 import numpy as np
 from qcomp_nlce.utils.measure import (
     sample_counts_circuit,
-    estimate_circuit,
+    circuit_estimation_job,
 )
 from qcomp_nlce.utils.hamiltonian import index_bits, projector_ham, trace_dist
 from qcomp_nlce.utils.circuit import (
@@ -11,6 +11,7 @@ from qcomp_nlce.utils.circuit import (
     apply_parameters,
     circuit_instruction_to_circuit,
     prep_circ_superpos,
+    circuit_to_matrix,
 )
 
 from qcomp_nlce.utils.save import (
@@ -148,7 +149,8 @@ def get_overlaps_from_res(
     )
     # first order error prop
 
-    final_std = pmat
+    assert len(pmat) == 2
+    final_std = pmat[0] + 1j * pmat[1]
 
     return final_g, gs, g_abs, final_std
 
@@ -212,7 +214,7 @@ def iterative_hadamard_test_off_diag(
             out.compose(prep_dag, range(1, circ.num_qubits), inplace=True)
             out_circs.append(out)
 
-        jobs = estimate_circuit(
+        jobs = circuit_estimation_job(
             backend=backend,
             observables=hams,
             circuit=out_circs,
@@ -230,7 +232,7 @@ def iterative_hadamard_test_off_diag(
     kUj = alpha + beta
 
     # I wish I lived in a world without propagation of errors
-    std = np.sqrt(0.5 * (d["+"][1] ** 2) + 0.5 * (d["-"][1] ** 2) + d["+i"] ** 2)
+    std = np.sqrt(0.5 * (d["+"][1] ** 2) + 0.5 * (d["-"][1] ** 2) + d["+i"][1] ** 2)
 
     return jUk, kUj, std
 
@@ -276,7 +278,7 @@ def iterative_hadamard_test_projecto_estimo(
         proj ^ SparsePauliOp("Y"),
         proj ^ SparsePauliOp("Z"),
     ]
-    jobs = estimate_circuit(
+    jobs = circuit_estimation_job(
         backend=backend,
         observables=hams,
         circuit=circuits,
@@ -287,6 +289,62 @@ def iterative_hadamard_test_projecto_estimo(
     final_g, _, _, std = get_overlaps_from_res(jobs.result())
 
     return final_g, std
+
+
+def build_stefan_circuit(
+    circuit: QuantumCircuit, parameters: np.ndarray, x: str, y: str
+) -> QuantumCircuit:
+    n_qubits = circuit.num_qubits + 1
+    hadam_circuit = QuantumCircuit(n_qubits)
+    hadam_circuit.h(0)
+
+    x_inds = index_bits(x, circuit.num_qubits, right_to_left=True)
+    y_inds = index_bits(y, circuit.num_qubits, right_to_left=True)
+
+    for y in y_inds:
+        hadam_circuit.cx(0, y + 1)
+    hadam_circuit.append(apply_parameters(circuit, parameters), range(1, n_qubits))
+    for x in x_inds:
+
+        hadam_circuit.cx(0, x + 1)
+
+    return hadam_circuit
+
+
+def stefan_hadamard_test(
+    circuit: QuantumCircuit,
+    parameters: np.ndarray,
+    n_shots: int,
+    x: str,
+    y: str,
+    backend: BACKEND_ALIAS = "statevector",
+):
+
+    # this is Stefan Wolf's test, a bit modified though
+    # because <0|u|0> in our case cancels perfectly, so
+    # we ignore it from the start!
+
+    # oUo = circuit_to_matrix(circuit)[0, 0]
+    # print(f"Uncomputed overlap is {oUo:.5e}")
+
+    stef_circuit = build_stefan_circuit(circuit, parameters, x, y)
+
+    proj = projector_ham(circuit.num_qubits, bitstring="0" * len(x))
+    hams = [
+        proj ^ SparsePauliOp("X"),
+        proj ^ SparsePauliOp("Y"),
+    ]
+    jobs = circuit_estimation_job(
+        backend=backend,
+        observables=hams,
+        circuit=stef_circuit,
+        parameters=None,
+        n_shots=n_shots,
+    )
+
+    ol, std = get_hadam_estimator(jobs.result())
+
+    return ol, std
 
 
 # computes the real part of overlap between psi and circuit(psi)
@@ -373,7 +431,7 @@ def circuit_with_init(
     return circ_out
 
 
-def get_hadam_estimator(res: EstimatorResult):
+def get_hadam_estimator(res: EstimatorResult) -> tuple[complex, complex]:
     # qiskit developers competing with python developers to see who can make the most breaking changes with a version chanege
     # anyway, here's wonderwall
 
@@ -425,6 +483,17 @@ def measure_matrix_element(
         )
         return ol, std
 
+    elif which_hadamard_test == "stefan":
+        ol, std = stefan_hadamard_test(
+            circuit,
+            parameters,
+            n_shots,
+            x,
+            y,
+            backend,
+        )
+        return ol, std
+
     elif which_hadamard_test == "off-diag":
 
         jUk, kUj, std = iterative_hadamard_test_off_diag(
@@ -473,7 +542,7 @@ def measure_matrix_element(
             SparsePauliOp(n_qubits * "I" + "Y"),
         ]
 
-        job = estimate_circuit(
+        job = circuit_estimation_job(
             backend=backend,
             observables=hams,
             circuit=hadam_circ,
@@ -523,7 +592,7 @@ def measure_matrix_elements(
     backend: BACKEND_ALIAS,
     which_backend: str,
     n_shots: int,
-    which_hadamard_test: str = "full",
+    which_hadamard_test: str,
     custom_idx: list[list[int]] = None,
     handcraft: bool = True,
 ) -> np.ndarray:
@@ -620,7 +689,9 @@ def measure_hamiltonian_element(
         for x_ind in x_inds:
             circ_out.x(x_ind)
         circ_out.compose(circuit, inplace=True)
-        job = estimate_circuit(circ_out, [hamiltonian], parameters, backend, n_shots)
+        job = circuit_estimation_job(
+            circ_out, [hamiltonian], parameters, backend, n_shots
+        )
 
         res = job.result()
         if isinstance(res, EstimatorResult):
@@ -636,7 +707,7 @@ def measure_hamiltonian_element(
             circ_p.compose(circuit, inplace=True)
             circs.append(circ_p)
 
-        job = estimate_circuit(circs, [hamiltonian], parameters, backend, n_shots)
+        job = circuit_estimation_job(circs, [hamiltonian], parameters, backend, n_shots)
 
         res = job.result()
 
@@ -694,6 +765,8 @@ def measure_hamiltonian_elements(
                 vals[ind_y, ind_x] = val
                 stds[ind_x, ind_y] = std
                 stds[ind_y, ind_x] = std
+
+                print(f"{ind_x} - {ind_y} - {val:.5f}")
                 if on_hardware:
                     computed_values = add_tmp_entry_and_save(
                         filename, computed_values, val.conj(), std, ind_x, ind_y

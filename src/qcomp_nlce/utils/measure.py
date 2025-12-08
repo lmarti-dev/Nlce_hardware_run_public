@@ -1,6 +1,11 @@
 from qiskit.primitives import StatevectorSampler, PrimitiveJob, StatevectorEstimator
 from qcomp_nlce.utils.hardware import backend_sample, backend_estimate, BACKEND_ALIAS
 from qcomp_nlce.utils.circuit import parameters_exist
+from qcomp_nlce.utils.statevector import (
+    sv_estimate_observables,
+    sv_estimate_observables_jobs,
+    sv_expectation_observables,
+)
 from qiskit_ibm_runtime import IBMBackend
 from qiskit_ibm_runtime.base_runtime_job import BaseRuntimeJob
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
@@ -20,7 +25,7 @@ from qiskit_aer import AerJob
 from iqm.qiskit_iqm.iqm_job import IQMJob
 
 
-def estimate_circuit(
+def circuit_estimation_job(
     circuit: QuantumCircuit,
     observables: Union[SparsePauliOp, list[SparsePauliOp]],
     parameters: np.ndarray,
@@ -28,15 +33,9 @@ def estimate_circuit(
     n_shots: int = 1000,
 ):
     if backend == "statevector":
-        estimator = StatevectorEstimator()
 
-        if isinstance(circuit, QuantumCircuit):
-            circuit = [circuit]
-        ctr = [[c, observables] for c in circuit]
-        if parameters_exist(parameters):
-            for idx in range(len(ctr)):
-                ctr[idx].append(parameters)
-        job = estimator.run(ctr, precision=1 / np.sqrt(n_shots))
+        job = sv_estimate_observables_jobs(circuit, observables, parameters, n_shots)
+
     else:
         job = backend_estimate(
             backend=backend,
@@ -48,7 +47,7 @@ def estimate_circuit(
     return job
 
 
-def sample_circuit(
+def circuit_sampling_job(
     circuit: QuantumCircuit,
     parameters: np.ndarray,
     backend: BACKEND_ALIAS = "statevector",
@@ -78,7 +77,7 @@ def sample_counts_circuit(
     backend: str | FakeBackendV2 | IBMBackend = "statevector",
     n_shots: int = 1000,
 ):
-    job = sample_circuit(circuit, parameters, backend, n_shots)
+    job = circuit_sampling_job(circuit, parameters, backend, n_shots)
     counts = get_counts_from_job(job)
     return counts
 

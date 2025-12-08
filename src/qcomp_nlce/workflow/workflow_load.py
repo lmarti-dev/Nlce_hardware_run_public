@@ -1,13 +1,16 @@
 import copy
 from data_manager import ExperimentDataManager
-from qcomp_nlce.utils import (
+from qcomp_nlce.utils.workflow import (
     heff_backend_type,
     dispersion_all_backends,
     plot_multiple_dispersions,
     plot_all_backends_dispersions_UT,
 )
 
+from qcomp_nlce.utils.stats import mean_std
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def average_matrices(dicts: list[dict]) -> dict:
@@ -16,38 +19,27 @@ def average_matrices(dicts: list[dict]) -> dict:
 
     out_d = copy.deepcopy(dicts[0])
     ks = out_d["inputs"]["ks"]
+
     for si in ("dict_l", "dict_s"):
         for backend in out_d["results"]["vqe"][si]["eld"]:
             if backend != "system":
-                out_d["results"]["vqe"][si]["eld"][backend]["values"] = (
-                    out_d["results"]["vqe"][si]["eld"][backend]["values"] / n_dicts
-                )
-                out_d["results"]["vqe"][si]["exd"][backend]["values"] = (
-                    out_d["results"]["vqe"][si]["exd"][backend]["values"] / n_dicts
-                )
-                out_d["results"]["vqe"][si]["gsd"][backend]["energy"] = (
-                    out_d["results"]["vqe"][si]["gsd"][backend]["energy"] / n_dicts
-                )
+                for mnd in ("eld", "exd"):
+                    out_d["results"]["vqe"][si][mnd][backend]["values"] = np.mean(
+                        (d["results"]["vqe"][si][mnd][backend]["values"] for d in dicts)
+                    )
+                    out_d["results"]["vqe"][si][mnd][backend]["stds"] = mean_std(
+                        (d["results"]["vqe"][si][mnd][backend]["stds"] for d in dicts)
+                    )
 
-    for ii in range(1, len(dicts)):
-        d = dicts[ii]
-        for si in ("dict_l", "dict_s"):
-            for backend in d["results"]["vqe"][si]["eld"]:
-                if backend != "system":
-                    out_d["results"]["vqe"][si]["eld"][backend]["values"] = (
-                        out_d["results"]["vqe"][si]["eld"][backend]["values"]
-                        + d["results"]["vqe"][si]["eld"][backend]["values"] / n_dicts
-                    )
-                    out_d["results"]["vqe"][si]["exd"][backend]["values"] = (
-                        out_d["results"]["vqe"][si]["exd"][backend]["values"]
-                        + d["results"]["vqe"][si]["exd"][backend]["values"] / n_dicts
-                    )
-                    out_d["results"]["vqe"][si]["gsd"][backend]["energy"] = (
-                        out_d["results"]["vqe"][si]["gsd"][backend]["energy"]
-                        + d["results"]["vqe"][si]["gsd"][backend]["energy"] / n_dicts
-                    )
+            out_d["results"]["vqe"][si]["gsd"][backend]["energy"] = np.mean(
+                (d["results"]["vqe"][si]["gsd"][backend]["energy"] for d in dicts)
+            )
+            out_d["results"]["vqe"][si]["gsd"][backend]["std"] = mean_std(
+                (d["results"]["vqe"][si]["gsd"][backend]["std"] for d in dicts)
+            )
+
     for si in ("dict_l", "dict_s"):
-        for backend in d["results"]["vqe"][si]["eld"]:
+        for backend in out_d["results"]["vqe"][si]["eld"]:
             if backend != "system":
                 eld = out_d["results"]["vqe"][si]["eld"]
                 gsd = out_d["results"]["vqe"][si]["gsd"]

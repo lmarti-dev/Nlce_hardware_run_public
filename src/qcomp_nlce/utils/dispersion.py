@@ -41,7 +41,7 @@ def exact_dispersion_1qp_1d(j: float, k: np.ndarray):
     return 2 * np.sqrt(1 + j**2 - 2 * j * np.cos(k))
 
 
-def amount_of_vals_needed(n_qubits: int) -> int:
+def heff_n_expectation_values_1d(n_qubits: int) -> int:
 
     total = 0
 
@@ -53,4 +53,9 @@ def amount_of_vals_needed(n_qubits: int) -> int:
         expectations = q + 4 * sum(range(1, q))
         gs = 1
         total += sum([overlap, expectations, gs])
+    return total
+
+
+def heff_n_expectation_values_1d(n_qubits: int) -> int:
+    ...
     return total

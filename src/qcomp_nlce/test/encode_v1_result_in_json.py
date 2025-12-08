@@ -3,10 +3,21 @@ from mqp.qiskit_provider import MQPProvider
 from qiskit.providers import JobStatus
 
 
-from qcomp_nlce.utils import get_token, sampler_result_to_json
+from qcomp_nlce.utils import get_token
 
 
 TOKEN = get_token("LRZ")
+
+
+def sampler_result_to_json(sampler: SamplerResult):
+    d = {}
+
+    d["quasi_dists"] = [
+        dict(sampler.quasi_dists[m]) for m in range(len(sampler.quasi_dists))
+    ]
+    d["metadata"] = sampler.metadata
+
+    return d
 
 
 def load_jobs_from_ids(jobids: list):

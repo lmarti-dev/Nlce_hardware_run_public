@@ -1,6 +1,6 @@
 from qcomp_nlce.utils.measure import (
     sample_counts_circuit,
-    sample_circuit,
+    circuit_sampling_job,
     get_counts_from_job,
 )
 from qiskit import QuantumCircuit

@@ -1,11 +1,11 @@
-from qcomp_nlce.utils import amount_of_vals_needed
+from qcomp_nlce.utils import heff_n_expectation_values_1d
 import matplotlib.pyplot as plt
 
 x = range(3, 100)
 y = []
 
 for n in x:
-    y.append(amount_of_vals_needed(n))
+    y.append(heff_n_expectation_values_1d(n))
 
 fig, ax = plt.subplots()
 

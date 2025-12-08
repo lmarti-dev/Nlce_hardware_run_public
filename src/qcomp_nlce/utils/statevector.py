@@ -5,27 +5,59 @@ from qiskit.quantum_info import SparsePauliOp, Statevector, partial_trace
 from scipy.optimize import minimize
 from itertools import combinations
 from collections.abc import Callable
-from qcomp_nlce.utils.circuit import apply_parameters, circuit_to_matrix
+from qcomp_nlce.utils.circuit import (
+    apply_parameters,
+    circuit_to_matrix,
+    parameters_exist,
+)
+from qcomp_nlce.utils.hardware import circuits_to_payload
 from qcomp_nlce.utils.hamiltonian import from_bitstring
 from typing import Literal
 
 
-def sv_estimate_observables(
-    circuit: QuantumCircuit, observables: list[SparsePauliOp], param_sweep: np.ndarray
+def sv_estimate_observables_jobs(
+    circuit: QuantumCircuit | list[QuantumCircuit],
+    observables: list[SparsePauliOp],
+    parameters: np.ndarray,
+    n_shots: int,
 ):
     estimator = StatevectorEstimator()
-    job_observables = []
-    for ind, o in enumerate(observables):
-        if o.num_qubits < circuit.num_qubits:
-            job_observables.append(
-                SparsePauliOp("I" * (circuit.num_qubits - o.num_qubits)).expand(o)
-            )
-        else:
-            job_observables.append(o)
-    pub = (circuit, job_observables, param_sweep)
-    job = estimator.run([pub])
+    if isinstance(circuit, QuantumCircuit):
+        circuit = [circuit]
+    ctr = [[c, observables] for c in circuit]
+    if parameters_exist(parameters):
+        for idx in range(len(ctr)):
+            ctr[idx].append(parameters)
+    job = estimator.run(ctr, precision=1 / np.sqrt(n_shots))
+
+    return job
+
+
+def sv_estimate_observables(
+    circuit: QuantumCircuit,
+    observables: list[SparsePauliOp],
+    param_sweep: np.ndarray,
+    n_shots: int,
+):
+    job = sv_estimate_observables_jobs(circuit, observables, param_sweep, n_shots)
     result = job.result()[0]
     return result
+
+
+def sv_expectation_observables(
+    circuit: QuantumCircuit,
+    observables: list[SparsePauliOp],
+    parameters: np.ndarray,
+):
+    r = np.zeros((len(observables),), dtype=complex)
+    cpar = apply_parameters(circuit, parameters)
+    for jj, o in enumerate(observables):
+        val = Statevector(cpar).expectation_value(
+            o,
+            range(0, o.num_qubits),
+        )
+        r[jj] = val
+    return r
 
 
 def optimize_circuit(
@@ -46,8 +78,10 @@ def optimize_circuit(
     if cost is None:
 
         def cost(xk: np.ndarray):
-            result = sv_estimate_observables(
-                circuit=circuit, observables=[hamiltonian], param_sweep=xk
+            result = sv_expectation_observables(
+                circuit=circuit,
+                observables=[hamiltonian],
+                param_sweep=xk,
             )
             return result.data.evs[0]
 
@@ -58,7 +92,7 @@ def optimize_circuit(
             p[ind] += np.pi / 2
             m = x.copy()
             m[ind] -= np.pi / 2
-            res = sv_estimate_observables(
+            res = sv_expectation_observables(
                 circuit=circuit, observables=[hamiltonian], param_sweep=[p, m]
             )
             out[ind] = 0.5 * (res.data.evs[1] - res.data.evs[0])

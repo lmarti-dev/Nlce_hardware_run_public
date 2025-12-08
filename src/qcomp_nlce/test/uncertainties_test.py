@@ -82,20 +82,5 @@ def filter_workflow():
     plt.show()
 
 
-def test_UT_with_normal():
-    n_samples = 100
-    mu_x = 0
-    mu_y = 1
-
-    sigma_x = 1
-    sigma_y = 1
-
-    x = np.random.normal(mu_x, sigma_x, size=n_samples)
-    y = np.random.normal(mu_y, sigma_y, size=n_samples)
-    z = x + 1j * y
-
-    ymean, pmat = unscented_transform()
-
-
 if __name__ == "__main__":
-    test_UT_with_normal()
+    ...
