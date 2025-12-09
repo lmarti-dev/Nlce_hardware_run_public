@@ -23,6 +23,8 @@ from qiskit.quantum_info import SparsePauliOp
 
 from data_manager import ExperimentDataManager
 
+from qiskit_ibm_runtime import Session
+
 HOME = Path(__file__).parent
 BACKEND_TYPES = Literal["statevector", "fake_backend", "real_backend"]
 
@@ -174,15 +176,27 @@ def measure_1qp_expectations_v2(
             backend = get_backend(circuit.num_qubits, provider_name)
         bn = backend.name
 
-    comp_vals, stds = measure_hamiltonian_elements(
-        hamiltonian,
-        circuit,
-        comp_states,
-        None,
-        backend,
-        which_backend,
-        n_shots,
-    )
+    if which_backend == "real_backend":
+        with Session(backend) as s:
+            comp_vals, stds = measure_hamiltonian_elements(
+                hamiltonian,
+                circuit,
+                comp_states,
+                None,
+                backend,
+                which_backend,
+                n_shots,
+            )
+    else:
+        comp_vals, stds = measure_hamiltonian_elements(
+            hamiltonian,
+            circuit,
+            comp_states,
+            None,
+            backend,
+            which_backend,
+            n_shots,
+        )
     print(f"{which_backend} ({bn})")
     td = compare_with_true(true_comp_vals, comp_vals, bn)
 

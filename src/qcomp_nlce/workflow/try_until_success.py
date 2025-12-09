@@ -15,7 +15,7 @@ def keep_trying(func: callable):
     success = False
     while not success:
         try:
-            func()
+            func(True)
             success = True
         except Exception as e:
             print(f"Encoutered exception: {e}")

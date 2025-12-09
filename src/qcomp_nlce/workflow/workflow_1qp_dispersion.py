@@ -14,20 +14,20 @@ from data_manager import ExperimentDataManager
 import matplotlib.pyplot as plt
 
 
-def workflow_5q():
+def workflow_5q(dry_run):
     # avoid the "unused arguments" warning
     # warnings.filterwarnings("ignore")
     n_qubits_max = 5
     J = 1
     which_backends = [
-        "fake_backend",
+        "real_backend",
         "statevector",
     ]
     provider_name = "AQT"
-    n_shots = int(2e3)
+    n_shots = int(2e2)
     ks = np.linspace(0, np.pi, 21)
     group_size = None
-    which_hadamard_test = "stefan"
+    which_hadamard_test = "estimator"
 
     gs_dirname_l = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/5q_3l")
     gs_dirname_s = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/4q_2l")
@@ -37,8 +37,6 @@ def workflow_5q():
     elem_dirname_s = Path(
         res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/4q_2l"
     )
-
-    dry_run = True
 
     edm = ExperimentDataManager(
         f"workflow_tfim_hadam_{which_hadamard_test}_{provider_name}_{n_shots}shots",
@@ -115,9 +113,9 @@ def worflow_sweep_test():
     for n_steps in range(4, 30, 5):
         n_qubits_max = 5
         J = 1
-        which_backends = ["statevector", "fake_backend"]
+        which_backends = ["real_backend", "statevector"]
         provider_name = "AQT"
-        n_shots = int(2e3)
+        n_shots = int(2e2)
         ks = np.linspace(0, np.pi, 21)
         group_size = None
         which_hadamard_test = "stefan"
