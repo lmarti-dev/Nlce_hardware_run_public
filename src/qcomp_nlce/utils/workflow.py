@@ -15,6 +15,7 @@ from qcomp_nlce.utils import (
     load_optimized_vqe,
     get_tfim_ratio,
     sweep_time_from_steps,
+    BACKEND_TYPES,
 )
 from qcomp_nlce.utils.dispersion import (
     dispersion_1d_thermodynamic,
@@ -32,8 +33,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 from typing import Literal
-
-BACKEND_TYPES = Literal["statevector", "fake_backend", "real_backend"]
 
 
 def dispersion_all_backends(dict_l: dict, dict_s: dict, ks: np.ndarray):

@@ -6,6 +6,7 @@ from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import EstimatorV2, SamplerV2
 from qiskit_ibm_runtime.base_runtime_job import BaseRuntimeJob
 from qiskit.primitives import EstimatorResult, PrimitiveResult
+from qcomp_nlce.utils.aqt_target_utils import custom_aqt_target
 
 try:
     from iqm.qiskit_iqm.fake_backends.fake_deneb import (
@@ -42,6 +43,7 @@ try:
     from qiskit_aqt_provider.primitives import AQTSampler, AQTEstimator
     from qiskit_aqt_provider.aqt_resource import AQTResource
     from mqp.qiskit_provider import MQPProvider, MQPBackend
+    from qiskit_aqt_provider.aqt_resource import OfflineSimulatorResource
 except ModuleNotFoundError:
     # watch this
     class MQPProvider: ...
@@ -56,6 +58,8 @@ except ModuleNotFoundError:
 
     class AQTProvider: ...
 
+    class OfflineSimulatorResource: ...
+
 
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
 
@@ -66,6 +70,7 @@ from qcomp_nlce.utils.circuit import (
 )
 from qiskit_ibm_runtime import QiskitRuntimeService, IBMBackend
 
+BACKEND_TYPES = Literal["statevector", "fake_backend", "real_backend"]
 
 BACKEND_ALIAS = (
     Literal["statevector"] | FakeBackendV2 | IBMBackend | MQPBackend | IQMBackend
@@ -273,14 +278,18 @@ def circuits_to_estimator_payload(
     if isinstance(circuit, QuantumCircuit):
         circuit = [circuit]
 
-    if isinstance(backend, MQPBackend):
+    if isinstance(backend, (MQPBackend, OfflineSimulatorResource)):
+        kwargs = {}
+        if isinstance(backend, OfflineSimulatorResource) and False:
+            kwargs.update({"target": custom_aqt_target()})
+
         initial_layout = list(range(circuit[0].num_qubits))
         isa_circuit = transpile(
             circuit,
             backend=backend,
             initial_layout=initial_layout,
             optimization_level=3,
-            coupling_map=backend.coupling_map,
+            **kwargs,
         )
     else:
         isa_circuit = compile_circuit_for_backend(
@@ -364,6 +373,14 @@ def backend_sample(
     return job
 
 
+def delete_non_picklable(estimator: AQTEstimator):
+    try:
+        # easy V2 primitive conversion
+        del estimator._backend._http_client
+    except Exception:
+        pass
+
+
 def backend_estimate(
     backend: BACKEND_ALIAS,
     observables: Union[SparsePauliOp, list[SparsePauliOp]],
@@ -374,6 +391,7 @@ def backend_estimate(
 
     if isinstance(backend, (AQTResource, MQPBackend)):
         estimator = AQTEstimator(backend)
+        estimator.set_transpile_options(optimization_level=3)
         (circuit, observables, parameters) = circuits_to_estimator_payload(
             backend, circuit, parameters, observables, which="v1"
         )
@@ -398,6 +416,7 @@ def backend_estimate(
         payload = circuits_to_estimator_payload(
             backend, circuit, parameters, observables
         )
+
         job = estimator.run(
             payload,
             precision=1 / np.sqrt(n_shots),

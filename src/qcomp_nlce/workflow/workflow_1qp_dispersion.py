@@ -12,10 +12,12 @@ from qcomp_nlce.utils.workflow import (
 from data_manager import ExperimentDataManager
 
 import matplotlib.pyplot as plt
+import warnings
 
 
 def workflow_5q():
-
+    # avoid the "unused arguments" warning
+    # warnings.filterwarnings("ignore")
     n_qubits_max = 5
     J = 1
     which_backends = [
@@ -36,7 +38,7 @@ def workflow_5q():
     dry_run = True
 
     edm = ExperimentDataManager(
-        f"workflow_tfim_group_size{group_size}_{provider_name}_{n_shots}shots",
+        f"workflow_tfim_hadam_{which_hadamard_test}_{provider_name}_{n_shots}shots",
         dry_run=dry_run,
     )
 
@@ -101,9 +103,8 @@ def workflow_5q():
 
     fig = plot_all_backends_dispersions_UT(out_dict)
 
-    plt.show()
-
     edm.save_figure(fig, fig_shape="double-y")
+    plt.show()
 
 
 def worflow_sweep_test():
