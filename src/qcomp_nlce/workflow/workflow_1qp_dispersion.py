@@ -12,14 +12,13 @@ from qcomp_nlce.utils.workflow import (
 from data_manager import ExperimentDataManager
 
 import matplotlib.pyplot as plt
-import warnings
 
 
 def workflow_5q():
     # avoid the "unused arguments" warning
     # warnings.filterwarnings("ignore")
     n_qubits_max = 5
-    J = 0.8
+    J = 1
     which_backends = [
         "fake_backend",
         "statevector",
@@ -32,8 +31,12 @@ def workflow_5q():
 
     gs_dirname_l = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/5q_3l")
     gs_dirname_s = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/4q_2l")
-    elem_dirname_l = Path(res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/5q_3l")
-    elem_dirname_s = Path(res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/4q_2l")
+    elem_dirname_l = Path(
+        res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/5q_3l"
+    )
+    elem_dirname_s = Path(
+        res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/4q_2l"
+    )
 
     dry_run = True
 

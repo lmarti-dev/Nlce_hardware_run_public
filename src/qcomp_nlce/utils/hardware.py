@@ -227,7 +227,7 @@ def circuits_to_sampler_payload(
     if isinstance(circuit, QuantumCircuit):
         circuit = [circuit]
 
-    if isinstance(backend, MQPBackend | IQMBackend):
+    if isinstance(backend, MQPBackend | IQMBackend | AQTResource):
         initial_layout = list(range(circuit[0].num_qubits))
         isa_circuit = transpile(
             circuit,
@@ -391,7 +391,7 @@ def backend_estimate(
 
     if isinstance(backend, (AQTResource, MQPBackend)):
         estimator = AQTEstimator(backend)
-        estimator.set_transpile_options(optimization_level=3)
+        # estimator.set_transpile_options(optimization_level=3)
         (circuit, observables, parameters) = circuits_to_estimator_payload(
             backend, circuit, parameters, observables, which="v1"
         )
@@ -405,8 +405,9 @@ def backend_estimate(
         }
         if parameters != []:
             kwargs.update({"parameters": parameters})
-
-        job = estimator.run(qasm3=True, queued=True, **kwargs)
+        if not isinstance(backend, OfflineSimulatorResource):
+            kwargs.update({"qasm3": True, "queued": True})
+        job = estimator.run(**kwargs)
     else:
         options = {}
         # avoid the warning when using a fakebackend
