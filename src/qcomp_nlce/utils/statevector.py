@@ -81,9 +81,9 @@ def optimize_circuit(
             result = sv_expectation_observables(
                 circuit=circuit,
                 observables=[hamiltonian],
-                param_sweep=xk,
+                parameters=xk,
             )
-            return result.data.evs[0]
+            return result[0]
 
     def jac(x: np.ndarray) -> np.ndarray:
         out = np.zeros_like(x)
@@ -92,10 +92,13 @@ def optimize_circuit(
             p[ind] += np.pi / 2
             m = x.copy()
             m[ind] -= np.pi / 2
-            res = sv_expectation_observables(
-                circuit=circuit, observables=[hamiltonian], param_sweep=[p, m]
+            res_p = sv_expectation_observables(
+                circuit=circuit, observables=[hamiltonian], parameters=p
             )
-            out[ind] = 0.5 * (res.data.evs[1] - res.data.evs[0])
+            res_m = sv_expectation_observables(
+                circuit=circuit, observables=[hamiltonian], parameters=m
+            )
+            out[ind] = 0.5 * (res_m[0] - res_p[0])
         return out
 
     if initial_params is None:
