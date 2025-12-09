@@ -278,17 +278,17 @@ def circuits_to_estimator_payload(
     if isinstance(circuit, QuantumCircuit):
         circuit = [circuit]
 
-    if isinstance(backend, (MQPBackend, OfflineSimulatorResource)):
+    if isinstance(backend, (MQPBackend)):
         kwargs = {}
-        if isinstance(backend, OfflineSimulatorResource) and False:
-            kwargs.update({"target": custom_aqt_target()})
-
+        # If OfflineSimulatorResource ends up here,
+        # then simulations will be extremely slow!
         initial_layout = list(range(circuit[0].num_qubits))
         isa_circuit = transpile(
             circuit,
             backend=backend,
             initial_layout=initial_layout,
             optimization_level=3,
+            coupling_map=backend.coupling_map,
             **kwargs,
         )
     else:
@@ -391,7 +391,7 @@ def backend_estimate(
 
     if isinstance(backend, (AQTResource, MQPBackend)):
         estimator = AQTEstimator(backend)
-        # estimator.set_transpile_options(optimization_level=3)
+        estimator.set_transpile_options(optimization_level=3)
         (circuit, observables, parameters) = circuits_to_estimator_payload(
             backend, circuit, parameters, observables, which="v1"
         )

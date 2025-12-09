@@ -684,7 +684,9 @@ def measure_matrix_elements(
                         computed_values = add_tmp_entry_and_save(
                             filename, computed_values, jUk, std, ind_x, ind_y
                         )
-                    print(f"{ind_x} - {ind_y}: {vals[ind_x,ind_y]:.4f}")
+                    print(
+                        f"{ind_x} - {ind_y}: {vals[ind_x,ind_y]:.4f} ({stds[ind_x,ind_y]:.4f})"
+                    )
     elif which_hadamard_test == "off-diag":
         for ind_x, x in enumerate(comp_states):
             for ind_y, y in enumerate(comp_states[ind_x:]):
@@ -715,7 +717,9 @@ def measure_matrix_elements(
                         computed_values = add_tmp_entry_and_save(
                             filename, computed_values, kUj, std, ind_y, ind_x
                         )
-                    print(f"{ind_x} - {ind_y}: {jUk:.3f}, {kUj:.3f}")
+                    print(
+                        f"{ind_x} - {ind_y}: {jUk:.3f}, {kUj:.3f} ({stds[ind_x,ind_y]:.4f})"
+                    )
     if on_hardware:
         vals, stds = rebuild_matrices_from_tmp(computed_values, len(comp_states))
     # somehow indices are all messy
