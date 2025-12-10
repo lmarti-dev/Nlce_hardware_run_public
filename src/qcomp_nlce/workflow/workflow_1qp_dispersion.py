@@ -20,11 +20,11 @@ def workflow_5q(dry_run):
     n_qubits_max = 5
     J = 1
     which_backends = [
-        "real_backend",
+        "fake_backend",
         "statevector",
     ]
     provider_name = "AQT"
-    n_shots = int(2e2)
+    n_shots = int(2e3)
     ks = np.linspace(0, np.pi, 21)
     group_size = None
     which_hadamard_test = "estimator"
@@ -51,6 +51,7 @@ def workflow_5q(dry_run):
             "provider_name": provider_name,
             "group_size": group_size,
             "n_qubits": n_qubits_max,
+            "n_shots": n_shots,
         },
     }
 
@@ -108,22 +109,20 @@ def workflow_5q(dry_run):
     plt.show()
 
 
-def worflow_sweep_test():
+def worflow_sweep_test(dry_run):
 
     for n_steps in range(4, 30, 5):
         n_qubits_max = 5
         J = 1
-        which_backends = ["real_backend", "statevector"]
+        which_backends = ["fake_backend", "statevector"]
         provider_name = "AQT"
         n_shots = int(2e2)
         ks = np.linspace(0, np.pi, 21)
         group_size = None
         which_hadamard_test = "stefan"
 
-        dry_run = False
-
         edm = ExperimentDataManager(
-            f"workflow_tfim_sweep_nsteps_{provider_name}_{n_shots}shots",
+            f"workflow_tfim_sweep_{n_steps}nsteps_test_{which_hadamard_test}_{provider_name}_{n_shots}shots",
             dry_run=dry_run,
         )
 
@@ -136,6 +135,7 @@ def worflow_sweep_test():
                 "group_size": group_size,
                 "n_qubits": n_qubits_max,
                 "n_steps": n_steps,
+                "n_shots": n_shots,
             },
         }
 
@@ -170,4 +170,4 @@ def worflow_sweep_test():
 
 
 if __name__ == "__main__":
-    workflow_5q()
+    worflow_sweep_test(False)

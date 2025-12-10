@@ -6,6 +6,7 @@ from qcomp_nlce.utils.measure import (
     circuit_estimation_job,
     circuit_sampling_job,
     get_counts_from_res,
+    convert_count_keys,
 )
 from qcomp_nlce.utils.hamiltonian import index_bits, projector_ham, trace_dist
 from qcomp_nlce.utils.circuit import (
@@ -36,7 +37,7 @@ from qcomp_nlce.utils.stats import sum_std
 
 from qiskit.primitives import EstimatorResult, PrimitiveResult
 
-from typing import Union, Tuple
+from typing import Union, Tuple, Literal
 
 
 def custom_idx_groups_of_n(total_len: int, group_size: int = 2):
@@ -330,12 +331,14 @@ def build_stefan_circuits_sample(
         hadam_circuit.append(apply_parameters(circuit, parameters), range(1, n_qubits))
         for x in x_inds:
             hadam_circuit.cx(0, x + 1)
+
         if t == "imag":
             hadam_circuit.s(0)
-        hadam_circuit.x(0)
-        hadam_circuits.append(hadam_circuit)
 
+        hadam_circuit.h(0)
         hadam_circuit.measure_all()
+
+        hadam_circuits.append(hadam_circuit)
 
     return hadam_circuits
 
@@ -347,7 +350,7 @@ def stefan_hadamard_test(
     x: str,
     y: str,
     backend: BACKEND_ALIAS = "statevector",
-    counting_method: str = "estimator",
+    counting_method: Literal["estimator", "samples"] = "estimator",
 ):
 
     # this is Stefan Wolf's test, a bit modified though
@@ -376,16 +379,15 @@ def stefan_hadamard_test(
         return ol, std
 
     elif counting_method == "samples":
+        n_qubits = circuit.num_qubits + 1
         stef_circuits = build_stefan_circuits_sample(circuit, parameters, x, y)
         jobs = circuit_sampling_job(stef_circuits, parameters, backend, n_shots)
-        if backend == "statevector":
-            keys = {"p0": "0" * (len(x) + 1), "p1": "0" * (len(x)) + "1"}
-        else:
-            # weep
-            keys = {"p0": "0", "p1": "1"}
+        keys = {"p0": "0" * (len(x) + 1), "p1": "0" * (len(x)) + "1"}
         res = jobs.result()
-        re, rstd = hadam_diff(get_counts_from_res(res, 0), keys=keys)
-        im, imstd = hadam_diff(get_counts_from_res(res, 1), keys=keys)
+        re, rstd = hadam_diff(get_counts_from_res(res, n_qubits, 0), n_shots, keys=keys)
+        im, imstd = hadam_diff(
+            get_counts_from_res(res, n_qubits, 1), n_shots, keys=keys
+        )
 
         return re + 1j * im, rstd + 1j * imstd
 
@@ -427,12 +429,10 @@ def hadamard_test(
     return val
 
 
-def get_n0n1_hadam_counts(counts: dict, keys: dict[str, str] = {"p0": "0", "p1": "1"}):
+def get_n0n1_hadam_counts(
+    counts: dict[str, int], keys: dict[str, str] = {"p0": "0", "p1": "1"}
+):
     # make sure that keys are str and not int!
-    out_counts = {}
-    for k in counts:
-        out_counts[str(k)] = counts[k]
-    counts = out_counts
 
     if keys["p0"] not in counts.keys():
         n0 = 0
@@ -446,17 +446,14 @@ def get_n0n1_hadam_counts(counts: dict, keys: dict[str, str] = {"p0": "0", "p1":
 
 
 def hadam_diff(
-    counts: dict, n_shots: int = None, keys: dict[str, str] = {"p0": "0", "p1": "1"}
+    counts: dict, n_shots: int, keys: dict[str, str] = {"p0": "0", "p1": "1"}
 ) -> float:
 
     n0, n1 = get_n0n1_hadam_counts(counts, keys)
     if n0 == 0 and n1 == 0:
         return 0, 0
 
-    if n_shots is None:
-        n_shots = n0 + n1
-
-    std = full_hadamard_std(n1, n0)
+    std = full_hadamard_std(n1, n0, n_shots)
 
     return (n0 - n1) / n_shots, std
 
@@ -497,13 +494,14 @@ def get_hadam_estimator(res: EstimatorResult) -> tuple[complex, complex]:
         ) + 1j * +np.sqrt(res.metadata[1]["variance"])
 
 
-def full_hadamard_std(n_1: int, n_0: int) -> float:
+def full_hadamard_std(n_1: int, n_0: int, n_shots: int) -> float:
     if n_1 == 0 and n_0 == 0:
         return 0
-    N = n_1 + n_0
-    mu = n_1 / N
-    sigma = np.sqrt((n_1 * ((mu - 1) ** 2)) / N)
-    return sigma
+    # <(Z x |0X0|)^2> - <(Z x |0X0|)>^2
+    # or simply <Z^2> - <Z>^2
+    t1 = (n_0 + n_1) / n_shots
+    t2 = ((n_0 - n_1) / (n_shots)) ** 2
+    return np.sqrt(t1 - t2)
 
 
 def measure_matrix_element(
@@ -684,9 +682,7 @@ def measure_matrix_elements(
                         computed_values = add_tmp_entry_and_save(
                             filename, computed_values, jUk, std, ind_x, ind_y
                         )
-                    print(
-                        f"{ind_x} - {ind_y}: {vals[ind_x,ind_y]:.4f} ({stds[ind_x,ind_y]:.4f})"
-                    )
+                    print(f"{ind_x} - {ind_y}: {jUk:.4f} ({std:.4f})")
     elif which_hadamard_test == "off-diag":
         for ind_x, x in enumerate(comp_states):
             for ind_y, y in enumerate(comp_states[ind_x:]):
@@ -717,9 +713,7 @@ def measure_matrix_elements(
                         computed_values = add_tmp_entry_and_save(
                             filename, computed_values, kUj, std, ind_y, ind_x
                         )
-                    print(
-                        f"{ind_x} - {ind_y}: {jUk:.3f}, {kUj:.3f} ({stds[ind_x,ind_y]:.4f})"
-                    )
+                    print(f"{ind_x} - {ind_y}: {jUk:.3f}, {kUj:.3f} ({std:.4f})")
     if on_hardware:
         vals, stds = rebuild_matrices_from_tmp(computed_values, len(comp_states))
     # somehow indices are all messy
@@ -820,7 +814,7 @@ def measure_hamiltonian_elements(
                 stds[ind_x, ind_y] = std
                 stds[ind_y, ind_x] = std
 
-                print(f"{ind_x} - {ind_y} - {val}")
+                print(f"{ind_x} - {ind_y} - {complex(val):.4f} ({complex(std):.4f})")
                 if on_hardware:
                     computed_values = add_tmp_entry_and_save(
                         filename, computed_values, val.conj(), std, ind_x, ind_y

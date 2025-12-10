@@ -1,5 +1,6 @@
 from qiskit.primitives import StatevectorSampler, PrimitiveJob, StatevectorEstimator
 from qcomp_nlce.utils.hardware import backend_sample, backend_estimate, BACKEND_ALIAS
+from qcomp_nlce.utils.hamiltonian import to_bitstring
 from qcomp_nlce.utils.circuit import parameters_exist
 from qcomp_nlce.utils.statevector import (
     sv_estimate_observables,
@@ -82,33 +83,48 @@ def sample_counts_circuit(
     n_shots: int = 1000,
 ):
     job = circuit_sampling_job(circuit, parameters, backend, n_shots)
-    counts = get_counts_from_job(job)
+    counts = get_counts_from_res(job.result(), circuit.num_clbits)
     return counts
 
 
-def get_counts_from_res(res: Union[PrimitiveResult, Result], ind: int = 0) -> dict:
+def convert_count_keys(counts: dict, n_qubits: int):
+    int_keys = any([set(str(k)).issubset(set(("0", "1"))) for k in counts])
+    counts_out = {}
+    if int_keys:
+        for k in counts:
+            nk = to_bitstring(k, n_qubits, False)
+            counts_out[nk] = counts[k]
+    else:
+        for k in counts:
+            counts_out[str(k)] = counts[k]
+    return counts_out
+
+
+def get_counts_from_res(
+    res: Union[PrimitiveResult, Result], n_qubits: int, ind: int = 0
+) -> dict:
     # you get them at some point
     try:
         key = list(res[ind].data.keys())[0]
         counts = res[ind].data[key].get_counts()
-        return counts
+        return convert_count_keys(counts, n_qubits)
     except Exception:
         pass
     try:
         qd = res.quasi_dists[ind]
         n_shots = res.metadata[ind]["shots"]
         counts = {k: int(qd[k] * n_shots) for k in qd.keys()}
-        return counts
+        return convert_count_keys(counts, n_qubits)
     except Exception:
         pass
     try:
         counts = res[ind].join_data().get_counts()
-        return counts
+        return convert_count_keys(counts, n_qubits)
     except Exception:
         pass
     try:
         counts = res.get_counts(ind)
-        return counts
+        return convert_count_keys(counts, n_qubits)
     except Exception as e:
         raise RuntimeError(f"Unknown result: {res}")
 

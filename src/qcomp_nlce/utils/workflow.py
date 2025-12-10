@@ -314,6 +314,7 @@ def plot_all_backends_dispersions_UT(
 ) -> plt.Figure:
     ks = _d["inputs"]["ks"]
     j = _d["inputs"]["J"]
+
     fig, ax = plt.subplots()
     res = _d["results"]
 
