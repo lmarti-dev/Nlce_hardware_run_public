@@ -18,7 +18,8 @@ def workflow_5q(dry_run):
     # avoid the "unused arguments" warning
     # warnings.filterwarnings("ignore")
     n_qubits_max = 5
-    J = 1
+    nq= n_qubits_max
+    J = 1.0
     which_backends = [
         "fake_backend",
         "statevector",
@@ -29,13 +30,13 @@ def workflow_5q(dry_run):
     group_size = None
     which_hadamard_test = "estimator"
 
-    gs_dirname_l = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/5q_3l")
-    gs_dirname_s = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/4q_2l")
+    gs_dirname_l = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/{nq}q_3l")
+    gs_dirname_s = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/{nq-1}q_2l")
     elem_dirname_l = Path(
-        res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/5q_3l"
+        res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/{nq}q_3l"
     )
     elem_dirname_s = Path(
-        res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/4q_2l"
+        res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/{nq-1}q_2l"
     )
 
     edm = ExperimentDataManager(
@@ -170,4 +171,5 @@ def worflow_sweep_test(dry_run):
 
 
 if __name__ == "__main__":
-    worflow_sweep_test(False)
+    # worflow_sweep_test(False)
+    workflow_5q(False)
