@@ -5,8 +5,7 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import EstimatorV2, SamplerV2
 from qiskit_ibm_runtime.base_runtime_job import BaseRuntimeJob
-from qiskit.primitives import EstimatorResult, PrimitiveResult, Estimator
-from qcomp_nlce.utils.aqt_target_utils import custom_aqt_target
+from qiskit.primitives import EstimatorResult, PrimitiveResult
 
 try:
     from iqm.qiskit_iqm.fake_backends.fake_deneb import (

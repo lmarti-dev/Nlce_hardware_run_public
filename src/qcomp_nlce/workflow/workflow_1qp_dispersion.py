@@ -28,7 +28,7 @@ def workflow_5q(dry_run):
     n_shots = int(2e3)
     ks = np.linspace(0, np.pi, 21)
     group_size = None
-    which_hadamard_test = "estimator"
+    which_hadamard_test = "stefan"
 
     gs_dirname_l = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/{nq}q_3l")
     gs_dirname_s = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/{nq-1}q_2l")
@@ -117,10 +117,10 @@ def worflow_sweep_test(dry_run):
         J = 1
         which_backends = ["fake_backend", "statevector"]
         provider_name = "AQT"
-        n_shots = int(2e2)
+        n_shots = int(1999)
         ks = np.linspace(0, np.pi, 21)
         group_size = None
-        which_hadamard_test = "stefan"
+        which_hadamard_test = "estimator"
 
         edm = ExperimentDataManager(
             f"workflow_tfim_sweep_{n_steps}nsteps_test_{which_hadamard_test}_{provider_name}_{n_shots}shots",
