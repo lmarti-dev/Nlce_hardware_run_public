@@ -13,30 +13,48 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def average_matrices(dicts: list[dict]) -> dict:
+def plot_average_matrices(dicts: list[dict]) -> dict:
 
     n_dicts = len(dicts)
 
     out_d = copy.deepcopy(dicts[0])
     ks = out_d["inputs"]["ks"]
+    out_d["inputs"]["n_shots"] = 2000 * n_dicts
 
     for si in ("dict_l", "dict_s"):
         for backend in out_d["results"]["vqe"][si]["eld"]:
             if backend != "system":
                 for mnd in ("eld", "exd"):
                     out_d["results"]["vqe"][si][mnd][backend]["values"] = np.mean(
-                        (d["results"]["vqe"][si][mnd][backend]["values"] for d in dicts)
+                        list(
+                            d["results"]["vqe"][si][mnd][backend]["values"]
+                            for d in dicts
+                        ),
+                        axis=0,
                     )
                     out_d["results"]["vqe"][si][mnd][backend]["stds"] = mean_std(
-                        (d["results"]["vqe"][si][mnd][backend]["stds"] for d in dicts)
+                        list(
+                            d["results"]["vqe"][si][mnd][backend]["stds"] for d in dicts
+                        ),
+                        axis=0,
                     )
 
-            out_d["results"]["vqe"][si]["gsd"][backend]["energy"] = np.mean(
-                (d["results"]["vqe"][si]["gsd"][backend]["energy"] for d in dicts)
-            )
-            out_d["results"]["vqe"][si]["gsd"][backend]["std"] = mean_std(
-                (d["results"]["vqe"][si]["gsd"][backend]["std"] for d in dicts)
-            )
+                out_d["results"]["vqe"][si]["gsd"][backend]["energy"] = np.mean(
+                    np.array(
+                        list(
+                            d["results"]["vqe"][si]["gsd"][backend]["energy"]
+                            for d in dicts
+                        )
+                    )
+                )
+                out_d["results"]["vqe"][si]["gsd"][backend]["std"] = mean_std(
+                    np.array(
+                        list(
+                            d["results"]["vqe"][si]["gsd"][backend]["std"]
+                            for d in dicts
+                        )
+                    )
+                )
 
     for si in ("dict_l", "dict_s"):
         for backend in out_d["results"]["vqe"][si]["eld"]:
@@ -53,7 +71,7 @@ def average_matrices(dicts: list[dict]) -> dict:
     return out_d
 
 
-def average_over_runs():
+def plot_average_over_runs():
     runs = (
         r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test_00005",
         r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test",
@@ -69,9 +87,9 @@ def average_over_runs():
         d = edm.load_last_saved_data_file
         dicts.append(d)
 
-    out_d = average_matrices(dicts)
+    out_d = plot_average_matrices(dicts)
 
-    fig = plot_multiple_dispersions([out_d, dicts[0]])
+    fig = plot_all_backends_dispersions_UT(out_d)
 
     plt.show()
 
@@ -86,4 +104,4 @@ def load_and_plot(fpath):
 if __name__ == "__main__":
 
     fpath = r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test_00005"
-    load_and_plot(fpath)
+    plot_average_over_runs()

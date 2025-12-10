@@ -7,10 +7,10 @@ def prod_std(stds: np.ndarray, vals: np.ndarray) -> float:
     return np.sqrt(np.sum((stds**2) / (vals**2)))
 
 
-def sum_std(stds: np.ndarray) -> float:
+def sum_std(stds: np.ndarray, axis: int = 0) -> float:
     stds = np.array(stds)
-    return np.sqrt(np.sum((stds**2)))
+    return np.sqrt(np.sum(stds**2, axis=axis))
 
 
-def mean_std(stds: np.ndarray) -> float:
-    return sum_std(stds) / len(stds)
+def mean_std(stds: np.ndarray, axis: int = 0) -> float:
+    return sum_std(stds, axis=axis) / len(stds)

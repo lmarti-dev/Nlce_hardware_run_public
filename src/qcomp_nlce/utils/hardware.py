@@ -5,7 +5,7 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import EstimatorV2, SamplerV2
 from qiskit_ibm_runtime.base_runtime_job import BaseRuntimeJob
-from qiskit.primitives import EstimatorResult, PrimitiveResult
+from qiskit.primitives import EstimatorResult, PrimitiveResult, Estimator
 from qcomp_nlce.utils.aqt_target_utils import custom_aqt_target
 
 try:
@@ -227,7 +227,7 @@ def circuits_to_sampler_payload(
     if isinstance(circuit, QuantumCircuit):
         circuit = [circuit]
 
-    if isinstance(backend, MQPBackend | IQMBackend | AQTResource):
+    if isinstance(backend, MQPBackend | IQMBackend):
         initial_layout = list(range(circuit[0].num_qubits))
         isa_circuit = transpile(
             circuit,
@@ -268,6 +268,24 @@ def circuits_to_sampler_payload(
     return payload
 
 
+# from https://quantumcomputing.stackexchange.com/questions/25672/remove-inactive-qubits-from-qiskit-circuit
+def count_gates(qc: QuantumCircuit):
+    gate_count = {qubit: 0 for qubit in qc.qubits}
+    for gate in qc.data:
+        for qubit in gate.qubits:
+            gate_count[qubit] += 1
+    return gate_count
+
+
+def remove_idle_wires(qc: QuantumCircuit):
+    qc_out = qc.copy()
+    gate_count = count_gates(qc_out)
+    for qubit, count in gate_count.items():
+        if count == 0:
+            qc_out.qubits.remove(qubit)
+    return qc_out
+
+
 def circuits_to_estimator_payload(
     backend,
     circuit: Union[QuantumCircuit, list[QuantumCircuit]],
@@ -292,9 +310,8 @@ def circuits_to_estimator_payload(
             **kwargs,
         )
     else:
-        isa_circuit = compile_circuit_for_backend(
-            circuit, backend, {"optimization_level": 3}
-        )
+        kwargs = {"optimization_level": 3}
+        isa_circuit = compile_circuit_for_backend(circuit, backend, kwargs)
     if which == "v1":
 
         payload = [[], [], []]
@@ -389,7 +406,8 @@ def backend_estimate(
     n_shots: int,
 ) -> BaseRuntimeJob:
 
-    if isinstance(backend, (AQTResource, MQPBackend)):
+    if isinstance(backend, (MQPBackend, AQTResource)):
+        # can't replace it with EstimatorV1
         estimator = AQTEstimator(backend)
         estimator.set_transpile_options(optimization_level=3)
         (circuit, observables, parameters) = circuits_to_estimator_payload(
@@ -412,7 +430,7 @@ def backend_estimate(
         options = {}
         # avoid the warning when using a fakebackend
         if not isinstance(backend, FakeBackendV2):
-            options.update({"resilience_level": 2})
+            options.update({"resilience_level": 3})
         estimator = EstimatorV2(backend, options=options)
         payload = circuits_to_estimator_payload(
             backend, circuit, parameters, observables

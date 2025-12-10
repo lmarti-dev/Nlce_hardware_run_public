@@ -283,29 +283,34 @@ def disp_from_res_dict(
     ks: np.ndarray,
     _d: dict,
     circ: Literal["vqe", "sweep"],
-    improvement_needed: int = 1,
+    improvement_needed: float = 1,
 ) -> dict:
     res = _d["results"][circ]
     disps = {}
     # tweak this to see how much better we need to get
     # 1 for actual values
     if improvement_needed != 1:
-        print(f"Fictional scenario with std divided by {improvement_needed}")
+        print(f"!!! Fictional scenario with std divided by {improvement_needed}")
+    use_estimator_std = True
+    fac = 1
+    if use_estimator_std:
+        fac = 1 / np.sqrt(_d["inputs"]["n_shots"])
+    totfac = fac / improvement_needed
     for be in res["dict_l"]["eld"]:
         if be != "system":
             overlap_l = res["dict_l"]["eld"][be]["values"]
-            overlap_std_l = res["dict_l"]["eld"][be]["stds"] / improvement_needed
+            overlap_std_l = res["dict_l"]["eld"][be]["stds"] * totfac
             expectations_l = res["dict_l"]["exd"][be]["values"]
-            expectations_std_l = res["dict_l"]["exd"][be]["stds"] / improvement_needed
+            expectations_std_l = res["dict_l"]["exd"][be]["stds"] * totfac
             gs_expectation_l = res["dict_l"]["gsd"][be]["energy"]
-            gs_expectation_std_l = res["dict_l"]["gsd"][be]["std"] / improvement_needed
+            gs_expectation_std_l = res["dict_l"]["gsd"][be]["std"] * totfac
 
             overlap_s = res["dict_s"]["eld"][be]["values"]
-            overlap_std_s = res["dict_s"]["eld"][be]["stds"] / improvement_needed
+            overlap_std_s = res["dict_s"]["eld"][be]["stds"] * totfac
             expectations_s = res["dict_s"]["exd"][be]["values"]
-            expectations_std_s = res["dict_s"]["exd"][be]["stds"] / improvement_needed
+            expectations_std_s = res["dict_s"]["exd"][be]["stds"] * totfac
             gs_expectation_s = res["dict_s"]["gsd"][be]["energy"]
-            gs_expectation_std_s = res["dict_s"]["gsd"][be]["std"] / improvement_needed
+            gs_expectation_std_s = res["dict_s"]["gsd"][be]["std"] * totfac
 
             vals, means, pmat = dispersion_1d_thermodynamic_ks_UT(
                 ks,
