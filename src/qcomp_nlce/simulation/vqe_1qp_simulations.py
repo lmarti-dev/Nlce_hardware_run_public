@@ -130,7 +130,7 @@ def train_and_save(
 if __name__ == "__main__":
     dry_run = False
     which_cost = "offdiag"
-    for n_qubits in (4, 5):
-        for J in (0.8,):
+    for n_qubits in (2, 3):
+        for J in (0.8, 1.0):
             dirname = f"elem_vqe_{int(J*100)}j"
             train_and_save(n_qubits, J, dirname, which_cost, dry_run)
