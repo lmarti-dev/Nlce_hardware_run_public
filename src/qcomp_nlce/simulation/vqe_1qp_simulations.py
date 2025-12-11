@@ -114,7 +114,7 @@ def train_and_save(
         cost=cost,
         initial_params=0.1 * np.ones((len(circuit.parameters),)),
     )
-    print(f"final cost is {np.abs(cost_values[-1])}")
+    # print(f"final cost is {np.abs(cost_values[-1])}")
 
     save_optimized_vqe(
         f"{dirname}/vqe/cost_{which_cost}/{n_qubits}q_{n_layers}l",
@@ -130,6 +130,8 @@ def train_and_save(
 if __name__ == "__main__":
     dry_run = False
     which_cost = "offdiag"
+    for n_qubits in (6, 7):
+        for J in (1.0, 0.8):
     for n_qubits in (2, 3):
         for J in (0.8, 1.0):
             dirname = f"elem_vqe_{int(J*100)}j"
