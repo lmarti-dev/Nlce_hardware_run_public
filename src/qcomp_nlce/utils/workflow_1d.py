@@ -16,6 +16,7 @@ from qcomp_nlce.utils import (
     get_tfim_ratio,
     sweep_time_from_steps,
     BACKEND_TYPES,
+    baptize_circuit,
 )
 from qcomp_nlce.utils.dispersion import (
     dispersion_1d_thermodynamic,
@@ -27,7 +28,7 @@ from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
 from qcomp_nlce.utils.effective_hamiltonian import H_effective, H_effective_ed
 
-from qcomp_nlce.utils.unscented_transform import disp_from_res_dict
+from qcomp_nlce.utils.unscented_transform import ut_disp_from_res_dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -37,10 +38,12 @@ from typing import Literal
 
 def dispersion_all_backends(dict_l: dict, dict_s: dict, ks: np.ndarray):
     disp = {}
-    for which in dict_l["heff"].keys():
-        H_eff_Nb = dict_l["heff"][which]
-        H_eff_Ns = dict_s["heff"][which]
-        disp[which] = [dispersion_1d_thermodynamic(k, H_eff_Nb, H_eff_Ns) for k in ks]
+    for which_backend in dict_l["heff"].keys():
+        H_eff_Nb = dict_l["heff"][which_backend]
+        H_eff_Ns = dict_s["heff"][which_backend]
+        disp[which_backend] = [
+            dispersion_1d_thermodynamic(k, H_eff_Nb, H_eff_Ns) for k in ks
+        ]
     return disp
 
 
@@ -113,17 +116,6 @@ def sweep_dispersion(
     return dict_l, dict_s, dispersion_all_backends(dict_l, dict_s, ks)
 
 
-def baptize_circuit(
-    n_qubits: int,
-    ratio: float,
-    provider_name: str,
-    n_shots: int,
-    which_hadamard_test: str,
-) -> str:
-
-    return f"{n_qubits}_{int(ratio*100)}_{provider_name}_{n_shots}shots_{which_hadamard_test}_test"
-
-
 def vqe_heff(
     gs_dirname: Path,
     elem_dirname: Path,
@@ -141,12 +133,12 @@ def vqe_heff(
     elem_circuit = apply_parameters(elem_circuit, elem_weights[-1])
     ratio = get_tfim_ratio(hamiltonian1)
     name_part = baptize_circuit(
-        n_qubits, ratio, provider_name, n_shots, which_hadamard_test
+        "dim1d", "vqe", n_qubits, ratio, provider_name, n_shots, which_hadamard_test
     )
-    elem_circuit.metadata["tmpname"] = f"vqe_elem_circuit_{name_part}"
+    elem_circuit.metadata["tmpname"] = name_part
     hamiltonian2, gs_circuit, gs_weights, ground_energy = load_optimized_vqe(gs_dirname)
     gs_circuit = apply_parameters(gs_circuit, gs_weights[-1])
-    gs_circuit.metadata["tmpname"] = f"vqe_gs_circuit_{name_part}"
+    gs_circuit.metadata["tmpname"] = name_part
 
     assert hamiltonian1 == hamiltonian2
     hamiltonian = hamiltonian1
@@ -188,7 +180,7 @@ def sweep_heff(
     )
     ratio = get_tfim_ratio(hamiltonian)
     name_part = baptize_circuit(
-        n_qubits, ratio, provider_name, n_shots, which_hadamard_test
+        "dim1d", "sweep", n_qubits, ratio, provider_name, n_shots, which_hadamard_test
     )
     circuit.metadata["tmpname"] = f"sweep_circuit_{name_part}"
     return get_heff_values(
@@ -309,8 +301,23 @@ def plot_all_backends_dispersions(_d: dict) -> plt.Figure:
     return fig
 
 
-def plot_all_backends_dispersions_UT(
-    _d: dict, plot_ut_means: bool = False
+def plot_multiple_dispersions(_l: list[dict]) -> plt.Figure:
+    fig, ax = plt.subplots()
+    for ind, _d in enumerate(_l):
+        ks = _d["inputs"]["ks"]
+        j = _d["inputs"]["J"]
+        res = _d["results"]
+        for k in res:
+            disp = res[k]["disp"]
+            for be in disp:
+                ax.plot(ks, disp[be], label=f"{k} - {be} ({ind})")
+    ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="analytic")
+    ax.legend()
+    return fig
+
+
+def plot_all_backends_dispersions_montecarlo(
+    _d: dict,
 ) -> plt.Figure:
     ks = _d["inputs"]["ks"]
     j = _d["inputs"]["J"]
@@ -324,33 +331,20 @@ def plot_all_backends_dispersions_UT(
             for be in disp:
                 ax.plot(ks, disp[be], label=f"{circ} - {be}")
         else:
-            err = disp_from_res_dict(ks, _d, circ)
             disp = res[circ]["disp"]
-            for be in disp:
+            for be in res[circ]["mc_disp"]:
                 ax.errorbar(
-                    ks, disp[be], err[be]["pmat"] ** (1 / 2), label=f"{circ} - {be}"
+                    ks,
+                    res[circ]["mc_disp"][be]["mean"],
+                    res[circ]["mc_disp"][be]["std"],
+                    label=f"{circ} montecarlo - {be}",
                 )
-                if plot_ut_means:
-                    ax.plot(
-                        ks,
-                        err[be]["means"],
-                        label=f"{circ} - {be} (UT mean)",
-                    )
-    ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="analytic")
-    ax.legend()
-    return fig
-
-
-def plot_multiple_dispersions(_l: list[dict]) -> plt.Figure:
-    fig, ax = plt.subplots()
-    for ind, _d in enumerate(_l):
-        ks = _d["inputs"]["ks"]
-        j = _d["inputs"]["J"]
-        res = _d["results"]
-        for k in res:
-            disp = res[k]["disp"]
-            for be in disp:
-                ax.plot(ks, disp[be], label=f"{k} - {be} ({ind})")
+                ax.plot(
+                    ks,
+                    disp[be],
+                    "x-",
+                    label=f"{circ} - {be}",
+                )
     ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="analytic")
     ax.legend()
     return fig

@@ -140,7 +140,7 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
 
     for which_backend in which_backends:
         on_hardware = is_hardware_run(which_backend)
-        filename = f"measure_ground_energy_{tmp_filename(circuit,which_backend)}"
+        filename = f"{tmp_filename(circuit,which_backend)}/measure_ground_energy.json"
         item = None
         if on_hardware:
             try:

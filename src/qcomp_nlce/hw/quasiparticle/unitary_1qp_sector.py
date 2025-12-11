@@ -15,11 +15,13 @@ from qcomp_nlce.utils import (
     custom_idx_groups_of_n,
     trace_dist,
     compare_with_true,
+    HADAMARD_TESTS,
 )
 import os
 from pathlib import Path
 
 from data_manager import ExperimentDataManager
+from qiskit_ibm_runtime import Session
 
 HOME = Path(__file__).parent
 
@@ -64,7 +66,7 @@ def measure_1qp_elements_v2(
     provider_name: str = "IBM",
     n_shots: int = 1e3,
     group_size: int = None,
-    which_hadamard_test: str = "full",
+    which_hadamard_test: HADAMARD_TESTS = "full",
 ):
 
     n_qubits = circuit.num_qubits
@@ -97,16 +99,29 @@ def measure_1qp_elements_v2(
             backend = get_backend(circuit.num_qubits, provider_name)
         bn = backend.name
 
-    comp_vals, stds = measure_matrix_elements(
-        circuit,
-        comp_states,
-        circuit.parameters,
-        backend,
-        which_backend,
-        n_shots,
-        custom_idx=custom_idx,
-        which_hadamard_test=which_hadamard_test,
-    )
+    if which_backend == "real_backend":
+        with Session(backend) as s:
+            comp_vals, stds = measure_matrix_elements(
+                circuit,
+                comp_states,
+                circuit.parameters,
+                backend,
+                which_backend,
+                n_shots,
+                custom_idx=custom_idx,
+                which_hadamard_test=which_hadamard_test,
+            )
+    else:
+        comp_vals, stds = measure_matrix_elements(
+            circuit,
+            comp_states,
+            circuit.parameters,
+            backend,
+            which_backend,
+            n_shots,
+            custom_idx=custom_idx,
+            which_hadamard_test=which_hadamard_test,
+        )
     print(f"{which_backend} ({bn})")
     td = compare_with_true(true_comp_vals, comp_vals, bn)
 

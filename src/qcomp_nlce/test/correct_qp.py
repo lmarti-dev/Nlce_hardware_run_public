@@ -1,4 +1,4 @@
-from Nlce_hardware_run.src.qcomp_nlce.utils import n_qp_indices, to_bitstring
+from qcomp_nlce.utils import n_qp_indices, to_bitstring
 import itertools
 
 

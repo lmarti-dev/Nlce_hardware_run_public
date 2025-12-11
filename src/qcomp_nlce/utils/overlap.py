@@ -504,6 +504,9 @@ def full_hadamard_std(n_1: int, n_0: int, n_shots: int) -> float:
     return np.sqrt(t1 - t2)
 
 
+HADAMARD_TESTS = Literal["stefan", "projecto-estimo", "off-diag", "full", "estimator"]
+
+
 def measure_matrix_element(
     circuit: QuantumCircuit,
     x: str,
@@ -511,7 +514,7 @@ def measure_matrix_element(
     parameters: np.ndarray,
     backend: BACKEND_ALIAS,
     n_shots: int,
-    which_hadamard_test="iterative",
+    which_hadamard_test: HADAMARD_TESTS = "estimator",
     custom_idx: list[list[int]] = None,
     handcraft: bool = True,
 ) -> Union[complex, tuple[complex, complex]]:
@@ -649,7 +652,7 @@ def measure_matrix_elements(
     stds = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
 
     on_hardware = is_hardware_run(which_backend)
-    filename = f"measure_matrix_elements_{tmp_filename(circuit,which_backend)}"
+    filename = f"{tmp_filename(circuit,which_backend)}/measure_matrix_elements.json"
 
     if on_hardware:
         try:
@@ -790,7 +793,9 @@ def measure_hamiltonian_elements(
     stds = np.zeros((len(states), len(states)), dtype=complex)
 
     on_hardware = is_hardware_run(which_backend)
-    filename = f"measure_hamiltonian_elements_{tmp_filename(circuit,which_backend)}"
+    filename = (
+        f"{tmp_filename(circuit,which_backend)}/measure_hamiltonian_elements.json"
+    )
 
     if on_hardware:
         try:

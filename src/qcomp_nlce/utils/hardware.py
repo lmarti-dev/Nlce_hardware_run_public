@@ -285,6 +285,13 @@ def remove_idle_wires(qc: QuantumCircuit):
     return qc_out
 
 
+def get_provider_version(provider_name: PROVIDER_ALIAS) -> Literal["v1", "v2"]:
+    if provider_name in ("QEXA", "AQT"):
+        return "v1"
+    else:
+        return "v2"
+
+
 def circuits_to_estimator_payload(
     backend,
     circuit: Union[QuantumCircuit, list[QuantumCircuit]],
@@ -415,10 +422,14 @@ def backend_estimate(
         # lose yourself in the moment, the music
         # the moment you own it you never let it go (oh)
         # you only get 2000 shots
+        # if isinstance(backend, AQTResource):
+        #     n_shots = min(n_shots, 2000)
+        # I've commented out this part, to avoid getting
+        # an unexpected number of shots
         kwargs = {
             "circuits": circuit,
             "observables": observables,
-            "shots": min(n_shots, 2000),
+            "shots": n_shots,
         }
         if parameters != []:
             kwargs.update({"parameters": parameters})

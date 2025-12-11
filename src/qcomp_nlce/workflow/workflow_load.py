@@ -1,6 +1,6 @@
 import copy
 from data_manager import ExperimentDataManager
-from qcomp_nlce.utils.workflow import (
+from qcomp_nlce.utils.workflow_1d import (
     heff_backend_type,
     dispersion_all_backends,
     plot_multiple_dispersions,
