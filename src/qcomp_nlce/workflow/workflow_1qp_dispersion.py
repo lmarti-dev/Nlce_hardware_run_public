@@ -62,10 +62,10 @@ def workflow_5q(
     gs_dirname_l = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/5q_3l")
     gs_dirname_s = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/4q_2l")
     elem_dirname_l = Path(
-        res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/{nq}q_3l"
+        res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/{n_qubits_max}q_3l"
     )
     elem_dirname_s = Path(
-        res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/{nq-1}q_2l"
+        res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/{n_qubits_max-1}q_2l"
     )
 
     edm = ExperimentDataManager(
