@@ -7,6 +7,7 @@ from qcomp_nlce.utils import (
     TFIM,
     optimize_circuit,
     save_optimized_vqe,
+    get_optimal_n_layers,
 )
 
 
@@ -14,7 +15,7 @@ def train_and_save(n_qubits: int, J: float, dirname: str, dry_run: bool):
     periodic = False
     h = 1
     hamiltonian = TFIM(n_qubits, h, J, periodic=periodic)
-    n_layers = int(np.ceil(hamiltonian.num_qubits / 2))
+    n_layers = get_optimal_n_layers(hamiltonian.num_qubits)
 
     circuit = get_hva_vqe(hamiltonian, n_layers=n_layers, unique_weights=True)
     # circuit = get_custom_vqe(4, n_layers=2)
@@ -42,7 +43,7 @@ def train_and_save(n_qubits: int, J: float, dirname: str, dry_run: bool):
 
 
 dry_run = False
-J_range = (1.0,0.8)
+J_range = (1.0, 0.8)
 for n_qubits in (6, 7):
     for J in J_range:
         dirname = f"gs_vqe_{int(J*100)}j"

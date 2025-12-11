@@ -9,7 +9,7 @@ from qcomp_nlce.utils.workflow_1d import (
     sweep_dispersion,
     plot_all_backends_dispersions_montecarlo,
 )
-
+from qcomp_nlce.utils.vqe import get_optimal_n_layers
 from qcomp_nlce.utils.stats import mc_disp_from_res_dict
 from qcomp_nlce.utils.hardware import PROVIDER_ALIAS, BACKEND_TYPES
 from qcomp_nlce.utils.overlap import HADAMARD_TESTS
@@ -18,10 +18,8 @@ from data_manager import ExperimentDataManager
 
 import matplotlib.pyplot as plt
 
-from typing import Literal
 
-
-def workflow_5q_qexa(dry_run):
+def workflow_nq_qexa(dry_run):
 
     J = 1
     which_backends = [
@@ -29,11 +27,12 @@ def workflow_5q_qexa(dry_run):
         "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "QEXA"
-    n_shots = int(2e3)
+    n_shots = int(1e5)
     which_hadamard_test = "stefan"
-
-    workflow_5q(
+    n_qubits_max = 3
+    workflow_nq(
         dry_run,
+        n_qubits_max,
         which_hadamard_test,
         provider_name,
         n_shots,
@@ -43,8 +42,32 @@ def workflow_5q_qexa(dry_run):
     )
 
 
-def workflow_5q(
+def workflow_nq_aqt(dry_run):
+
+    J = 1
+    which_backends = [
+        "real_backend",
+        "statevector",
+    ]
+    provider_name: PROVIDER_ALIAS = "AQT"
+    n_shots = int(200)
+    which_hadamard_test = "estimator"
+    n_qubits_max = 5
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["vqe"],
+        J,
+    )
+
+
+def workflow_nq(
     dry_run: bool,
+    n_qubits_max: int,
     which_hadamard_test: HADAMARD_TESTS,
     provider_name: PROVIDER_ALIAS,
     n_shots: int,
@@ -56,16 +79,22 @@ def workflow_5q(
 ):
     # avoid the "unused arguments" warning
     # warnings.filterwarnings("ignore")
-    n_qubits_max = 5
     ks = np.linspace(0, np.pi, 21)
     group_size = None
-    gs_dirname_l = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/5q_3l")
-    gs_dirname_s = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/4q_2l")
+
+    vqe_l_dir = f"{n_qubits_max}q_{get_optimal_n_layers(n_qubits_max)}l"
+    vqe_s_dir = f"{n_qubits_max-1}q_{get_optimal_n_layers(n_qubits_max-1)}l"
+
+    gs_dirname_l = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/{vqe_l_dir}")
+    gs_dirname_s = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/{vqe_s_dir}")
+
     elem_dirname_l = Path(
-        res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/{n_qubits_max}q_3l"
+        res_sim_dir(),
+        f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/{vqe_l_dir}",
     )
     elem_dirname_s = Path(
-        res_sim_dir(), f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/{n_qubits_max-1}q_2l"
+        res_sim_dir(),
+        f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/{vqe_s_dir}",
     )
 
     edm = ExperimentDataManager(
@@ -138,4 +167,4 @@ def workflow_5q(
 
 
 if __name__ == "__main__":
-    workflow_5q_qexa(False)
+    workflow_nq_aqt(True)

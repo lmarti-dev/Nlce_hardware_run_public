@@ -12,6 +12,7 @@ from qcomp_nlce.utils import (
     circuit_to_matrix,
     apply_parameters,
     get_min_gap,
+    get_optimal_n_layers,
 )
 
 from qiskit import QuantumCircuit
@@ -92,8 +93,7 @@ def train_and_save(
     ham_j, ham_h = TFIM(n_qubits, h, J, periodic=False, split_parts=True)
     hamiltonian = ham_j + ham_h
     if n_layers is None:
-        n_layers = int(np.ceil(hamiltonian.num_qubits / 2))
-
+        n_layers = get_optimal_n_layers(hamiltonian.num_qubits)
     circuit = get_hva_vqe(hamiltonian, n_layers=n_layers, unique_weights=True)
 
     # circuit = get_custom_vqe(4, n_layers=2)
@@ -132,7 +132,5 @@ if __name__ == "__main__":
     which_cost = "offdiag"
     for n_qubits in (6, 7):
         for J in (1.0, 0.8):
-    for n_qubits in (2, 3):
-        for J in (0.8, 1.0):
             dirname = f"elem_vqe_{int(J*100)}j"
             train_and_save(n_qubits, J, dirname, which_cost, dry_run)

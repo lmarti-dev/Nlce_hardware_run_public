@@ -3,7 +3,7 @@ from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
 from uuid import uuid4
-
+import numpy as np
 
 from qiskit import __version__ as qiskit_version
 
@@ -12,6 +12,7 @@ if qiskit_version > "1.3.0":
 from qiskit.quantum_info import SparsePauliOp
 from qcomp_nlce.utils.hamiltonian import pretty_pauli_str
 import itertools
+
 
 # random ansatz with Ry, Ry and CNOTs as layers
 def get_custom_vqe(n_qubits: int, n_layers: int) -> QuantumCircuit:
@@ -25,6 +26,10 @@ def get_custom_vqe(n_qubits: int, n_layers: int) -> QuantumCircuit:
         for x, y in zip(range(n_qubits - 1), range(1, n_qubits)):
             circuit.cx(x, y)
     return circuit
+
+
+def get_optimal_n_layers(n_qubits: int) -> int:
+    return int(np.ceil(n_qubits / 2))
 
 
 # HVA ansatz
@@ -62,6 +67,7 @@ def get_nq_paulistr(n_qubits: int, nq_pauli: str = "XX"):
         paulistr_list.append("".join(pid))
     return paulistr_list
 
+
 # Givens rotations ansatz: XX + YY terms
 def get_givens_vqe(hamiltonian: SparsePauliOp, n_layers: int) -> QuantumCircuit:
     n_qubits = hamiltonian.num_qubits
@@ -75,6 +81,7 @@ def get_givens_vqe(hamiltonian: SparsePauliOp, n_layers: int) -> QuantumCircuit:
             param = Parameter(f"l{layer}_{ind}")
             circuit.append(PauliEvolutionGate(xx + yy, time=param), range(n_qubits))
     return circuit
+
 
 # Prepares a circuit that first initializes n_qp qubits in the |1> state
 def circuit_composed_with_prep(circuit: QuantumCircuit, n_qp: int) -> QuantumCircuit:
