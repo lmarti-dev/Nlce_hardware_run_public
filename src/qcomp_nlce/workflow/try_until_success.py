@@ -1,4 +1,7 @@
-from qcomp_nlce.workflow.workflow_1qp_dispersion import workflow_nq_aqt
+from qcomp_nlce.workflow.workflow_1qp_dispersion import (
+    workflow_nq_aqt,
+    workflow_nq_qexa,
+)
 
 from time import sleep
 
@@ -20,8 +23,10 @@ def keep_trying(func: callable):
         except Exception as e:
             print(f"Encoutered exception: {e}")
             count_to_awakening(300)
+
+    func(False)
     print("🚀🪐🌕🌑☄️🛸")
 
 
 if __name__ == "__main__":
-    keep_trying(workflow_nq_aqt)
+    keep_trying(workflow_nq_qexa)

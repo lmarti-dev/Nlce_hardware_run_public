@@ -1,0 +1,386 @@
+[
+    [
+        [
+            0,
+            0
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -0.7552
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.04384515670695497
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            0,
+            0
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -0.7552
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.04384515670695497
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            0,
+            1
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": -0.4216,
+                            "imag": -0.28039999999999987
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.06563494733873851,
+                            "imag": 0.06433121026475574
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            1,
+            0
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": -0.4216,
+                            "imag": 0.28039999999999987
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.06563494733873851,
+                            "imag": 0.06433121026475574
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            0,
+            2
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.06490000000000001,
+                            "imag": -0.05579999999999999
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.06925921582690629,
+                            "imag": 0.06952188641584414
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            2,
+            0
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.06490000000000001,
+                            "imag": 0.05579999999999999
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.06925921582690629,
+                            "imag": 0.06952188641584414
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            1,
+            1
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -1.4094000000000002
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.04417697053471455
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            1,
+            1
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -1.4094000000000002
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.04417697053471455
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            1,
+            2
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": -0.5076,
+                            "imag": 0.14239999999999997
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.0648942629618024,
+                            "imag": 0.0637142978972098
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            2,
+            1
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": -0.5076,
+                            "imag": -0.14239999999999997
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.0648942629618024,
+                            "imag": 0.0637142978972098
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            2,
+            2
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -0.5411999999999999
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.0439385029066824
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            2,
+            2
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -0.5411999999999999
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.0439385029066824
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ]
+]

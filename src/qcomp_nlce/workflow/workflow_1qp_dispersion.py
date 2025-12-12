@@ -27,7 +27,7 @@ def workflow_nq_qexa(dry_run):
         "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "QEXA"
-    n_shots = int(1e5)
+    n_shots = int(1e4)
     which_hadamard_test = "stefan"
     n_qubits_max = 3
     workflow_nq(
@@ -167,4 +167,4 @@ def workflow_nq(
 
 
 if __name__ == "__main__":
-    workflow_nq_aqt(False)
+    workflow_nq_qexa(True)

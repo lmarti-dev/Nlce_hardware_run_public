@@ -286,7 +286,7 @@ def remove_idle_wires(qc: QuantumCircuit):
 
 
 def get_provider_version(provider_name: PROVIDER_ALIAS) -> Literal["v1", "v2"]:
-    if provider_name in ("QEXA", "AQT"):
+    if provider_name in ("AQT",):
         return "v1"
     else:
         return "v2"
@@ -409,7 +409,8 @@ def backend_estimate(
     n_shots: int,
 ) -> BaseRuntimeJob:
 
-    if isinstance(backend, (MQPBackend, AQTResource)):
+    # I believe only AQT now runs on V1, QExa can use V2 prims.
+    if isinstance(backend, (AQTResource)):
         # can't replace it with EstimatorV1
         estimator = AQTEstimator(backend)
         estimator.set_transpile_options(optimization_level=3)
@@ -437,7 +438,7 @@ def backend_estimate(
         options = {}
         # avoid the warning when using a fakebackend
         if not isinstance(backend, FakeBackendV2):
-            options.update({"resilience_level": 3})
+            options.update({"resilience_level": 2})
         estimator = EstimatorV2(backend, options=options)
         payload = circuits_to_estimator_payload(
             backend, circuit, parameters, observables

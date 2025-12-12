@@ -1,0 +1,182 @@
+[
+    [
+        [
+            0,
+            0
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -0.5446
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.022761026369559397
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            0,
+            0
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -0.5446
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.022761026369559397
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            0,
+            1
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": -0.5069,
+                            "imag": 0.1774
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.03962610118952948,
+                            "imag": 0.041808288473528465
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            1,
+            0
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": -0.5069,
+                            "imag": -0.1774
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.03962610118952948,
+                            "imag": 0.041808288473528465
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            1,
+            1
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -0.027800000000000047
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.022824493918575474
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            1,
+            1
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -0.027800000000000047
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.022824493918575474
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ]
+]
