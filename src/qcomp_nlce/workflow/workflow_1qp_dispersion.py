@@ -23,13 +23,13 @@ def workflow_nq_qexa(dry_run):
 
     J = 1
     which_backends = [
-        "real_backend",
+        # "real_backend",
         "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "QEXA"
-    n_shots = int(1e4)
+    n_shots = int(1e6)
     which_hadamard_test = "stefan"
-    n_qubits_max = 3
+    n_qubits_max = 5
     workflow_nq(
         dry_run,
         n_qubits_max,
@@ -46,6 +46,7 @@ def workflow_nq_aqt(dry_run):
 
     J = 1
     which_backends = [
+        "fake_backend",
         "real_backend",
         "statevector",
     ]
@@ -97,8 +98,11 @@ def workflow_nq(
         f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/{vqe_s_dir}",
     )
 
+    elem_dirname_l = gs_dirname_l
+    elem_dirname_s = gs_dirname_s
+
     edm = ExperimentDataManager(
-        f"workflow_tfim_hadam_{which_hadamard_test}_{provider_name}_{n_shots}shots",
+        f"vqe_gsonly_workflow_tfim_hadam_{which_hadamard_test}_{provider_name}_{n_shots}shots",
         dry_run=dry_run,
     )
 
@@ -167,4 +171,4 @@ def workflow_nq(
 
 
 if __name__ == "__main__":
-    workflow_nq_qexa(True)
+    workflow_nq_aqt(False)

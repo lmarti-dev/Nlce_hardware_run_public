@@ -33,7 +33,6 @@ from qcomp_nlce.utils.unscented_transform import ut_disp_from_res_dict
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
-from typing import Literal
 
 
 def dispersion_all_backends(dict_l: dict, dict_s: dict, ks: np.ndarray):
@@ -301,7 +300,7 @@ def plot_all_backends_dispersions(_d: dict) -> plt.Figure:
     return fig
 
 
-def plot_multiple_dispersions(_l: list[dict]) -> plt.Figure:
+def plot_multiple_dispersions_1d(_l: list[dict]) -> plt.Figure:
     fig, ax = plt.subplots()
     for ind, _d in enumerate(_l):
         ks = _d["inputs"]["ks"]

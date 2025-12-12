@@ -75,14 +75,29 @@ def get_heff_mc_sampler(
     gs_std_s: np.ndarray,
 ) -> callable:
 
-    def sampler(ks, fac: float = 1.0):
-        sa_expect_l = complex_normal(loc=expect_l, scale=expect_std_l * fac)
-        sa_overlap_l = complex_normal(loc=overlap_l, scale=overlap_std_l * fac)
-        sa_gs_l = complex_normal(loc=gs_l, scale=gs_std_l * fac)
+    def sampler(ks, sigma_scale: float = 1.0, sigma_add: float = 0.0):
 
-        sa_expect_s = complex_normal(loc=expect_s, scale=expect_std_s * fac)
-        sa_overlap_s = complex_normal(loc=overlap_s, scale=overlap_std_s * fac)
-        sa_gs_s = complex_normal(loc=gs_s, scale=gs_std_s * fac)
+        sa_expect_l = complex_normal(
+            loc=expect_l,
+            scale=(expect_std_l + (1 + 1j) * sigma_add) * sigma_scale,
+        )
+        sa_overlap_l = complex_normal(
+            loc=overlap_l,
+            scale=(overlap_std_l + (1 + 1j) * sigma_add) * sigma_scale,
+        )
+        sa_gs_l = complex_normal(
+            loc=gs_l, scale=(gs_std_l + (1 + 1j) * sigma_add) * sigma_scale
+        )
+
+        sa_expect_s = complex_normal(
+            loc=expect_s, scale=(expect_std_s + (1 + 1j) * sigma_add) * sigma_scale
+        )
+        sa_overlap_s = complex_normal(
+            loc=overlap_s, scale=(overlap_std_s + (1 + 1j) * sigma_add) * sigma_scale
+        )
+        sa_gs_s = complex_normal(
+            loc=gs_s, scale=(gs_std_s + (1 + 1j) * sigma_add) * sigma_scale
+        )
 
         H_eff_Nb = H_effective(sa_gs_l, sa_expect_l, sa_overlap_l)
         H_eff_Ns = H_effective(sa_gs_s, sa_expect_s, sa_overlap_s)
@@ -92,19 +107,18 @@ def get_heff_mc_sampler(
     return sampler
 
 
-def mc_disp_from_res_dict(
-    ks: np.ndarray, _d: dict, circ: ALGORITHMS_ALIAS, n_samples: int = 10000
-) -> dict:
-    res = _d["results"][circ]
-    disps = {}
+def res_dict_sampler(_d: dict, circ: ALGORITHMS_ALIAS) -> dict[callable]:
 
-    fac = 1
+    res = _d["results"][circ]
+    samplers = {}
+
     # if the provider is v1
     # the std is the std of the observable
     # and not the error on the mean
     # which is what we want to propagate
     # because we're not looking at the true distribution
     # but rather the distribution of the estimator
+    fac = 1
     if get_provider_version(_d["inputs"]["provider_name"]) == "v1":
         n_shots = _d["inputs"]["n_shots"]
         fac = 1 / np.sqrt(n_shots)
@@ -139,18 +153,33 @@ def mc_disp_from_res_dict(
                 gs_expectation_s,
                 gs_expectation_std_s,
             )
+            samplers[be] = sampler
+    return samplers
 
-            sampled = np.zeros((len(ks), n_samples))
-            for n in range(n_samples):
-                print(f"{n:0>6n}/{n_samples}", end="\r")
-                sampled[:, n] = sampler(ks)
 
-            mc_mean = np.mean(sampled, axis=1)
-            mc_std = np.std(sampled, axis=1)
+def mc_disp_from_res_dict(
+    ks: np.ndarray,
+    _d: dict,
+    circ: ALGORITHMS_ALIAS,
+    n_samples: int = 10000,
+    sampler_opts: dict = {},
+) -> dict:
 
-            disps[be] = {
-                "mean": mc_mean,
-                "std": mc_std,
-                "n_samples": n_samples,
-            }
+    disps = {}
+    samplers = res_dict_sampler(_d, circ)
+    for be in samplers:
+        sampler = samplers[be]
+        sampled = np.zeros((len(ks), n_samples))
+        for n in range(n_samples):
+            print(f"{n:0>6n}/{n_samples}", end="\r")
+            sampled[:, n] = sampler(ks, **sampler_opts)
+
+        mc_mean = np.mean(sampled, axis=1)
+        mc_std = np.std(sampled, axis=1)
+
+        disps[be] = {
+            "mean": mc_mean,
+            "std": mc_std,
+            "n_samples": n_samples,
+        }
     return disps

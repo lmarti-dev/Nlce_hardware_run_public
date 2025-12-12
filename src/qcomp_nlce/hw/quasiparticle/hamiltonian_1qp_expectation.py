@@ -76,6 +76,20 @@ def measure_1qp_expectations_v2(
             backend = get_backend(circuit.num_qubits, provider_name)
         bn = backend.name
 
+    # Session mode for faster execution
+
+    if which_backend == "real_backend":
+        with Session(backend) as s:
+            comp_vals, stds = measure_hamiltonian_elements(
+                hamiltonian,
+                circuit,
+                comp_states,
+                None,
+                backend,
+                which_backend,
+                n_shots,
+            )
+    else:
         comp_vals, stds = measure_hamiltonian_elements(
             hamiltonian,
             circuit,
@@ -85,7 +99,6 @@ def measure_1qp_expectations_v2(
             which_backend,
             n_shots,
         )
-
     print(f"{which_backend} ({bn})")
     td = compare_with_true(true_comp_vals, comp_vals, bn)
 

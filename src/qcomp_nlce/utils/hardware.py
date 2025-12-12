@@ -41,13 +41,10 @@ try:
     from qiskit_aqt_provider import AQTProvider
     from qiskit_aqt_provider.primitives import AQTSampler, AQTEstimator
     from qiskit_aqt_provider.aqt_resource import AQTResource
-    from mqp.qiskit_provider import MQPProvider, MQPBackend
     from qiskit_aqt_provider.aqt_resource import OfflineSimulatorResource
 except ModuleNotFoundError:
+    print("qiskit_aqt_provider not found")
     # watch this
-    class MQPProvider: ...
-
-    class MQPBackend: ...
 
     class AQTResource: ...
 
@@ -58,6 +55,18 @@ except ModuleNotFoundError:
     class AQTProvider: ...
 
     class OfflineSimulatorResource: ...
+
+
+try:
+
+    from mqp.qiskit_provider import MQPProvider, MQPBackend
+
+except ModuleNotFoundError:
+    print("mqp.qiskit_provider not found")
+
+    class MQPProvider: ...
+
+    class MQPBackend: ...
 
 
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
