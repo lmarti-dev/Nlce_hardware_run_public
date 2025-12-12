@@ -376,11 +376,8 @@ def backend_sample(
         payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
         sampler = AQTSampler(backend)
         job = sampler.run(payload, parameter_values=None, shots=n_shots)
-    elif isinstance(backend, MQPBackend):
-        payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
-        job = backend.run(payload, shots=n_shots, qasm3=True, queued=True)
 
-    elif isinstance(backend, (IQMFakeBackend, IQMBackend)):
+    elif isinstance(backend, (IQMFakeBackend, IQMBackend, MQPBackend)):
         initial_layout = list(range(circuit.num_qubits))
         isa_circuits = transpile(
             circuit,

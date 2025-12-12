@@ -19,7 +19,7 @@ def keep_trying(func: callable):
             success = True
         except Exception as e:
             print(f"Encoutered exception: {e}")
-            count_to_awakening(1200)
+            count_to_awakening(300)
     print("🚀🪐🌕🌑☄️🛸")
 
 

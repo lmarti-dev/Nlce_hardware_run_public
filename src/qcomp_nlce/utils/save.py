@@ -88,7 +88,7 @@ TempListType = list[tuple[tuple[int, int], tuple[complex, complex]]]
 def save_tmp_item(d, filename: str):
     fpath = Path(Path(__file__).parent, f"../tmp/{filename}")
 
-    if not fpath.exists():
+    if not fpath.parent.exists():
         os.makedirs(fpath.parent)
 
     with io.open(fpath, "w+", encoding="utf8") as fd:
