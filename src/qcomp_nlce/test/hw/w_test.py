@@ -21,7 +21,7 @@ def hardware_run():
     circ = w_circ(n_qubits)
     edm = ExperimentDataManager("w_test_all_backends", project="nlce", dry_run=False)
 
-    for provider_name, n_shots in (("QEXA", int(1e2)),):
+    for provider_name, n_shots in (("QEXA", int(1e3)),):
         backend = get_backend(n_qubits, provider_name)
         job = backend_sample(backend, circ, None, n_shots)
         counts = get_counts_from_res(job.result(), n_qubits, 0)
@@ -55,5 +55,4 @@ def load_and_plot(fpath: Path = None, title: str = None):
 
 
 if __name__ == "__main__":
-
     hardware_run()

@@ -6,6 +6,7 @@ from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import EstimatorV2, SamplerV2
 from qiskit_ibm_runtime.base_runtime_job import BaseRuntimeJob
 from qiskit.primitives import EstimatorResult, PrimitiveResult
+from qiskit_ibm_transpiler import generate_ai_pass_manager
 
 try:
     from iqm.qiskit_iqm.fake_backends.fake_deneb import (
@@ -63,10 +64,17 @@ try:
 
 except ModuleNotFoundError:
     print("mqp.qiskit_provider not found")
+    # https://munich-quantum-software-stack.github.io/MQSS-Interfaces/qiskit/user_guide/getting_started/#usage
+    try:
+        # MQV people forcing me to write the nastiest code ever
+        from mqss.qiskit_adapter import MQSSQiskitAdapter
+        from mqss.qiskit_adapter.backend import MQSSQiskitBackend
 
-    class MQPProvider: ...
-
-    class MQPBackend: ...
+        MQPProvider = MQSSQiskitAdapter
+        MQPBackend = MQSSQiskitBackend
+    except ModuleNotFoundError as e:
+        print("Neither MQSS nor MQP working")
+        raise e
 
 
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
@@ -216,11 +224,24 @@ def is_hardware_run(which_backend: str):
 
 
 def compile_circuit_for_backend(
-    circuit: QuantumCircuit, backend: BACKEND_ALIAS, options: dict = None
+    circuit: QuantumCircuit,
+    backend: BACKEND_ALIAS,
+    options: dict = None,
+    ai: bool = True,
 ):
     if options is None:
         options = {}
-    pm = generate_preset_pass_manager(backend=backend, **options)
+    if not ai:
+        pm = generate_preset_pass_manager(backend=backend, **options)
+    else:
+        pm = generate_ai_pass_manager(
+            coupling_map=backend.coupling_map,
+            ai_optimization_level=3,
+            optimization_level=3,
+            ai_layout_mode="optimize",
+            backend=backend,
+        )
+
     isa_circuit = pm.run(circuit)
     isa_circ_depth(isa_circuit, True)
     return isa_circuit

@@ -15,6 +15,7 @@ from qcomp_nlce.utils.statevector import (
 )
 from qcomp_nlce.utils.measure import (
     get_counts_from_job,
+    get_counts_from_res,
     add_meas_layer,
     get_unique_bitstrings,
 )
@@ -210,7 +211,7 @@ def measure_ground_state_energy_subspace_sampling_v2(
             parameters=[],
             n_shots=n_shots,
         )
-        counts = get_counts_from_job(job)
+        counts = get_counts_from_res(job.result(), hamiltonian.num_qubits, 0)
 
         bn = backend.name
 

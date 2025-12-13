@@ -16,10 +16,21 @@ from qiskit.primitives import PrimitiveResult
 
 try:
     from mqp.qiskit_provider.job import MQPJob
-    from qiskit.result import Result
 except ModuleNotFoundError:
+    try:
+        from mqss.qiskit_adapter.job import MQSSQiskitJob
+
+        MQPJob = MQSSQiskitJob
+    except ModuleNotFoundError as e:
+        raise e
 
     class MQPJob: ...
+
+
+try:
+
+    from qiskit.result import Result
+except Exception:
 
     class Result: ...
 

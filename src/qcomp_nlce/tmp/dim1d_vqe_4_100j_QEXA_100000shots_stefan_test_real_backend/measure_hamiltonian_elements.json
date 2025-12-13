@@ -1,0 +1,666 @@
+[
+    [
+        [
+            0,
+            0
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -0.01872981270187299
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.020685980158079313
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            0,
+            0
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -0.01872981270187299
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.020685980158079313
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            0,
+            1
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.2528274717252827,
+                            "imag": -0.10166898331016694
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.029089600257175503,
+                            "imag": 0.029225526658478693
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            1,
+            0
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.2528274717252827,
+                            "imag": 0.10166898331016694
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.029089600257175503,
+                            "imag": 0.029225526658478693
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            0,
+            2
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.06845931540684591,
+                            "imag": 0.009939900600994034
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.029844351737256622,
+                            "imag": 0.029874188418656047
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            2,
+            0
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.06845931540684591,
+                            "imag": -0.009939900600994034
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.029844351737256622,
+                            "imag": 0.029874188418656047
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            0,
+            3
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": -0.028989710102898997,
+                            "imag": 0.049289507104928965
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.030933754948833166,
+                            "imag": 0.03093136995184997
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            3,
+            0
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": -0.028989710102898997,
+                            "imag": -0.049289507104928965
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.030933754948833166,
+                            "imag": 0.03093136995184997
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            1,
+            1
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -1.4251757482425176
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.020805730326183748
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            1,
+            1
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -1.4251757482425176
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.020805730326183748
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            1,
+            2
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": -0.07183928160718389,
+                            "imag": 0.011429885701143117
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.0299804167277712,
+                            "imag": 0.029954614777933205
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            2,
+            1
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": -0.07183928160718389,
+                            "imag": -0.011429885701143117
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.0299804167277712,
+                            "imag": 0.029954614777933205
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            1,
+            3
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": -0.006999930000700094,
+                            "imag": -0.10954890451095484
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.03069420625647134,
+                            "imag": 0.030630482936092863
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            3,
+            1
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": -0.006999930000700094,
+                            "imag": 0.10954890451095484
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.03069420625647134,
+                            "imag": 0.030630482936092863
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            2,
+            2
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -1.7877921220787791
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.020344997929162372
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            2,
+            2
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -1.7877921220787791
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.020344997929162372
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            2,
+            3
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.009579904200958,
+                            "imag": 0.21483785162148375
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.030771267366831893,
+                            "imag": 0.029505349526784665
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            3,
+            2
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.009579904200958,
+                            "imag": -0.21483785162148375
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    {
+                        "type": "complex",
+                        "kwargs": {
+                            "real": 0.030771267366831893,
+                            "imag": 0.029505349526784665
+                        }
+                    }
+                ],
+                "kwargs": {
+                    "dtype": "complex128"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            3,
+            3
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -1.0947590524094757
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.020423675502844033
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ],
+    [
+        [
+            3,
+            3
+        ],
+        [
+            {
+                "type": "ndarray",
+                "args": [
+                    -1.0947590524094757
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            },
+            {
+                "type": "ndarray",
+                "args": [
+                    0.020423675502844033
+                ],
+                "kwargs": {
+                    "dtype": "float64"
+                }
+            }
+        ]
+    ]
+]
