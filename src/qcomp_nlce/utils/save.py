@@ -9,6 +9,9 @@ from data_manager import ExtendedJSONDecoder, ExtendedJSONEncoder
 import io
 
 
+from qcomp_nlce.utils.constants import ALGORITHMS_ALIAS
+
+
 def get_save_directory(dirname: str):
     home = Path(__file__).parent.parent
     save_dir = Path(home, f"res_sim/{dirname}/")
@@ -85,6 +88,9 @@ TempListType = list[tuple[tuple[int, int], tuple[complex, complex]]]
 def save_tmp_item(d, filename: str):
     fpath = Path(Path(__file__).parent, f"../tmp/{filename}")
 
+    if not fpath.parent.exists():
+        os.makedirs(fpath.parent)
+
     with io.open(fpath, "w+", encoding="utf8") as fd:
         fd.write(json.dumps(d, cls=ExtendedJSONEncoder, ensure_ascii=False, indent=4))
 
@@ -124,4 +130,61 @@ def rebuild_matrices_from_tmp(l: TempListType, n: int) -> tuple[np.array, np.arr
 
 
 def tmp_filename(circuit: QuantumCircuit, which_backend: str):
-    return f"{circuit.metadata['tmpname']}_{which_backend}.json"
+    return f"{circuit.metadata['tmpname']}_{which_backend}"
+
+
+def load_result_matrices(fpath: Path = None):
+
+    if fpath is None:
+        fpath = r"C:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_10\workflow_tfim_hadam_stefan_AQT_2000shots_00004\run_00000\data\green_00000.json"
+        n_shots = 2000
+        fac = np.sqrt(n_shots)
+    with open(fpath, "r", encoding="utf8") as f:
+        jobj = json.loads(f.read(), cls=ExtendedJSONDecoder)
+
+    be = "fake_backend"
+
+    data_l = jobj["results"]["vqe"]["dict_l"]
+    data_s = jobj["results"]["vqe"]["dict_s"]
+
+    expect_l = data_l["exd"][be]["values"]
+    expect_std_l = data_l["exd"][be]["stds"] / fac
+    overlap_l = data_l["eld"][be]["values"]
+    overlap_std_l = data_l["eld"][be]["stds"] / fac
+    gs_l = data_l["gsd"][be]["energy"]
+    gs_std_l = data_l["gsd"][be]["std"] / fac
+
+    expect_s = data_s["exd"][be]["values"]
+    expect_std_s = data_s["exd"][be]["stds"] / fac
+    overlap_s = data_s["eld"][be]["values"]
+    overlap_std_s = data_s["eld"][be]["stds"] / fac
+    gs_s = data_s["gsd"][be]["energy"]
+    gs_std_s = data_s["gsd"][be]["std"] / fac
+
+    return (
+        expect_l,
+        expect_std_l,
+        overlap_l,
+        overlap_std_l,
+        gs_l,
+        gs_std_l,
+        expect_s,
+        expect_std_s,
+        overlap_s,
+        overlap_std_s,
+        gs_s,
+        gs_std_s,
+    )
+
+
+def baptize_circuit(
+    prefix: str,
+    method: ALGORITHMS_ALIAS,
+    n_qubits: int,
+    ratio: float,
+    provider_name: str,
+    n_shots: int,
+    which_hadamard_test: str,
+) -> str:
+
+    return f"{prefix}_{method}_{n_qubits}_{int(ratio*100)}j_{provider_name}_{n_shots}shots_{which_hadamard_test}_test"

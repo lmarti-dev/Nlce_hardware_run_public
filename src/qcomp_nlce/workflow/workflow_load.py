@@ -1,13 +1,12 @@
 import copy
 from data_manager import ExperimentDataManager
-from qcomp_nlce.utils.workflow import (
+from qcomp_nlce.utils.workflow_1d import (
     heff_backend_type,
     dispersion_all_backends,
-    plot_multiple_dispersions,
-    plot_all_backends_dispersions_UT,
+    plot_all_backends_dispersions_montecarlo,
 )
 
-from qcomp_nlce.utils.stats import mean_std
+from qcomp_nlce.utils.stats import mean_std, mc_disp_from_res_dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -68,17 +67,16 @@ def plot_average_matrices(dicts: list[dict]) -> dict:
             out_d["results"]["vqe"]["dict_l"], out_d["results"]["vqe"]["dict_s"], ks
         )
     out_d["results"]["vqe"]["disp"] = disp
+    n_mc_samples = int(1e4)
+    mc_disp = mc_disp_from_res_dict(ks, out_d, "vqe", n_mc_samples)
+    out_d["results"]["vqe"]["mc_disp"] = mc_disp
     return out_d
 
 
 def plot_average_over_runs():
     runs = (
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test_00005",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test_00001",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test_00002",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test_00003",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_02\workflow_tfim_all_backends_test_00004",
+        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_11\workflow_tfim_hadam_estimator_AQT_200shots",
+        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_12\workflow_tfim_hadam_estimator_AQT_200shots",
     )
 
     dicts = []
@@ -89,7 +87,7 @@ def plot_average_over_runs():
 
     out_d = plot_average_matrices(dicts)
 
-    fig = plot_all_backends_dispersions_UT(out_d)
+    fig = plot_all_backends_dispersions_montecarlo(out_d)
 
     plt.show()
 

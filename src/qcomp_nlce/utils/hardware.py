@@ -6,6 +6,7 @@ from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime import EstimatorV2, SamplerV2
 from qiskit_ibm_runtime.base_runtime_job import BaseRuntimeJob
 from qiskit.primitives import EstimatorResult, PrimitiveResult
+from qiskit_ibm_transpiler import generate_ai_pass_manager
 
 try:
     from iqm.qiskit_iqm.fake_backends.fake_deneb import (
@@ -41,13 +42,10 @@ try:
     from qiskit_aqt_provider import AQTProvider
     from qiskit_aqt_provider.primitives import AQTSampler, AQTEstimator
     from qiskit_aqt_provider.aqt_resource import AQTResource
-    from mqp.qiskit_provider import MQPProvider, MQPBackend
     from qiskit_aqt_provider.aqt_resource import OfflineSimulatorResource
 except ModuleNotFoundError:
+    print("qiskit_aqt_provider not found")
     # watch this
-    class MQPProvider: ...
-
-    class MQPBackend: ...
 
     class AQTResource: ...
 
@@ -58,6 +56,25 @@ except ModuleNotFoundError:
     class AQTProvider: ...
 
     class OfflineSimulatorResource: ...
+
+
+try:
+
+    from mqp.qiskit_provider import MQPProvider, MQPBackend
+
+except ModuleNotFoundError:
+    print("mqp.qiskit_provider not found")
+    # https://munich-quantum-software-stack.github.io/MQSS-Interfaces/qiskit/user_guide/getting_started/#usage
+    try:
+        # MQV people forcing me to write the nastiest code ever
+        from mqss.qiskit_adapter import MQSSQiskitAdapter
+        from mqss.qiskit_adapter.backend import MQSSQiskitBackend
+
+        MQPProvider = MQSSQiskitAdapter
+        MQPBackend = MQSSQiskitBackend
+    except ModuleNotFoundError as e:
+        print("Neither MQSS nor MQP working")
+        raise e
 
 
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
@@ -207,11 +224,24 @@ def is_hardware_run(which_backend: str):
 
 
 def compile_circuit_for_backend(
-    circuit: QuantumCircuit, backend: BACKEND_ALIAS, options: dict = None
+    circuit: QuantumCircuit,
+    backend: BACKEND_ALIAS,
+    options: dict = None,
+    ai: bool = True,
 ):
     if options is None:
         options = {}
-    pm = generate_preset_pass_manager(backend=backend, **options)
+    if not ai:
+        pm = generate_preset_pass_manager(backend=backend, **options)
+    else:
+        pm = generate_ai_pass_manager(
+            coupling_map=backend.coupling_map,
+            ai_optimization_level=3,
+            optimization_level=3,
+            ai_layout_mode="optimize",
+            backend=backend,
+        )
+
     isa_circuit = pm.run(circuit)
     isa_circ_depth(isa_circuit, True)
     return isa_circuit
@@ -283,6 +313,13 @@ def remove_idle_wires(qc: QuantumCircuit):
         if count == 0:
             qc_out.qubits.remove(qubit)
     return qc_out
+
+
+def get_provider_version(provider_name: PROVIDER_ALIAS) -> Literal["v1", "v2"]:
+    if provider_name in ("AQT",):
+        return "v1"
+    else:
+        return "v2"
 
 
 def circuits_to_estimator_payload(
@@ -369,11 +406,8 @@ def backend_sample(
         payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
         sampler = AQTSampler(backend)
         job = sampler.run(payload, parameter_values=None, shots=n_shots)
-    elif isinstance(backend, MQPBackend):
-        payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
-        job = backend.run(payload, shots=n_shots, qasm3=True, queued=True)
 
-    elif isinstance(backend, (IQMFakeBackend, IQMBackend)):
+    elif isinstance(backend, (IQMFakeBackend, IQMBackend, MQPBackend)):
         initial_layout = list(range(circuit.num_qubits))
         isa_circuits = transpile(
             circuit,
@@ -405,7 +439,8 @@ def backend_estimate(
     n_shots: int,
 ) -> BaseRuntimeJob:
 
-    if isinstance(backend, (MQPBackend, AQTResource)):
+    # I believe only AQT now runs on V1, QExa can use V2 prims.
+    if isinstance(backend, (AQTResource)):
         # can't replace it with EstimatorV1
         estimator = AQTEstimator(backend)
         estimator.set_transpile_options(optimization_level=3)
@@ -415,10 +450,14 @@ def backend_estimate(
         # lose yourself in the moment, the music
         # the moment you own it you never let it go (oh)
         # you only get 2000 shots
+        # if isinstance(backend, AQTResource):
+        #     n_shots = min(n_shots, 2000)
+        # I've commented out this part, to avoid getting
+        # an unexpected number of shots
         kwargs = {
             "circuits": circuit,
             "observables": observables,
-            "shots": min(n_shots, 2000),
+            "shots": n_shots,
         }
         if parameters != []:
             kwargs.update({"parameters": parameters})
@@ -429,7 +468,7 @@ def backend_estimate(
         options = {}
         # avoid the warning when using a fakebackend
         if not isinstance(backend, FakeBackendV2):
-            options.update({"resilience_level": 3})
+            options.update({"resilience_level": 2})
         estimator = EstimatorV2(backend, options=options)
         payload = circuits_to_estimator_payload(
             backend, circuit, parameters, observables

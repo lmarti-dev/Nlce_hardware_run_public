@@ -1,9 +1,14 @@
 from qcomp_nlce.utils.effective_hamiltonian import (
     H_effective,
 )
-from qcomp_nlce.utils.dispersion import dispersion_1d_thermodynamic
+from qcomp_nlce.utils.dispersion import (
+    dispersion_1d_thermodynamic,
+    exact_dispersion_1qp_1d,
+)
 import numpy as np
 from typing import Literal
+
+import matplotlib.pyplot as plt
 
 
 def arr_to_vec(m: np.ndarray) -> np.ndarray:
@@ -147,7 +152,7 @@ def unscented_transform(
     func: callable,
     vals: np.ndarray,
     stds: np.ndarray,
-    alpha: float = 1e-3,
+    alpha: float = 1e-5,
     kappa: float = 0,
     beta: float = 2,
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -167,13 +172,13 @@ def unscented_transform(
     L = len(vals)
     lam = (alpha**2) * (L + kappa) - L
 
-    Xs = np.zeros((len(vals), 2 * L + 1), dtype=complex)
-    Ys = np.zeros((ll, 2 * L + 1), dtype=complex)
-    Wms = np.zeros((2 * L + 1), dtype=complex)
-    Wcs = np.zeros((2 * L + 1), dtype=complex)
+    Xs = np.zeros((len(vals), 2 * L + 1), dtype=float)
+    Ys = np.zeros((ll, 2 * L + 1), dtype=float)
+    Wms = np.zeros((2 * L + 1), dtype=float)
+    Wcs = np.zeros((2 * L + 1), dtype=float)
 
     Wms[0] = lam / (L + lam)
-    Wcs[0] = (beta + 1 - alpha**2) + lam / (L + lam)
+    Wcs[0] = (1 - alpha**2 + beta) + lam / (L + lam)
 
     Xs[:, 0] = vals
     Ys[:, 0] = func(Xs[:, 0])
@@ -279,7 +284,7 @@ def dispersion_1d_thermodynamic_ks_UT(
     )
 
 
-def disp_from_res_dict(
+def ut_disp_from_res_dict(
     ks: np.ndarray,
     _d: dict,
     circ: Literal["vqe", "sweep"],
@@ -329,3 +334,35 @@ def disp_from_res_dict(
             )
             disps[be] = {"vals": vals, "means": means, "pmat": pmat}
     return disps
+
+
+def plot_all_backends_dispersions_UT(
+    _d: dict, plot_ut_means: bool = False
+) -> plt.Figure:
+    ks = _d["inputs"]["ks"]
+    j = _d["inputs"]["J"]
+
+    fig, ax = plt.subplots()
+    res = _d["results"]
+
+    for circ in res:
+        if circ == "ed":
+            disp = res[circ]["disp"]
+            for be in disp:
+                ax.plot(ks, disp[be], label=f"{circ} - {be}")
+        else:
+            err = ut_disp_from_res_dict(ks, _d, circ)
+            disp = res[circ]["disp"]
+            for be in disp:
+                ax.errorbar(
+                    ks, disp[be], err[be]["pmat"] ** (1 / 2), label=f"{circ} - {be}"
+                )
+                if plot_ut_means:
+                    ax.plot(
+                        ks,
+                        err[be]["means"],
+                        label=f"{circ} - {be} (UT mean)",
+                    )
+    ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="analytic")
+    ax.legend()
+    return fig

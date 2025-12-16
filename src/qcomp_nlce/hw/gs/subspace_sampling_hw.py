@@ -15,6 +15,7 @@ from qcomp_nlce.utils.statevector import (
 )
 from qcomp_nlce.utils.measure import (
     get_counts_from_job,
+    get_counts_from_res,
     add_meas_layer,
     get_unique_bitstrings,
 )
@@ -140,7 +141,7 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
 
     for which_backend in which_backends:
         on_hardware = is_hardware_run(which_backend)
-        filename = f"measure_ground_energy_{tmp_filename(circuit,which_backend)}"
+        filename = f"{tmp_filename(circuit,which_backend)}/measure_ground_energy.json"
         item = None
         if on_hardware:
             try:
@@ -210,7 +211,7 @@ def measure_ground_state_energy_subspace_sampling_v2(
             parameters=[],
             n_shots=n_shots,
         )
-        counts = get_counts_from_job(job)
+        counts = get_counts_from_res(job.result(), hamiltonian.num_qubits, 0)
 
         bn = backend.name
 
