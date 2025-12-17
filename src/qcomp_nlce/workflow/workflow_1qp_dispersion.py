@@ -23,8 +23,9 @@ def workflow_nq_qexa(dry_run):
 
     J = 1
     which_backends = [
-        "real_backend",
-        # "statevector",
+        # "real_backend",
+        "fake_backend",
+        "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "QEXA"
     n_shots = int(1e5)

@@ -8,6 +8,13 @@ from qiskit.circuit import CircuitInstruction
 from qiskit.circuit.parametertable import ParameterView
 
 
+def circ_stats(circ: QuantumCircuit):
+    depth = circ.depth()
+    n_gates = circ.size()
+    n_non_local_gates = circ.num_nonlocal_gates()
+    return depth, n_gates, n_non_local_gates
+
+
 def parameters_exist(parameters) -> bool:
     x = (
         (parameters is None)

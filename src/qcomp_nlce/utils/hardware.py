@@ -226,23 +226,33 @@ def is_hardware_run(which_backend: str):
 def compile_circuit_for_backend(
     circuit: QuantumCircuit,
     backend: BACKEND_ALIAS,
-    options: dict = None,
+    options: dict = {},
     ai: bool = True,
 ):
-    if options is None:
-        options = {}
-    if not ai:
-        pm = generate_preset_pass_manager(backend=backend, **options)
-    else:
-        pm = generate_ai_pass_manager(
-            coupling_map=backend.coupling_map,
-            ai_optimization_level=3,
-            optimization_level=3,
-            ai_layout_mode="optimize",
+    # IQMBackend, IQMFakeBackend
+    if isinstance(backend, (MQPBackend)):
+        initial_layout = list(range(circuit.num_qubits))
+        isa_circuit = transpile(
+            circuit,
             backend=backend,
+            initial_layout=initial_layout,
+            optimization_level=3,
+            coupling_map=backend.coupling_map,
         )
+    else:
+        if not ai:
+            pm = generate_preset_pass_manager(backend=backend, **options)
+        else:
+            if "optimization_level" not in options:
+                options["optimization_level"] = 3
+            pm = generate_ai_pass_manager(
+                ai_optimization_level=3,
+                ai_layout_mode="optimize",
+                coupling_map=backend.coupling_map,
+                **options,
+            )
 
-    isa_circuit = pm.run(circuit)
+        isa_circuit = pm.run(circuit)
     isa_circ_depth(isa_circuit, True)
     return isa_circuit
 
@@ -256,19 +266,10 @@ def circuits_to_sampler_payload(
     if isinstance(circuit, QuantumCircuit):
         circuit = [circuit]
 
-    if isinstance(backend, MQPBackend | IQMBackend):
-        initial_layout = list(range(circuit[0].num_qubits))
-        isa_circuit = transpile(
-            circuit,
-            backend=backend,
-            initial_layout=initial_layout,
-            optimization_level=3,
-            coupling_map=backend.coupling_map,
-        )
-    else:
-        isa_circuit = compile_circuit_for_backend(
-            circuit, backend, {"optimization_level": 3}
-        )
+    isa_circuit = [
+        compile_circuit_for_backend(c, backend, {"optimization_level": 3})
+        for c in circuit
+    ]
     if which == "v1":
 
         payload = []
@@ -332,22 +333,10 @@ def circuits_to_estimator_payload(
     if isinstance(circuit, QuantumCircuit):
         circuit = [circuit]
 
-    if isinstance(backend, (MQPBackend)):
-        kwargs = {}
-        # If OfflineSimulatorResource ends up here,
-        # then simulations will be extremely slow!
-        initial_layout = list(range(circuit[0].num_qubits))
-        isa_circuit = transpile(
-            circuit,
-            backend=backend,
-            initial_layout=initial_layout,
-            optimization_level=3,
-            coupling_map=backend.coupling_map,
-            **kwargs,
-        )
-    else:
-        kwargs = {"optimization_level": 3}
-        isa_circuit = compile_circuit_for_backend(circuit, backend, kwargs)
+    isa_circuit = [
+        compile_circuit_for_backend(c, backend, {"optimization_level": 3})
+        for c in circuit
+    ]
     if which == "v1":
 
         payload = [[], [], []]
@@ -387,14 +376,32 @@ def circuits_to_estimator_payload(
     return payload
 
 
+def get_backend_sampler(
+    backend,
+) -> SamplerV2 | AQTSampler:
+
+    if isinstance(backend, AQTResource):
+        sampler = AQTSampler(backend)
+
+    elif isinstance(
+        backend, (IBMBackend, FakeBackendV2, IQMFakeBackend, IQMBackend, MQPBackend)
+    ):
+        sampler = SamplerV2(mode=backend)
+    else:
+        raise ValueError(f"Unexpected backend: type {type(backend)}")
+    return sampler
+
+
 def backend_sample(
     backend,
     circuit,
     parameters: np.ndarray,
     n_shots: int,
 ) -> BaseRuntimeJob:
+
+    sampler = get_backend_sampler(backend)
+
     if isinstance(backend, (IBMBackend, FakeBackendV2)):
-        sampler = SamplerV2(mode=backend)
 
         payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v2")
         job = sampler.run(
@@ -404,7 +411,6 @@ def backend_sample(
 
     elif isinstance(backend, AQTResource):
         payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
-        sampler = AQTSampler(backend)
         job = sampler.run(payload, parameter_values=None, shots=n_shots)
 
     elif isinstance(backend, (IQMFakeBackend, IQMBackend, MQPBackend)):
@@ -416,7 +422,6 @@ def backend_sample(
             optimization_level=3,
             coupling_map=backend.coupling_map,
         )
-        sampler = SamplerV2(mode=backend)
         job = backend.run(isa_circuits, shots=n_shots)
     else:
         raise ValueError(f"Unexpected backend: type {type(backend)}")
@@ -439,7 +444,7 @@ def backend_estimate(
     n_shots: int,
 ) -> BaseRuntimeJob:
 
-    # I believe only AQT now runs on V1, QExa can use V2 prims.
+    # I believe only AQT now runs on V1, QExa can use V2 prims. (except the passmanager lol)
     if isinstance(backend, (AQTResource)):
         # can't replace it with EstimatorV1
         estimator = AQTEstimator(backend)
@@ -468,7 +473,8 @@ def backend_estimate(
         options = {}
         # avoid the warning when using a fakebackend
         if not isinstance(backend, FakeBackendV2):
-            options.update({"resilience_level": 2})
+            if "resilience_level" not in options.keys():
+                options.update({"resilience_level": 2})
         estimator = EstimatorV2(backend, options=options)
         payload = circuits_to_estimator_payload(
             backend, circuit, parameters, observables

@@ -129,7 +129,12 @@ def field_pauli_sum(n_qubits: int, pauli: str):
 
 
 def TFIM(
-    n_qubits: int, h: float, J: float, periodic: bool = False, split_parts: bool = False
+    n_qubits: int,
+    h: float,
+    J: float,
+    periodic: bool = False,
+    split_parts: bool = False,
+    longitudinal_field: float = 0.0,
 ) -> SparsePauliOp:
 
     hamiltonian_J = sum(
@@ -146,6 +151,14 @@ def TFIM(
             for s in range(n_qubits)
         ]
     )
+    if longitudinal_field != 0.0:
+        hamiltonian_J += sum(
+            [
+                -longitudinal_field
+                * SparsePauliOp(s * "I" + "X" + (n_qubits - 1 - s) * "I")
+                for s in range(n_qubits)
+            ]
+        )
 
     if split_parts:
         # J: XX h: Z
