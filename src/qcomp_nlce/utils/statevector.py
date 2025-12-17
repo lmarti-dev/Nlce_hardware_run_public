@@ -104,8 +104,8 @@ def optimize_circuit(
     if initial_params is None:
         initial_params = np.zeros((len(circuit.parameters)))
 
-    kwargs = {"method": "COBYLA", "bounds": circuit.num_parameters * [(0, np.pi)]}
-    # kwargs = {"method": "CG", "options": {"maxiter": 500}}
+    #kwargs = {"method": "COBYLA", "bounds": circuit.num_parameters * [(0, np.pi)]}
+    kwargs = {"method": "CG", "options": {"maxiter": 500}}
 
     minimize(fun=cost, x0=initial_params, callback=callback, **kwargs)
     return energy_values, xks
