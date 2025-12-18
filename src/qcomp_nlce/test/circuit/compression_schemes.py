@@ -5,7 +5,7 @@ from qcomp_nlce.utils.save import load_optimized_vqe
 from qcomp_nlce.utils.hardware import (
     compile_circuit_for_backend,
     get_appropriate_fake_backend,
-    compute_circ_stats,
+    compute_mean_circ_stats,
     get_backend,
 )
 from qcomp_nlce.utils.hamiltonian import TFIM
@@ -21,7 +21,7 @@ def test_compilation_schemes(circuit: QuantumCircuit | list):
     else:
         n_qubits = circuit.num_qubits
 
-    backend = get_appropriate_fake_backend(n_qubits, "QEXA")
+    backend = get_appropriate_fake_backend(n_qubits, "IQM")
     print("Basic, no AI")
     no_ai = compile_circuit_for_backend(circuit, backend, ai=False)
     print("with Heuristic + AI")

@@ -196,7 +196,7 @@ def mean_std_tuples_from_res(
     return out
 
 
-def compute_circ_stats(circs: list | QuantumCircuit, verbose: bool = False):
+def compute_mean_circ_stats(circs: list | QuantumCircuit, verbose: bool = False):
 
     if isinstance(circs, QuantumCircuit):
         circ_list = [circs]
@@ -249,9 +249,7 @@ def compile_circuit_for_backend(
         )
     else:
         if not ai:
-            pm = generate_preset_pass_manager(
-                coupling_map=backend.coupling_map, **options
-            )
+            pm = generate_preset_pass_manager(backend=backend, **options)
         else:
             if "optimization_level" not in options:
                 options["optimization_level"] = 3
@@ -267,7 +265,7 @@ def compile_circuit_for_backend(
             )
 
         isa_circuit = pm.run(circuit)
-    compute_circ_stats(isa_circuit, True)
+    compute_mean_circ_stats(isa_circuit, True)
     return isa_circuit
 
 
@@ -284,7 +282,7 @@ def precompile_with_ai(circuit: QuantumCircuit, backend: BACKEND_ALIAS):
         tmpname = circuit.metadata["tmpname"]
         readd = True
     print("(before)", end=" ")
-    compute_circ_stats(circuit, True)
+    compute_mean_circ_stats(circuit, True)
     circuit = compile_circuit_for_backend(circuit, backend, ai=True)
     if readd:
         circuit.metadata["tmpname"] = tmpname

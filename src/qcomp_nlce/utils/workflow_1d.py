@@ -19,7 +19,7 @@ from qcomp_nlce.utils import (
     baptize_circuit,
     compile_circuit_for_backend,
     get_backend,
-    compute_circ_stats,
+    compute_mean_circ_stats,
     remove_idle_wires,
 )
 from qcomp_nlce.utils.dispersion import (
