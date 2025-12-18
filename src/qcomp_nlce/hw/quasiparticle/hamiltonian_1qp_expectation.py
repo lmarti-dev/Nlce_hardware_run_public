@@ -10,16 +10,18 @@ from qcomp_nlce.utils import (
     get_backend,
     hamming_weight_states,
     measure_hamiltonian_elements,
+    precompile_with_ai,
+    BACKEND_ALIAS,
+    get_backend_name,
+    BACKEND_TYPES,
 )
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
 
-from data_manager import ExperimentDataManager
 
 from qiskit_ibm_runtime import Session
 
 HOME = Path(__file__).parent
-BACKEND_TYPES = Literal["statevector", "fake_backend", "real_backend"]
 
 
 def loop_measure_1qp_expectations_v2(
@@ -55,6 +57,7 @@ def measure_1qp_expectations_v2(
     true_comp_vals: np.ndarray = None,
     provider_name: str = "IBM",
     n_shots: int = 1e3,
+    ai_precompiled: bool = True,
 ) -> np.ndarray:
 
     n_qubits = circuit.num_qubits
@@ -75,6 +78,8 @@ def measure_1qp_expectations_v2(
         elif which_backend == "real_backend":
             backend = get_backend(circuit.num_qubits, provider_name)
         bn = backend.name
+        if ai_precompiled:
+            circuit = precompile_with_ai(circuit, backend)
 
     # Session mode for faster execution
 
@@ -99,6 +104,40 @@ def measure_1qp_expectations_v2(
             which_backend,
             n_shots,
         )
+    print(f"{which_backend} ({bn})")
+    td = compare_with_true(true_comp_vals, comp_vals, bn)
+
+    return {
+        which_backend: {
+            "name": bn,
+            "trace_dist": td,
+            "values": comp_vals,
+            "stds": stds,
+        }
+    }
+
+
+def measure_1qp_expectation_v3(
+    hamiltonian: SparsePauliOp,
+    circuit: QuantumCircuit,
+    backend: BACKEND_ALIAS,
+    which_backend: BACKEND_TYPES,
+    true_comp_vals: np.ndarray = None,
+    n_shots: int = 1e3,
+):
+    n_qubits = circuit.num_qubits
+    print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
+    bn = get_backend_name(backend)
+    comp_states = hamming_weight_states(n_qubits, 1)
+    comp_vals, stds = measure_hamiltonian_elements(
+        hamiltonian,
+        circuit,
+        comp_states,
+        None,
+        backend,
+        which_backend,
+        n_shots,
+    )
     print(f"{which_backend} ({bn})")
     td = compare_with_true(true_comp_vals, comp_vals, bn)
 

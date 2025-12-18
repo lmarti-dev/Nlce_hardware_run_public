@@ -17,6 +17,10 @@ from qcomp_nlce.utils import (
     sweep_time_from_steps,
     BACKEND_TYPES,
     baptize_circuit,
+    compile_circuit_for_backend,
+    get_backend,
+    compute_circ_stats,
+    remove_idle_wires,
 )
 from qcomp_nlce.utils.dispersion import (
     dispersion_1d_thermodynamic,
@@ -315,9 +319,8 @@ def plot_multiple_dispersions_1d(_l: list[dict]) -> plt.Figure:
     return fig
 
 
-def plot_all_backends_dispersions_montecarlo(
-    _d: dict,
-) -> plt.Figure:
+def plot_all_backends_dispersions_montecarlo(_d: dict) -> plt.Figure:
+
     ks = _d["inputs"]["ks"]
     j = _d["inputs"]["J"]
 

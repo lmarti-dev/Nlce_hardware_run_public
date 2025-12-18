@@ -319,21 +319,21 @@ def build_stefan_circuits_sample(
 ) -> QuantumCircuit:
     hadam_circuits = []
     n_qubits = circuit.num_qubits + 1
+
+    x_inds = index_bits(x, circuit.num_qubits, right_to_left=True)
+    y_inds = index_bits(y, circuit.num_qubits, right_to_left=True)
+
     for t in ("real", "imag"):
         hadam_circuit = QuantumCircuit(n_qubits)
         hadam_circuit.h(0)
-
-        x_inds = index_bits(x, circuit.num_qubits, right_to_left=True)
-        y_inds = index_bits(y, circuit.num_qubits, right_to_left=True)
+        if t == "imag":
+            hadam_circuit.sdg(0)
 
         for y in y_inds:
             hadam_circuit.cx(0, y + 1)
         hadam_circuit.append(apply_parameters(circuit, parameters), range(1, n_qubits))
         for x in x_inds:
             hadam_circuit.cx(0, x + 1)
-
-        if t == "imag":
-            hadam_circuit.s(0)
 
         hadam_circuit.h(0)
         hadam_circuit.measure_all()
@@ -350,7 +350,7 @@ def stefan_hadamard_test(
     x: str,
     y: str,
     backend: BACKEND_ALIAS = "statevector",
-    counting_method: Literal["estimator", "samples"] = "estimator",
+    counting_method: Literal["estimator", "samples"] = "samples",
 ):
 
     # this is Stefan Wolf's test, a bit modified though

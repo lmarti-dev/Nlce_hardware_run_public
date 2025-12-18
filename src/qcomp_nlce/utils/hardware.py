@@ -77,12 +77,16 @@ except ModuleNotFoundError:
         raise e
 
 
+class NotABackend: ...
+
+
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
 
 from qcomp_nlce.utils.circuit import (
     isa_circuit_param_dict,
     parameters_dict,
     parameters_exist,
+    circ_stats,
 )
 from qiskit_ibm_runtime import QiskitRuntimeService, IBMBackend
 
@@ -118,13 +122,13 @@ def get_iqm_backend(n_qubits: int) -> "IQMBackend":
         device_name = "garnet"
     else:
         device_name = "emerald"
-    url = f"https://cocos.resonance.meetiqm.com/{device_name}"
+    url = f"https://resonance.meetiqm.com/{device_name}"
     return IQMProvider(url, token=get_token("IQM")).get_backend()
 
 
 def get_ibm_backend(n_qubits: int) -> IBMBackend:
     token = get_token("IBM")
-    service = QiskitRuntimeService(channel="ibm_quantum", token=token)
+    service = QiskitRuntimeService(channel="ibm_quantum_platform", token=token)
     real_backend = service.least_busy(
         simulator=False, operational=True, min_num_qubits=n_qubits
     )
@@ -192,31 +196,35 @@ def mean_std_tuples_from_res(
     return out
 
 
-def isa_circ_depth(isa_circ: list | QuantumCircuit, verbose: bool = False):
-    if isinstance(isa_circ, list):
-        if len(isa_circ) == 1:
-            depths = [isa_circ[0].depth()]
-            if verbose:
-                print(f"Circuit depth is {isa_circ[0].depth()}")
-        else:
-            depths = [c.depth() for c in isa_circ]
-            mean_depth = np.mean(depths)
-            max_depth = np.max(depths)
-            if verbose:
-                print(
-                    f"Mean circuit depth ({len(isa_circ)} circuits): {mean_depth}, max: {max_depth}"
-                )
+def compute_circ_stats(circs: list | QuantumCircuit, verbose: bool = False):
 
-    elif isinstance(isa_circ, QuantumCircuit):
-        if verbose:
-            depths = [isa_circ.depth()]
-            print(f"Circuit depth is {depths[0]}")
+    if isinstance(circs, QuantumCircuit):
+        circ_list = [circs]
+    elif isinstance(circs, list):
+        circ_list = circs
+
     else:
-        raise ValueError(
-            f"circ is neither QuantumCircuit nor list, but: {type(isa_circ)}"
+        raise ValueError(f"circ is neither QuantumCircuit nor list, but: {type(circs)}")
+
+    d_arr = []
+    n_gates_arr = []
+    nlg_arr = []
+    for isa_c in circ_list:
+        depth, n_gates, n_non_local_gates = circ_stats(isa_c)
+        d_arr.append(depth)
+        n_gates_arr.append(n_gates)
+        nlg_arr.append(n_non_local_gates)
+
+    mean_depth = np.mean(d_arr)
+    mean_n_gates = np.mean(n_gates_arr)
+    mean_nlg = np.mean(nlg_arr)
+
+    if verbose:
+        print(
+            f"depth {mean_depth}, total gates: {mean_n_gates}, nonlocal (k>=2) gates: {mean_nlg} (mean of {len(circ_list)} circuits(s))"
         )
 
-    return depths
+    return mean_depth, mean_n_gates, mean_nlg
 
 
 def is_hardware_run(which_backend: str):
@@ -227,7 +235,7 @@ def compile_circuit_for_backend(
     circuit: QuantumCircuit,
     backend: BACKEND_ALIAS,
     options: dict = {},
-    ai: bool = True,
+    ai: bool = False,
 ):
     # IQMBackend, IQMFakeBackend
     if isinstance(backend, (MQPBackend)):
@@ -241,10 +249,16 @@ def compile_circuit_for_backend(
         )
     else:
         if not ai:
-            pm = generate_preset_pass_manager(backend=backend, **options)
+            pm = generate_preset_pass_manager(
+                coupling_map=backend.coupling_map, **options
+            )
         else:
             if "optimization_level" not in options:
                 options["optimization_level"] = 3
+
+            # this can error randomly
+            # in case of transpiler error, try again a few times
+            # TranspilerError
             pm = generate_ai_pass_manager(
                 ai_optimization_level=3,
                 ai_layout_mode="optimize",
@@ -253,8 +267,28 @@ def compile_circuit_for_backend(
             )
 
         isa_circuit = pm.run(circuit)
-    isa_circ_depth(isa_circuit, True)
+    compute_circ_stats(isa_circuit, True)
     return isa_circuit
+
+
+def get_backend_name(backend: BACKEND_ALIAS) -> str:
+    if backend == "statevector":
+        return backend
+    else:
+        return backend.name
+
+
+def precompile_with_ai(circuit: QuantumCircuit, backend: BACKEND_ALIAS):
+    readd = False
+    if "tmpname" in circuit.metadata.keys():
+        tmpname = circuit.metadata["tmpname"]
+        readd = True
+    print("(before)", end=" ")
+    compute_circ_stats(circuit, True)
+    circuit = compile_circuit_for_backend(circuit, backend, ai=True)
+    if readd:
+        circuit.metadata["tmpname"] = tmpname
+    return circuit
 
 
 def circuits_to_sampler_payload(
@@ -401,7 +435,9 @@ def backend_sample(
 
     sampler = get_backend_sampler(backend)
 
-    if isinstance(backend, (IBMBackend, FakeBackendV2)):
+    if isinstance(
+        backend, (IBMBackend, FakeBackendV2, IQMBackend, IQMFakeBackend, MQPBackend)
+    ):
 
         payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v2")
         job = sampler.run(
@@ -413,7 +449,7 @@ def backend_sample(
         payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
         job = sampler.run(payload, parameter_values=None, shots=n_shots)
 
-    elif isinstance(backend, (IQMFakeBackend, IQMBackend, MQPBackend)):
+    elif isinstance(backend, (NotABackend,)):
         initial_layout = list(range(circuit.num_qubits))
         isa_circuits = transpile(
             circuit,

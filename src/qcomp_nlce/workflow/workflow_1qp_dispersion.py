@@ -43,6 +43,30 @@ def workflow_nq_qexa(dry_run):
     )
 
 
+def workflow_nq_iqm(dry_run):
+
+    J = 1
+    which_backends = [
+        # "real_backend",
+        "fake_backend",
+        "statevector",
+    ]
+    provider_name: PROVIDER_ALIAS = "IQM"
+    n_shots = int(2e4)
+    which_hadamard_test = "stefan"
+    n_qubits_max = 5
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["vqe"],
+        J,
+    )
+
+
 def workflow_nq_aqt(dry_run):
 
     J = 1
@@ -155,7 +179,7 @@ def workflow_nq(
             "dict_s": vqe_dict_s,
             "disp": vqe_disp,
         }
-        mc_disp = mc_disp_from_res_dict(ks, out_dict, "vqe", n_mc_samples)
+        mc_disp = mc_disp_from_res_dict(ks, out_dict, "vqe", n_mc_samples, to_eotm=True)
         out_dict["results"]["vqe"]["mc_disp"] = mc_disp
 
     ed_disp = tfim_ed_dispersion(n_qubits_max, J, ks)
@@ -169,4 +193,4 @@ def workflow_nq(
 
 
 if __name__ == "__main__":
-    workflow_nq_qexa(True)
+    workflow_nq_iqm(True)
