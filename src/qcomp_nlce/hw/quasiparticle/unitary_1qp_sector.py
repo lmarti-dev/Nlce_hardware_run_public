@@ -11,6 +11,7 @@ from qcomp_nlce.utils import (
     HADAMARD_TESTS,
     get_backend_name,
     BACKEND_ALIAS,
+    circuit_to_matrix,
 )
 from pathlib import Path
 
@@ -30,8 +31,12 @@ def loop_measure_1qp_elements_v2(
 ):
     n_qubits = circuit.num_qubits
     comp_states = hamming_weight_states(n_qubits, 1)
+
     if solve:
         true_comp_vals = circuit_matrix_elements(circuit, comp_states)
+        if "stefan" in which_hadamard_test:
+            oUo = circuit_to_matrix(circuit)[0, 0]
+            true_comp_vals = oUo.conj() * true_comp_vals
     else:
         true_comp_vals = None
     d = {

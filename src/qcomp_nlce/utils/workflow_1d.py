@@ -17,10 +17,6 @@ from qcomp_nlce.utils import (
     sweep_time_from_steps,
     BACKEND_TYPES,
     baptize_circuit,
-    compile_circuit_for_backend,
-    get_backend,
-    compute_mean_circ_stats,
-    remove_idle_wires,
 )
 from qcomp_nlce.utils.dispersion import (
     dispersion_1d_thermodynamic,
@@ -207,7 +203,11 @@ def load_and_plot(fpath: Path):
 def heff_backend_type(eld: dict, gsd: dict, exd: dict, which_backend: BACKEND_TYPES):
     overlap = eld[which_backend]["values"]
     one_qp_expectation = exd[which_backend]["values"]
-    gs_expectation = gsd[which_backend]["energy"]
+    if which_backend == "system":
+        gsk = "ground_energy"
+    else:
+        gsk = "energy"
+    gs_expectation = gsd[which_backend][gsk]
 
     heff = H_effective(gs_expectation, one_qp_expectation, overlap)
 

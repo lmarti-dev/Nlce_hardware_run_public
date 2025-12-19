@@ -23,13 +23,13 @@ def workflow_nq_qexa(dry_run):
 
     J = 1
     which_backends = [
-        # "real_backend",
+        "real_backend",
         "fake_backend",
         "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "QEXA"
-    n_shots = int(2e4)
-    which_hadamard_test = "stefan"
+    n_shots = int(2e5)
+    which_hadamard_test = "stefan_samples"
     n_qubits_max = 5
     workflow_nq(
         dry_run,
@@ -52,7 +52,7 @@ def workflow_nq_iqm(dry_run):
         "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "IQM"
-    n_shots = int(2e4)
+    n_shots = int(2e5)
     which_hadamard_test = "stefan"
     n_qubits_max = 5
     workflow_nq(
@@ -124,7 +124,7 @@ def workflow_nq(
     )
 
     edm = ExperimentDataManager(
-        f"vqe_gsonly_workflow_tfim_hadam_{which_hadamard_test}_{provider_name}_{n_shots}shots",
+        f"vqe_workflow_tfim_hadam_{which_hadamard_test}_{provider_name}_{n_shots}shots",
         dry_run=dry_run,
     )
 

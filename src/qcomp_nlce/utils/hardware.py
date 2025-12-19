@@ -8,7 +8,7 @@ from qiskit_ibm_runtime.base_runtime_job import BaseRuntimeJob
 from qiskit.primitives import EstimatorResult, PrimitiveResult
 from qiskit_ibm_transpiler import generate_ai_pass_manager
 from iqm.iqm_client import CircuitCompilationOptions
-from iqm.iqm_client.models import HeraldingMode
+from iqm.iqm_client.models import HeraldingMode, DDMode
 
 try:
     from iqm.qiskit_iqm.fake_backends.fake_deneb import (
@@ -38,7 +38,6 @@ from typing import Literal, Union
 
 from qiskit import transpile
 from qiskit.primitives.base import SamplerResult
-from iqm.qiskit_iqm.iqm_naive_move_pass import transpile_to_IQM
 
 try:
     from qiskit_aqt_provider import AQTProvider
@@ -456,7 +455,8 @@ def backend_sample(
             payload,
             shots=int(n_shots),
             circuit_compilation_options=CircuitCompilationOptions(
-                heralding_mode=HeraldingMode.ZEROS
+                heralding_mode=HeraldingMode.ZEROS,
+                dd_mode=DDMode.ENABLED,
             ),
         )
 
@@ -523,10 +523,11 @@ def backend_estimate(
     else:
         options = {}
         # avoid the warning when using a fakebackend
-        if not isinstance(backend, FakeBackendV2):
+        if not isinstance(backend, (FakeBackendV2, IQMFakeBackend)):
             if "resilience_level" not in options.keys():
                 options.update({"resilience_level": 2})
         estimator = EstimatorV2(backend, options=options)
+
         payload = circuits_to_estimator_payload(
             backend, circuit, parameters, observables
         )

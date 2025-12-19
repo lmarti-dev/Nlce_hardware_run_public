@@ -535,14 +535,13 @@ def measure_matrix_element(
         )
         return ol, std
 
-    elif which_hadamard_test == "stefan":
+    elif which_hadamard_test == "stefan" or which_hadamard_test == "stefan_samples":
+        if which_hadamard_test == "stefan_samples":
+            counting_method = "samples"
+        else:
+            counting_method = "estimator"
         ol, std = stefan_hadamard_test(
-            circuit,
-            parameters,
-            n_shots,
-            x,
-            y,
-            backend,
+            circuit, parameters, n_shots, x, y, backend, counting_method=counting_method
         )
         return ol, std
 
@@ -652,10 +651,11 @@ def measure_matrix_elements(
     stds = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
 
     on_hardware = is_hardware_run(which_backend)
-    filename = f"{tmp_filename(circuit,which_backend)}/measure_matrix_elements.json"
 
     if on_hardware:
+        filename = f"{tmp_filename(circuit,which_backend)}/measure_matrix_elements.json"
         try:
+
             computed_values = load_tmp_item(filename)
         except FileNotFoundError:
             print("Starting from scratch (hadamard test)")
@@ -793,11 +793,11 @@ def measure_hamiltonian_elements(
     stds = np.zeros((len(states), len(states)), dtype=complex)
 
     on_hardware = is_hardware_run(which_backend)
-    filename = (
-        f"{tmp_filename(circuit,which_backend)}/measure_hamiltonian_elements.json"
-    )
 
     if on_hardware:
+        filename = (
+            f"{tmp_filename(circuit,which_backend)}/measure_hamiltonian_elements.json"
+        )
         try:
             computed_values = load_tmp_item(filename)
         except FileNotFoundError:
