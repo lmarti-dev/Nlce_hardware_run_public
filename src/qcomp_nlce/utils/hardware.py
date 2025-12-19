@@ -7,6 +7,8 @@ from qiskit_ibm_runtime import EstimatorV2, SamplerV2
 from qiskit_ibm_runtime.base_runtime_job import BaseRuntimeJob
 from qiskit.primitives import EstimatorResult, PrimitiveResult
 from qiskit_ibm_transpiler import generate_ai_pass_manager
+from iqm.iqm_client import CircuitCompilationOptions
+from iqm.iqm_client.models import HeraldingMode
 
 try:
     from iqm.qiskit_iqm.fake_backends.fake_deneb import (
@@ -36,7 +38,7 @@ from typing import Literal, Union
 
 from qiskit import transpile
 from qiskit.primitives.base import SamplerResult
-
+from iqm.qiskit_iqm.iqm_naive_move_pass import transpile_to_IQM
 
 try:
     from qiskit_aqt_provider import AQTProvider
@@ -122,8 +124,10 @@ def get_iqm_backend(n_qubits: int) -> "IQMBackend":
         device_name = "garnet"
     else:
         device_name = "emerald"
-    url = f"https://resonance.meetiqm.com/{device_name}"
-    return IQMProvider(url, token=get_token("IQM")).get_backend()
+    url = f"https://resonance.meetiqm.com/"
+    return IQMProvider(
+        url, token=get_token("IQM"), quantum_computer=device_name
+    ).get_backend()
 
 
 def get_ibm_backend(n_qubits: int) -> IBMBackend:
@@ -238,7 +242,7 @@ def compile_circuit_for_backend(
     ai: bool = False,
 ):
     # IQMBackend, IQMFakeBackend
-    if isinstance(backend, (MQPBackend)):
+    if isinstance(backend, (IQMBackend, IQMFakeBackend)):
         initial_layout = list(range(circuit.num_qubits))
         isa_circuit = transpile(
             circuit,
@@ -246,7 +250,18 @@ def compile_circuit_for_backend(
             initial_layout=initial_layout,
             optimization_level=3,
             coupling_map=backend.coupling_map,
+            scheduling_method="move_routing_rz_optimization_ignores_barriers",
         )
+        # isa_circuit = transpile_to_IQM(
+        #     circuit,
+        #     backend=backend,
+        #     optimization_level=3,
+        #     perform_move_routing=True,
+        #     optimize_single_qubits=True,
+        #     remove_final_rzs=True,
+        #     initial_layout=initial_layout,
+        #     coupling_map=backend.coupling_map,
+        # )
     else:
         if not ai:
             pm = generate_preset_pass_manager(backend=backend, **options)
@@ -254,13 +269,13 @@ def compile_circuit_for_backend(
             if "optimization_level" not in options:
                 options["optimization_level"] = 3
 
-            # this can error randomly
-            # in case of transpiler error, try again a few times
-            # TranspilerError
+            # never put coupling_map instead of backend
+            # it will generate better circuit
+            # but they will be broken
             pm = generate_ai_pass_manager(
                 ai_optimization_level=3,
                 ai_layout_mode="optimize",
-                coupling_map=backend.coupling_map,
+                backend=backend,
                 **options,
             )
 
@@ -276,19 +291,6 @@ def get_backend_name(backend: BACKEND_ALIAS) -> str:
         return backend.name
 
 
-def precompile_with_ai(circuit: QuantumCircuit, backend: BACKEND_ALIAS):
-    readd = False
-    if "tmpname" in circuit.metadata.keys():
-        tmpname = circuit.metadata["tmpname"]
-        readd = True
-    print("(before)", end=" ")
-    compute_mean_circ_stats(circuit, True)
-    circuit = compile_circuit_for_backend(circuit, backend, ai=True)
-    if readd:
-        circuit.metadata["tmpname"] = tmpname
-    return circuit
-
-
 def circuits_to_sampler_payload(
     backend,
     circuit: Union[QuantumCircuit, list[QuantumCircuit]],
@@ -298,10 +300,12 @@ def circuits_to_sampler_payload(
     if isinstance(circuit, QuantumCircuit):
         circuit = [circuit]
 
-    isa_circuit = [
-        compile_circuit_for_backend(c, backend, {"optimization_level": 3})
-        for c in circuit
-    ]
+    options = {
+        "optimization_level": 3,
+        "initial_layout": list(range(circuit[0].num_qubits)),
+    }
+
+    isa_circuit = [compile_circuit_for_backend(c, backend, options) for c in circuit]
     if which == "v1":
 
         payload = []
@@ -434,13 +438,26 @@ def backend_sample(
     sampler = get_backend_sampler(backend)
 
     if isinstance(
-        backend, (IBMBackend, FakeBackendV2, IQMBackend, IQMFakeBackend, MQPBackend)
+        backend,
+        (IBMBackend, FakeBackendV2),
     ):
 
         payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v2")
+
         job = sampler.run(
             payload,
             shots=int(n_shots),
+        )
+
+    elif isinstance(backend, (IQMBackend, IQMFakeBackend, MQPBackend)):
+        payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
+
+        job = backend.run(
+            payload,
+            shots=int(n_shots),
+            circuit_compilation_options=CircuitCompilationOptions(
+                heralding_mode=HeraldingMode.ZEROS
+            ),
         )
 
     elif isinstance(backend, AQTResource):

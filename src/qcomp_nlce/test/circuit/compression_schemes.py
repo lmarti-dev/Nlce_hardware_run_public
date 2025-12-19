@@ -14,14 +14,14 @@ from qiskit import QuantumCircuit
 from qcomp_nlce.utils.overlap import build_stefan_circuits_sample
 
 
-def test_compilation_schemes(circuit: QuantumCircuit | list):
+def test_compilation_schemes(circuit: QuantumCircuit | list, provider_name: str):
 
     if isinstance(circuit, list):
         n_qubits = circuit[0].num_qubits
     else:
         n_qubits = circuit.num_qubits
 
-    backend = get_appropriate_fake_backend(n_qubits, "IQM")
+    backend = get_backend(n_qubits, provider_name)
     print("Basic, no AI")
     no_ai = compile_circuit_for_backend(circuit, backend, ai=False)
     print("with Heuristic + AI")
@@ -55,11 +55,16 @@ def vqe_compression():
 
     _, elem_circuit_s, elem_weights_s, _ = load_optimized_vqe(gs_dirname_s)
     elem_circuit_s = apply_parameters(elem_circuit_s, elem_weights_s[-1])
-
+    print("##IQM")
     print("## large")
-    test_compilation_schemes(elem_circuit_l)
+    test_compilation_schemes(elem_circuit_l, "IQM")
     print("## small")
-    test_compilation_schemes(elem_circuit_s)
+    test_compilation_schemes(elem_circuit_s, "IQM")
+    print("##QEXA")
+    print("## large")
+    test_compilation_schemes(elem_circuit_l, "QEXA")
+    print("## small")
+    test_compilation_schemes(elem_circuit_s, "QEXA")
 
 
 def sweep_compression():

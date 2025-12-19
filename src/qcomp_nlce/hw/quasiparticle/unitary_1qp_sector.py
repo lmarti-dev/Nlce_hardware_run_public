@@ -11,7 +11,6 @@ from qcomp_nlce.utils import (
     HADAMARD_TESTS,
     get_backend_name,
     BACKEND_ALIAS,
-    precompile_with_ai,
 )
 from pathlib import Path
 
@@ -62,7 +61,6 @@ def measure_1qp_elements_v2(
     n_shots: int = 1e3,
     group_size: int = None,
     which_hadamard_test: HADAMARD_TESTS = "full",
-    ai_precompiled: bool = True,
 ):
 
     n_qubits = circuit.num_qubits
@@ -94,8 +92,6 @@ def measure_1qp_elements_v2(
         elif which_backend == "real_backend":
             backend = get_backend(circuit.num_qubits, provider_name)
         bn = backend.name
-        if ai_precompiled:
-            circuit = precompile_with_ai(circuit, backend)
     # Session mode for faster execution
 
     if which_backend == "real_backend":

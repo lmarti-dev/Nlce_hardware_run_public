@@ -10,7 +10,6 @@ from qcomp_nlce.utils import (
     get_backend,
     hamming_weight_states,
     measure_hamiltonian_elements,
-    precompile_with_ai,
     BACKEND_ALIAS,
     get_backend_name,
     BACKEND_TYPES,
@@ -57,7 +56,6 @@ def measure_1qp_expectations_v2(
     true_comp_vals: np.ndarray = None,
     provider_name: str = "IBM",
     n_shots: int = 1e3,
-    ai_precompiled: bool = True,
 ) -> np.ndarray:
 
     n_qubits = circuit.num_qubits
@@ -78,8 +76,6 @@ def measure_1qp_expectations_v2(
         elif which_backend == "real_backend":
             backend = get_backend(circuit.num_qubits, provider_name)
         bn = backend.name
-        if ai_precompiled:
-            circuit = precompile_with_ai(circuit, backend)
 
     # Session mode for faster execution
 

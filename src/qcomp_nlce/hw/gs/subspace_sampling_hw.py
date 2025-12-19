@@ -7,7 +7,6 @@ from qcomp_nlce.utils.hardware import (
     encode_sampler_result,
     backend_estimate,
     mean_std_tuples_from_res,
-    precompile_with_ai,
     is_hardware_run,
     get_backend_name,
     BACKEND_ALIAS,
@@ -175,7 +174,6 @@ def measure_ground_state_energy_subspace_sampling_v2(
     which_backend: str,
     n_shots: int = 1e3,
     provider_name: str = "AQT",
-    ai_precompiled: bool = True,
 ) -> dict:
 
     def relerr(e):
@@ -218,9 +216,6 @@ def measure_ground_state_energy_subspace_sampling_v2(
         counts = get_counts_from_res(job.result(), hamiltonian.num_qubits, 0)
 
         bn = backend.name
-
-        if ai_precompiled:
-            circuit = precompile_with_ai(circuit, backend)
 
     unique_bitstring = get_unique_bitstrings(counts)
     bitstring_prop = len(unique_bitstring) / (2**circuit.num_qubits)
