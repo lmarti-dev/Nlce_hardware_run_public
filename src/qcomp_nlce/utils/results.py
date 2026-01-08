@@ -1,5 +1,4 @@
 import copy
-from data_manager import ExperimentDataManager
 from qcomp_nlce.utils.workflow_1d import (
     heff_backend_type,
     dispersion_all_backends,
@@ -77,34 +76,49 @@ def average_result_matrices(dicts: list[dict]) -> dict:
     return out_d
 
 
-def plot_disps(d):
-    ks = d["inputs"]["ks"]
+def get_available_backends(d: dict) -> list[str]:
+    backends = []
+    for si in ("dict_l", "dict_s"):
+        eld = d["results"]["vqe"][si]["eld"]
+        gsd = d["results"]["vqe"][si]["gsd"]
+        exd = d["results"]["vqe"][si]["exd"]
+        backends.append(set(eld.keys()) & set(gsd.keys()) & set(exd.keys()))
+    return list(backends[0] & backends[1])
 
-    disps = {}
-    for backend in ("statevector", "fake_backend", "system"):
-        heffs = []
-        for si in ("dict_l", "dict_s"):
-            eld = d["results"]["vqe"][si]["eld"]
-            gsd = d["results"]["vqe"][si]["gsd"]
-            exd = d["results"]["vqe"][si]["exd"]
-            heff = heff_backend_type(eld, gsd, exd, backend)
-            heffs.append(heff)
-        disp = [dispersion_1d_thermodynamic(k, heffs[0], heffs[1]) for k in ks]
-        disps[backend] = disp
 
+def plot_disps(ds: list[dict], labels: list[str] = None):
+    all_disps = {}
+    if labels is None:
+        labels = list(range(len(ds)))
+    for ind, d in enumerate(ds):
+        disps = {}
+        ks = d["inputs"]["ks"]
+
+        for backend in get_available_backends(d):
+            heffs = []
+            for si in ("dict_l", "dict_s"):
+                eld = d["results"]["vqe"][si]["eld"]
+                gsd = d["results"]["vqe"][si]["gsd"]
+                exd = d["results"]["vqe"][si]["exd"]
+                heff = heff_backend_type(eld, gsd, exd, backend)
+                heffs.append(heff)
+            disp = [dispersion_1d_thermodynamic(k, heffs[0], heffs[1]) for k in ks]
+            disps[backend] = disp
+        all_disps[labels[ind]] = disps
     fig, ax = plt.subplots()
-    for k in disps.keys():
-        ax.plot(ks, disps[k], label=k)
+    for label in all_disps:
+        for k in all_disps[label].keys():
+            ax.plot(ks, all_disps[label][k], label=k + f" ({label})")
     ax.legend()
     plt.show()
 
 
-def print_diff(a, b):
-    printr(np.abs(a - b))
+def pretty_print_diff(a, b):
+    pretty_print(np.abs(a - b))
 
 
-def printr(a):
-    print(np.round(a, 3))
+def pretty_print(a):
+    print(np.array_str(a, precision=3, suppress_small=True))
 
 
 def show_diffs(d, which_backend: BACKEND_TYPES):
@@ -114,8 +128,8 @@ def show_diffs(d, which_backend: BACKEND_TYPES):
         vals_true = d["results"]["vqe"]["dict_l"][which]["system"]["values"]
 
         print(which_backend)
-        printr(vals_be)
+        pretty_print(vals_be)
         print("TRUE")
-        printr(vals_true)
+        pretty_print(vals_true)
         print("DIFF")
-        print_diff(vals_be, vals_true)
+        pretty_print_diff(vals_be, vals_true)

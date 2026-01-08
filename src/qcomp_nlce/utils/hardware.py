@@ -26,6 +26,7 @@ from iqm.qiskit_iqm.fake_backends.fake_aphrodite import IQMFakeAphrodite
 from iqm.qiskit_iqm.fake_backends.iqm_fake_backend import IQMFakeBackend
 from iqm.qiskit_iqm import IQMProvider, IQMBackend, IQMJob
 
+
 import io
 
 from qiskit_ibm_runtime.fake_provider import (
@@ -63,7 +64,7 @@ try:
 
     from mqp.qiskit_provider import MQPProvider, MQPBackend
 
-except ModuleNotFoundError:
+except Exception:
     print("mqp.qiskit_provider not found")
     # https://munich-quantum-software-stack.github.io/MQSS-Interfaces/qiskit/user_guide/getting_started/#usage
     try:
@@ -412,7 +413,7 @@ def circuits_to_estimator_payload(
 
 
 def get_backend_sampler(
-    backend,
+    backend: BACKEND_ALIAS,
 ) -> SamplerV2 | AQTSampler:
 
     if isinstance(backend, AQTResource):
