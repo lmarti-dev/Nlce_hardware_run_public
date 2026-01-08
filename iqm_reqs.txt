@@ -26,7 +26,6 @@ contourpy==1.3.3
 cplex==22.1.2.0
 cryptography==46.0.3
 cycler==0.12.1
--e file:///C:/Users/Moi4/Desktop/current/FAU/phd/code/nlce/data_manager
 decorator==5.2.1
 deprecated==1.3.1
 dill==0.4.0
@@ -53,7 +52,6 @@ idna==3.11
 importlib-metadata==8.4.0
 ipython==8.37.0
 ipywidgets==8.1.8
--e file:///C:/Users/Moi4/Desktop/current/FAU/phd/code/nlce/iqm_client-33.0.2
 iqm-data-definitions==2.19
 iqm-exa-common==27.4.2
 iqm-pulse==12.7.2
@@ -79,7 +77,6 @@ mqp-client==0.1.5
 mqss-client==0.2.1
 mqss-qiskit==0.2.0
 mqt-bench==2.1.0
--e file:///C:/Users/Moi4/Desktop/current/FAU/phd/code/nlce/predictor
 msgpack==1.1.2
 multidict==6.7.0
 networkx==2.8.5
