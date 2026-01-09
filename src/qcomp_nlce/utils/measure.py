@@ -42,7 +42,7 @@ from iqm.qiskit_iqm.iqm_job import IQMJob
 
 
 def circuit_estimation_job(
-    circuit: QuantumCircuit,
+    circuit: QuantumCircuit | list[QuantumCircuit],
     observables: Union[SparsePauliOp, list[SparsePauliOp]],
     parameters: np.ndarray,
     backend: BACKEND_ALIAS = "statevector",

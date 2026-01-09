@@ -33,7 +33,7 @@ from qcomp_nlce.utils.unscented_transform import (
 
 from qcomp_nlce.utils.hardware import is_hardware_run, BACKEND_ALIAS
 
-from qcomp_nlce.utils.stats import sum_std
+from qcomp_nlce.utils.stats import sum_std, mean_std
 
 from qiskit.primitives import EstimatorResult, PrimitiveResult
 
@@ -350,7 +350,8 @@ def stefan_hadamard_test(
     x: str,
     y: str,
     backend: BACKEND_ALIAS = "statevector",
-    counting_method: Literal["estimator", "samples"] = "samples",
+    counting_method: Literal["estimator", "samples"] = "estimator",
+    n_reps: int = 3,
 ):
 
     # this is Stefan Wolf's test, a bit modified though
@@ -370,12 +371,15 @@ def stefan_hadamard_test(
         jobs = circuit_estimation_job(
             backend=backend,
             observables=hams,
-            circuit=stef_circuit,
+            circuit=[
+                stef_circuit,
+            ]
+            * n_reps,
             parameters=None,
             n_shots=n_shots,
         )
 
-        ol, std = get_hadam_estimator(jobs.result())
+        ol, std = get_hadam_estimator(jobs.result(), n_reps)
         return ol, std
 
     elif counting_method == "samples":
@@ -478,20 +482,39 @@ def circuit_with_init(
     return circ_out
 
 
-def get_hadam_estimator(res: EstimatorResult) -> tuple[complex, complex]:
+def get_hadam_estimator(
+    res: EstimatorResult, n_reps: int = 1
+) -> tuple[complex, complex]:
     # qiskit developers competing with python developers to see who can make the most breaking changes with a version chanege
     # anyway, here's wonderwall
+    if n_reps == 1:
+        try:
+            return (
+                res[0].data.evs[0] + 1j * res[0].data.evs[1],
+                res[0].data.stds[0] + 1j * res[0].data.stds[1],
+            )
 
-    try:
-        return (
-            res[0].data.evs[0] + 1j * res[0].data.evs[1],
-            res[0].data.stds[0] + 1j * res[0].data.stds[1],
-        )
+        except Exception:
+            return res.values[0] + 1j * res.values[1], np.sqrt(
+                res.metadata[0]["variance"]
+            ) + 1j * +np.sqrt(res.metadata[1]["variance"])
+    else:
+        vals_reps = []
+        stds_reps = []
+        for n in range(n_reps):
+            jj = 2 * n
+            if isinstance(res, EstimatorResult):
+                val = (res[n].data.evs[0] + 1j * res[n].data.evs[1],)
+                std = (res[n].data.stds[0] + 1j * res[n].data.stds[1],)
 
-    except Exception:
-        return res.values[0] + 1j * res.values[1], np.sqrt(
-            res.metadata[0]["variance"]
-        ) + 1j * +np.sqrt(res.metadata[1]["variance"])
+            else:
+                val = res.values[jj] + 1j * res.values[jj + 1]
+                std = np.sqrt(res.metadata[jj]["variance"]) + 1j * +np.sqrt(
+                    res.metadata[jj + 1]["variance"]
+                )
+            vals_reps.append(val)
+            stds_reps.append(std)
+        return np.mean(vals_reps), mean_std(stds_reps)
 
 
 def full_hadamard_std(n_1: int, n_0: int, n_shots: int) -> float:
@@ -733,6 +756,7 @@ def measure_hamiltonian_element(
     parameters: np.ndarray,
     backend: BACKEND_ALIAS,
     n_shots: int,
+    n_reps: int = 3,
 ) -> tuple[complex, complex]:
     if x == y:
         circ_out = QuantumCircuit(circuit.num_qubits)
@@ -740,43 +764,82 @@ def measure_hamiltonian_element(
         for x_ind in x_inds:
             circ_out.x(x_ind)
         circ_out.compose(circuit, inplace=True)
+        if n_reps > 1:
+            circ_out = [circ_out for _ in range(n_reps)]
         job = circuit_estimation_job(
             circ_out, [hamiltonian], parameters, backend, n_shots
         )
 
         res = job.result()
-        if isinstance(res, EstimatorResult):
-            return res.values[0], np.sqrt(res.metadata[0]["variance"])
+        if n_reps == 1:
+            if isinstance(res, EstimatorResult):
+                return res.values[0], np.sqrt(res.metadata[0]["variance"])
+            else:
+                return res[0].data.evs, res[0].data.stds
         else:
-            return res[0].data.evs, res[0].data.stds
+            if isinstance(res, EstimatorResult):
+                return np.mean([res.values[k] for k in range(n_reps)]), mean_std(
+                    [np.sqrt(res.metadata[k]["variance"]) for k in range(n_reps)]
+                )
+            else:
+                return np.mean([res[k].data.evs for k in range(n_reps)]), mean_std(
+                    [res[k].data.stds for k in range(n_reps)]
+                )
 
     else:
         d = ["+", "-", "+i", "-i"]
         circs = []
-        for k in d:
-            circ_p = prep_circ_superpos(x, y, k)
-            circ_p.compose(circuit, inplace=True)
-            circs.append(circ_p)
+        for _ in range(n_reps):
+            for k in d:
+                circ_p = prep_circ_superpos(x, y, k)
+                circ_p.compose(circuit, inplace=True)
+                circs.append(circ_p)
 
         job = circuit_estimation_job(circs, [hamiltonian], parameters, backend, n_shots)
 
         res = job.result()
+        if n_reps == 1:
+            if isinstance(res, EstimatorResult):
+                val = (res.values[0] - res.values[1]) / 2 + 1j * (
+                    res.values[2] - res.values[3]
+                ) / 2
+                stds = [np.sqrt(res.metadata[k]["variance"]) for k in range(4)]
+                std = sum_std(stds[0:2]) + 1j * sum_std(stds[2:4])
+                return val, std
 
-        if isinstance(res, EstimatorResult):
-            val = (res.values[0] - res.values[1]) / 2 + 1j * (
-                res.values[2] - res.values[3]
-            ) / 2
-            stds = [np.sqrt(res.metadata[k]["variance"]) for k in range(4)]
-            std = sum_std(stds[0:2]) + 1j * sum_std(stds[2:4])
-            return val, std
-
+            else:
+                val = (res[0].data.evs - res[1].data.evs) / 2 + 1j * (
+                    res[2].data.evs - res[3].data.evs
+                ) / 2
+                stds = [res[k].data.stds for k in range(4)]
+                std = sum_std(stds[0:2]) + 1j * sum_std(stds[2:4])
+                return val, std
         else:
-            val = (res[0].data.evs - res[1].data.evs) / 2 + 1j * (
-                res[2].data.evs - res[3].data.evs
-            ) / 2
-            stds = [res[k].data.stds for k in range(4)]
-            std = sum_std(stds[0:2]) + 1j * sum_std(stds[2:4])
-            return val, std
+            vals_reps = []
+            stds_reps = []
+            for n in range(n_reps):
+                jj = 4 * n
+                if isinstance(res, EstimatorResult):
+
+                    val = (res.values[jj] - res.values[jj + 1]) / 2 + 1j * (
+                        res.values[jj + 2] - res.values[jj + 3]
+                    ) / 2
+                    stds = [np.sqrt(res.metadata[jj + k]["variance"]) for k in range(4)]
+                    std = sum_std(stds[jj : (jj + 2)]) + 1j * sum_std(
+                        stds[(jj + 2) : (jj + 4)]
+                    )
+
+                else:
+                    val = (res[jj].data.evs - res[jj + 1].data.evs) / 2 + 1j * (
+                        res[jj + 2].data.evs - res[jj + 3].data.evs
+                    ) / 2
+                    stds = [res[jj + k].data.stds for k in range(4)]
+                    std = sum_std(stds[jj : (jj + 2)]) + 1j * sum_std(
+                        stds[(jj + 2) : (jj + 4)]
+                    )
+                vals_reps.append(val)
+                stds_reps.append(std)
+            return np.mean(vals_reps), mean_std(stds_reps)
 
 
 def measure_hamiltonian_elements(

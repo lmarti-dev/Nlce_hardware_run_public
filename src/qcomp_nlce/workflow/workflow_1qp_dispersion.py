@@ -72,7 +72,7 @@ def workflow_nq_aqt(dry_run):
     J = 1
     which_backends = [
         "fake_backend",
-        "real_backend",
+        # "real_backend",
         "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
@@ -193,4 +193,4 @@ def workflow_nq(
 
 
 if __name__ == "__main__":
-    workflow_nq_qexa(True)
+    workflow_nq_aqt(True)

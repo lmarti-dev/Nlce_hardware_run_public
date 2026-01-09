@@ -33,8 +33,8 @@ if __name__ == "__main__":
     elem_circuit = apply_parameters(elem_circuit, elem_weights[-1])
 
     which_backends = ["fake_backend", "statevector"]
-    provider_name = "QEXA"
-    n_shots = int(2e5)
+    provider_name = "AQT"
+    n_shots = int(2e3)
 
     d1 = loop_measure_1qp_elements_v2(
         elem_circuit,
