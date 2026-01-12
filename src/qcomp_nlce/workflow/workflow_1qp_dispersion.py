@@ -48,7 +48,7 @@ def workflow_nq_iqm(dry_run):
     J = 1
     which_backends = [
         # "real_backend",
-        "fake_backend",
+        # "fake_backend",
         "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "IQM"
@@ -77,7 +77,7 @@ def workflow_nq_aqt(dry_run):
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
-    which_hadamard_test = "estimator"
+    which_hadamard_test = "stefan"
     n_qubits_max = 5
     workflow_nq(
         dry_run,
@@ -193,4 +193,4 @@ def workflow_nq(
 
 
 if __name__ == "__main__":
-    workflow_nq_aqt(True)
+    workflow_nq_aqt(False)

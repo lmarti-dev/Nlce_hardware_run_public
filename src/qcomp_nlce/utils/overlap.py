@@ -351,7 +351,7 @@ def stefan_hadamard_test(
     y: str,
     backend: BACKEND_ALIAS = "statevector",
     counting_method: Literal["estimator", "samples"] = "estimator",
-    n_reps: int = 3,
+    n_reps: int = 10,
 ):
 
     # this is Stefan Wolf's test, a bit modified though
@@ -504,17 +504,17 @@ def get_hadam_estimator(
         for n in range(n_reps):
             jj = 2 * n
             if isinstance(res, EstimatorResult):
-                val = (res[n].data.evs[0] + 1j * res[n].data.evs[1],)
-                std = (res[n].data.stds[0] + 1j * res[n].data.stds[1],)
-
-            else:
                 val = res.values[jj] + 1j * res.values[jj + 1]
                 std = np.sqrt(res.metadata[jj]["variance"]) + 1j * +np.sqrt(
                     res.metadata[jj + 1]["variance"]
                 )
+            else:
+                val = res[n].data.evs[0] + 1j * res[n].data.evs[1]
+                std = res[n].data.stds[0] + 1j * res[n].data.stds[1]
+
             vals_reps.append(val)
             stds_reps.append(std)
-        return np.mean(vals_reps), mean_std(stds_reps)
+        return np.mean(vals_reps), mean_std(np.array(stds_reps))
 
 
 def full_hadamard_std(n_1: int, n_0: int, n_shots: int) -> float:
@@ -756,7 +756,7 @@ def measure_hamiltonian_element(
     parameters: np.ndarray,
     backend: BACKEND_ALIAS,
     n_shots: int,
-    n_reps: int = 3,
+    n_reps: int = 10,
 ) -> tuple[complex, complex]:
     if x == y:
         circ_out = QuantumCircuit(circuit.num_qubits)
@@ -779,11 +779,13 @@ def measure_hamiltonian_element(
         else:
             if isinstance(res, EstimatorResult):
                 return np.mean([res.values[k] for k in range(n_reps)]), mean_std(
-                    [np.sqrt(res.metadata[k]["variance"]) for k in range(n_reps)]
+                    np.array(
+                        [np.sqrt(res.metadata[k]["variance"]) for k in range(n_reps)]
+                    )
                 )
             else:
                 return np.mean([res[k].data.evs for k in range(n_reps)]), mean_std(
-                    [res[k].data.stds for k in range(n_reps)]
+                    np.array([res[k].data.stds for k in range(n_reps)])
                 )
 
     else:
@@ -825,21 +827,18 @@ def measure_hamiltonian_element(
                         res.values[jj + 2] - res.values[jj + 3]
                     ) / 2
                     stds = [np.sqrt(res.metadata[jj + k]["variance"]) for k in range(4)]
-                    std = sum_std(stds[jj : (jj + 2)]) + 1j * sum_std(
-                        stds[(jj + 2) : (jj + 4)]
-                    )
+                    std = sum_std(stds[:2]) + 1j * sum_std(stds[2:4])
 
                 else:
                     val = (res[jj].data.evs - res[jj + 1].data.evs) / 2 + 1j * (
                         res[jj + 2].data.evs - res[jj + 3].data.evs
                     ) / 2
                     stds = [res[jj + k].data.stds for k in range(4)]
-                    std = sum_std(stds[jj : (jj + 2)]) + 1j * sum_std(
-                        stds[(jj + 2) : (jj + 4)]
-                    )
+                    std = sum_std(stds[0:2]) + 1j * sum_std(stds[2:4])
                 vals_reps.append(val)
                 stds_reps.append(std)
-            return np.mean(vals_reps), mean_std(stds_reps)
+
+            return np.mean(vals_reps), mean_std(np.array(stds_reps))
 
 
 def measure_hamiltonian_elements(
