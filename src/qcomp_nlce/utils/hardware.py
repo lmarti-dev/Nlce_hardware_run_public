@@ -497,7 +497,8 @@ def backend_estimate(
 ) -> BaseRuntimeJob:
 
     # I believe only AQT now runs on V1, QExa can use V2 prims. (except the passmanager lol)
-    if isinstance(backend, (AQTResource)):
+    # need MQPBackend in there because the AQT real backend is provided by MQP
+    if isinstance(backend, (AQTResource, MQPBackend)):
         # can't replace it with EstimatorV1
         estimator = AQTEstimator(backend)
         estimator.set_transpile_options(optimization_level=3)
