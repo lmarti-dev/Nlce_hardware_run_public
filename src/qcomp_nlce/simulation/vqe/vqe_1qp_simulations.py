@@ -113,8 +113,8 @@ def train_and_save(
     print(f"The number of parameters is {len(circuit.parameters)}")
 
     # Load optimized parameters from ground state VQE
-    gs_dirname = f"elem_vqe_{int(J*100)}j_{int(hl*100)}hl"
-    gs_vqe_path = get_save_directory(f"{gs_dirname}/vqe/cost_offdiag/{n_qubits}q_{n_layers}l")
+    gs_dirname = f"gs_vqe_{int(J*100)}j_{int(hl*100)}hl"
+    gs_vqe_path = get_save_directory(f"{gs_dirname}/vqe/{n_qubits}q_{n_layers}l")
     _, _, gs_weights, _ = load_optimized_vqe(gs_vqe_path)
     initial_params = np.real(gs_weights[-1])  # Take the last (final optimized) set of parameters
     # print(initial_params.shape)
@@ -143,7 +143,7 @@ hl=0.1
 if __name__ == "__main__":
     dry_run = False
     which_cost = "offdiag"
-    for n_qubits in (4,):
+    for n_qubits in (5,):
         for J in (0.8,):
             dirname = f"elem_vqe_{int(J*100)}j_{int(hl*100)}hl"
             train_and_save(n_qubits, J, hl, dirname, which_cost, dry_run)
