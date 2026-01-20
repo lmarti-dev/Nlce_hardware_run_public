@@ -10,6 +10,9 @@ from qiskit_ibm_transpiler import generate_ai_pass_manager
 from iqm.iqm_client import CircuitCompilationOptions
 from iqm.iqm_client.models import HeraldingMode, DDMode
 
+from qiskit.providers.fake_provider import GenericBackendV2
+from qcomp_nlce.utils.iqm_utils import IQMFakePerfect, IQMFakePrettyGood
+
 try:
     from iqm.qiskit_iqm.fake_backends.fake_deneb import (
         IQMFakeDeneb as IQMSmallFakeBackend,
@@ -89,7 +92,9 @@ from qcomp_nlce.utils.circuit import (
     parameters_dict,
     parameters_exist,
     circ_stats,
+    measure_pauli_circuit,
 )
+from qcomp_nlce.utils.hamiltonian import get_tfim_ratio, get_tfim_xx, HAM_NAME_VAR
 from qiskit_ibm_runtime import QiskitRuntimeService, IBMBackend
 
 BACKEND_TYPES = Literal["statevector", "fake_backend", "real_backend"]
@@ -98,7 +103,7 @@ BACKEND_ALIAS = (
     Literal["statevector"] | FakeBackendV2 | IBMBackend | MQPBackend | IQMBackend
 )
 
-PROVIDER_ALIAS = Literal["IBM", "AQT", "IQM", "QEXA"]
+PROVIDER_ALIAS = Literal["IBM", "AQT", "IQM", "QEXA", "IBM_GENERIC", "IQM_PERFECT"]
 
 
 def get_aqt_backend(n_qubits: int) -> MQPBackend:
@@ -181,8 +186,18 @@ def get_appropriate_fake_backend(
             return IQMFakeGarnet()
         else:
             return IQMFakeAphrodite()
+    elif which == "IBM_GENERIC":
+        # I should've made the backend calling
+        # after the circuit is created
+        # because you might add ancillas and such
+        # and this isn't taken into account here
+        n_qubits += 4
+        return GenericBackendV2(n_qubits)
+    elif which == "IQM_PERFECT":
+        return IQMFakePrettyGood()
+        return IQMFakePerfect()
     else:
-        raise ValueError(f"Expected a provider got: {which}")
+        raise ValueError(f"Expected a provider, got: {which}")
 
 
 def mean_std_tuples_from_res(
@@ -420,7 +435,15 @@ def get_backend_sampler(
         sampler = AQTSampler(backend)
 
     elif isinstance(
-        backend, (IBMBackend, FakeBackendV2, IQMFakeBackend, IQMBackend, MQPBackend)
+        backend,
+        (
+            IBMBackend,
+            FakeBackendV2,
+            IQMFakeBackend,
+            IQMBackend,
+            MQPBackend,
+            GenericBackendV2,
+        ),
     ):
         sampler = SamplerV2(mode=backend)
     else:
@@ -439,7 +462,7 @@ def backend_sample(
 
     if isinstance(
         backend,
-        (IBMBackend, FakeBackendV2),
+        (IBMBackend, FakeBackendV2, GenericBackendV2),
     ):
 
         payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v2")
@@ -465,7 +488,7 @@ def backend_sample(
         payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
         job = sampler.run(payload, parameter_values=None, shots=n_shots)
 
-    elif isinstance(backend, (NotABackend,)):
+    elif isinstance(backend, (NotABackend)):
         initial_layout = list(range(circuit.num_qubits))
         isa_circuits = transpile(
             circuit,
@@ -539,6 +562,45 @@ def backend_estimate(
             precision=1 / np.sqrt(n_shots),
         )
     return job
+
+
+def sample_based_estimation(
+    backend: BACKEND_ALIAS,
+    circuit: QuantumCircuit,
+    hamiltonian: SparsePauliOp,
+    n_shots: int,
+) -> BaseRuntimeJob:
+    if HAM_NAME_VAR not in hamiltonian.__dict__:
+        raise ValueError("Expected the hamiltonian to have name")
+    if hamiltonian.__dict__[HAM_NAME_VAR] == "TFIM":
+        n_qubits = hamiltonian.num_qubits
+        # ZZZ
+        z_circ = circuit.copy()
+        z_circ.measure_all()
+
+        # XX XX XX
+        # even
+
+        x_circ_even = circuit.copy()
+        even_paulis = get_tfim_xx(n_qubits, "even")
+        for pauli in even_paulis:
+            x_circ_even = measure_pauli_circuit(x_circ_even, pauli, False)
+
+        x_circ_odd = circuit.copy()
+        odd_paulis = get_tfim_xx(n_qubits, "odd")
+        for pauli in odd_paulis:
+            x_circ_odd = measure_pauli_circuit(x_circ_odd, pauli, False)
+
+        payload = circuits_to_sampler_payload(
+            backend, [z_circ, x_circ_even, x_circ_odd], None, "v1"
+        )
+        job = backend.run(payload, shots=n_shots)
+        return job
+
+    else:
+        raise ValueError(
+            f"Expected a valid name, got: {hamiltonian.__dict__[HAM_NAME_VAR]}"
+        )
 
 
 def get_token(which: Literal["IBM", "LRZ"]):

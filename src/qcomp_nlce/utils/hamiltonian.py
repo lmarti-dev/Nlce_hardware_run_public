@@ -6,10 +6,12 @@ from qiskit.quantum_info import (
 )
 from scipy.sparse.linalg import eigsh
 import numpy as np
-from typing import Union
+from typing import Union, Literal
 
 
 import itertools
+
+HAM_NAME_VAR = "__ham_name"
 
 
 def binleftpad(integer: int, left_pad: int):
@@ -110,6 +112,21 @@ def get_singlet_ham(n_qubits: int, J: float) -> SparsePauliOp:
     return hamiltonian
 
 
+def get_tfim_xx(n_qubits: int, which: Literal["even", "odd"]) -> list[SparsePauliOp]:
+    if which == "even":
+        start = 0
+    elif which == "odd":
+        start = 1
+
+    out = []
+    for ind in range(start, n_qubits - 1, 2):
+        idty = ["I" for _ in range(n_qubits)]
+        idty[ind] = "X"
+        idty[ind + 1] = "X"
+        out.append(SparsePauliOp("".join(idty)))
+    return out
+
+
 def get_tfim_ratio(ham: SparsePauliOp) -> float:
     c = ham.coeffs
     u = np.unique_counts(c)
@@ -166,6 +183,7 @@ def TFIM(
 
     hamiltonian = hamiltonian_J + hamiltonian_h
 
+    hamiltonian.__dict__[HAM_NAME_VAR] = "TFIM"
     return hamiltonian
 
 

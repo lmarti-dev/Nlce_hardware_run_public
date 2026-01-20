@@ -19,17 +19,17 @@ from data_manager import ExperimentDataManager
 import matplotlib.pyplot as plt
 
 
-def workflow_nq_qexa(dry_run):
+def workflow_nq_ibm(dry_run):
 
     J = 1
     which_backends = [
-        "real_backend",
+        # "real_backend",
         "fake_backend",
         "statevector",
     ]
-    provider_name: PROVIDER_ALIAS = "QEXA"
-    n_shots = int(2e5)
-    which_hadamard_test = "stefan_samples"
+    provider_name: PROVIDER_ALIAS = "IBM_GENERIC"
+    n_shots = int(1e6)
+    which_hadamard_test = "stefan"
     n_qubits_max = 5
     workflow_nq(
         dry_run,
@@ -43,17 +43,40 @@ def workflow_nq_qexa(dry_run):
     )
 
 
-def workflow_nq_iqm(dry_run):
+def workflow_nq_qexa(dry_run):
 
     J = 1
     which_backends = [
         # "real_backend",
-        # "fake_backend",
+        "fake_backend",
         "statevector",
     ]
-    provider_name: PROVIDER_ALIAS = "IQM"
-    n_shots = int(2e5)
+    provider_name: PROVIDER_ALIAS = "QEXA"
+    n_shots = int(1e4)
     which_hadamard_test = "stefan"
+    n_qubits_max = 5
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["vqe"],
+        J,
+    )
+
+
+def workflow_nq_iqm_manual(dry_run):
+    J = 1
+    which_backends = [
+        # "real_backend",
+        "fake_backend",
+        "statevector",
+    ]
+    provider_name: PROVIDER_ALIAS = "IQM_PERFECT"
+    n_shots = int(1e6)
+    which_hadamard_test = "stefan_samples"
     n_qubits_max = 5
     workflow_nq(
         dry_run,
@@ -193,4 +216,4 @@ def workflow_nq(
 
 
 if __name__ == "__main__":
-    workflow_nq_aqt(False)
+    workflow_nq_iqm_manual(True)

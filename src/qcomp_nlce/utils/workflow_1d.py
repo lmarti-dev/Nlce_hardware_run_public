@@ -17,6 +17,7 @@ from qcomp_nlce.utils import (
     sweep_time_from_steps,
     BACKEND_TYPES,
     baptize_circuit,
+    HAM_NAME_VAR,
 )
 from qcomp_nlce.utils.dispersion import (
     dispersion_1d_thermodynamic,
@@ -141,6 +142,8 @@ def vqe_heff(
 
     assert hamiltonian1 == hamiltonian2
     hamiltonian = hamiltonian1
+
+    hamiltonian.__dict__[HAM_NAME_VAR] = "TFIM"
 
     return get_heff_values(
         gs_circuit,
