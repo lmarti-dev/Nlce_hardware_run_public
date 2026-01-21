@@ -15,7 +15,10 @@ def prod_std(stds: np.ndarray, vals: np.ndarray) -> float:
 
 def sum_std(stds: np.ndarray, axis: int = 0) -> float:
     stds = np.array(stds)
-    return np.sqrt(np.sum(stds**2, axis=axis))
+    sm = np.sqrt(np.sum(stds**2, axis=axis))
+    if sm.shape == (1,):
+        return sm[0]
+    return sm
 
 
 def mean_std(stds: np.ndarray, axis: int = 0) -> float:
