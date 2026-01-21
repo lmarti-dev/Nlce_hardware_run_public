@@ -29,4 +29,4 @@ def keep_trying(func: callable):
 
 
 if __name__ == "__main__":
-    keep_trying(workflow_nq_qexa)
+    keep_trying(workflow_nq_aqt)

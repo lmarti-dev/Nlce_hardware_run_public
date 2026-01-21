@@ -11,7 +11,11 @@ from iqm.iqm_client import CircuitCompilationOptions
 from iqm.iqm_client.models import HeraldingMode, DDMode
 
 from qiskit.providers.fake_provider import GenericBackendV2
-from qcomp_nlce.utils.iqm_utils import IQMFakePerfect, IQMFakePrettyGood
+from qcomp_nlce.utils.iqm_utils import (
+    IQMFakePerfect,
+    IQMFakePrettyGood,
+    IQMFakeReallyGood,
+)
 
 try:
     from iqm.qiskit_iqm.fake_backends.fake_deneb import (
@@ -64,7 +68,7 @@ except ModuleNotFoundError:
 
 
 try:
-
+    raise Exception
     from mqp.qiskit_provider import MQPProvider, MQPBackend
 
 except Exception:
@@ -103,7 +107,16 @@ BACKEND_ALIAS = (
     Literal["statevector"] | FakeBackendV2 | IBMBackend | MQPBackend | IQMBackend
 )
 
-PROVIDER_ALIAS = Literal["IBM", "AQT", "IQM", "QEXA", "IBM_GENERIC", "IQM_PERFECT"]
+PROVIDER_ALIAS = Literal[
+    "IBM",
+    "AQT",
+    "IQM",
+    "QEXA",
+    "IBM_GENERIC",
+    "IQM_PERFECT",
+    "IQM_REALLYGOOD",
+    "IQM_PRETTYGOOD",
+]
 
 
 def get_aqt_backend(n_qubits: int) -> MQPBackend:
@@ -193,8 +206,11 @@ def get_appropriate_fake_backend(
         # and this isn't taken into account here
         n_qubits += 4
         return GenericBackendV2(n_qubits)
-    elif which == "IQM_PERFECT":
+    elif which == "IQM_PRETTYGOOD":
         return IQMFakePrettyGood()
+    elif which == "IQM_REALLYGOOD":
+        return IQMFakeReallyGood()
+    elif which == "IQM_PERFECT":
         return IQMFakePerfect()
     else:
         raise ValueError(f"Expected a provider, got: {which}")

@@ -683,7 +683,7 @@ def measure_matrix_elements(
 
             computed_values = load_tmp_item(filename)
         except FileNotFoundError:
-            print("Starting from scratch (hadamard test)")
+            print(f"Starting from scratch (hadamard {which_hadamard_test} test)")
             computed_values = []
 
     if which_hadamard_test != "off-diag":
