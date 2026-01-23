@@ -29,7 +29,6 @@ from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
 from qcomp_nlce.utils.effective_hamiltonian import H_effective, H_effective_ed
 
-from qcomp_nlce.utils.unscented_transform import ut_disp_from_res_dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -91,6 +90,7 @@ def sweep_dispersion(
     ks: np.ndarray,
     group_size: int,
     which_hadamard_test: str,
+    which_model: str = "TFIM",
 ):
     dict_l = sweep_heff(
         n_qubits_max,
@@ -101,6 +101,7 @@ def sweep_dispersion(
         n_shots,
         group_size,
         which_hadamard_test,
+        which_model=which_model,
     )
     dict_s = sweep_heff(
         n_qubits_max - 1,
@@ -111,6 +112,7 @@ def sweep_dispersion(
         n_shots,
         group_size,
         which_hadamard_test,
+        which_model=which_model,
     )
 
     return dict_l, dict_s, dispersion_all_backends(dict_l, dict_s, ks)
@@ -157,6 +159,37 @@ def vqe_heff(
     )
 
 
+def pick_model(
+    n_qubits: int,
+    J: float,
+    which_model: str,
+):
+    if "ladder" in which_model:
+        ladder = True
+    else:
+        ladder = False
+
+    if "HL" in which_model:
+        if len(which_model.split("_")) == 3:
+            parts = which_model.split("_")
+            hl = int(parts[-1]) / 100
+        else:
+            hl = 0.1
+    else:
+        hl = 0.0
+
+    ham_j, ham_h = TFIM(
+        n_qubits,
+        1,
+        J,
+        periodic=False,
+        split_parts=True,
+        ladder=ladder,
+        longitudinal_field=hl,
+    )
+    return ham_j, ham_h
+
+
 def sweep_heff(
     n_qubits: int,
     J: float,
@@ -166,8 +199,9 @@ def sweep_heff(
     n_shots: int,
     group_size: int,
     which_hadamard_test: str,
+    which_model: str = "TFIM",
 ):
-    ham_j, ham_h = TFIM(n_qubits, 1, J, periodic=False, split_parts=True)
+    ham_j, ham_h = pick_model(n_qubits, J, which_model)
     hamiltonian = ham_j + ham_h
     min_gap = get_min_gap(hamiltonian)
     # the most important thing is to have enough steps!!!
@@ -350,6 +384,11 @@ def plot_all_backends_dispersions_montecarlo(_d: dict) -> plt.Figure:
                     "x-",
                     label=f"{circ} - {be}",
                 )
-    ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="analytic")
+    if "which_model" not in _d["inputs"].keys():
+        which_model = "TFIM"
+    else:
+        which_model = _d["inputs"]["which_model"]
+    if which_model == "TFIM":
+        ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="analytic")
     ax.legend()
     return fig

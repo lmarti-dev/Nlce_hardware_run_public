@@ -38,7 +38,7 @@ def graph(m, n):
     Returns 1-indexed bonds.
     """
     coordinates = bond_coordinates(m, n)
-    
+
     bonds = []
     for i in range(len(coordinates)):
         for j in range(i + 1, len(coordinates)):
@@ -47,7 +47,7 @@ def graph(m, n):
             if np.linalg.norm(diff) == 1:
                 # Julia is 1-indexed, so we add 1 to match
                 bonds.append([i + 1, j + 1])
-    
+
     return bonds
 
 
@@ -58,19 +58,18 @@ def graph_periodic_1d(m, n):
     Returns 1-indexed bonds.
     """
     coordinates = bond_coordinates(m, n)
-    
+
     bonds = []
     for i in range(len(coordinates)):
         for j in range(i + 1, len(coordinates)):
             diff = np.array(coordinates[i]) - np.array(coordinates[j])
             if np.linalg.norm(diff) == 1:
                 bonds.append([i + 1, j + 1])
-    
+
     # Add periodic bond connecting last site to first (1-indexed)
     bonds.append([m * n, 1])
-    
-    return bonds
 
+    return bonds
 
 
 if __name__ == "__main__":
@@ -79,4 +78,3 @@ if __name__ == "__main__":
     print("Periodic bonds (N=5):", periodic_bonds(5))
     print("Graph 2x3:", graph(2, 3))
     print("Graph periodic 1D (2x3):", graph_periodic_1d(2, 3))
- 

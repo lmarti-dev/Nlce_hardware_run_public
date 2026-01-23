@@ -1,4 +1,4 @@
-from qcomp_nlce.workflow.workflow_1qp_dispersion import (
+from Nlce_hardware_run.src.qcomp_nlce.workflow.workflow_tfim_1qp_dispersion import (
     workflow_nq_aqt,
     workflow_nq_qexa,
 )

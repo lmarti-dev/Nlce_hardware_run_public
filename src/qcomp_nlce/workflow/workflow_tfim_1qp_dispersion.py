@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 
 from qcomp_nlce.utils.folders import res_sim_dir
-from qcomp_nlce.utils.workflow_1d import (
+from Nlce_hardware_run.src.qcomp_nlce.utils.workflow_tfim_1d import (
     vqe_dispersion,
     tfim_ed_dispersion,
     sweep_dispersion,
@@ -17,6 +17,7 @@ from qcomp_nlce.utils.constants import ALGORITHMS_ALIAS
 from data_manager import ExperimentDataManager
 
 import matplotlib.pyplot as plt
+from fauplotstyle import style
 
 
 def workflow_nq_ibm(dry_run):
@@ -67,14 +68,14 @@ def workflow_nq_qexa(dry_run):
     )
 
 
-def workflow_nq_iqm_manual(provider_name, dry_run):
+def workflow_nq_iqm_manual(dry_run):
     J = 1
     which_backends = [
         # "real_backend",
         "fake_backend",
         "statevector",
     ]
-    # provider_name: PROVIDER_ALIAS = "IQM"
+    provider_name: PROVIDER_ALIAS = "IQM_PERFECT"
     n_shots = int(1e6)
     which_hadamard_test = "stefan_samples"
     n_qubits_max = 5
@@ -94,8 +95,8 @@ def workflow_nq_aqt(dry_run):
 
     J = 1
     which_backends = [
-        "real_backend",
         "fake_backend",
+        # "real_backend",
         "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
@@ -114,6 +115,32 @@ def workflow_nq_aqt(dry_run):
     )
 
 
+def workflow_nq_sweep_aqt_hl(dry_run):
+
+    J = 1
+    which_backends = [
+        "fake_backend",
+        # "real_backend",
+        "statevector",
+    ]
+    provider_name: PROVIDER_ALIAS = "AQT"
+    n_shots = int(2000)
+    which_hadamard_test = "stefan"
+    n_qubits_max = 5
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["sweep"],
+        J,
+        which_model="TFIM_ladder",
+        n_steps=20,
+    )
+
+
 def workflow_nq(
     dry_run: bool,
     n_qubits_max: int,
@@ -125,6 +152,7 @@ def workflow_nq(
     J: float,
     n_steps: int = 1,
     n_mc_samples: int = 10000,
+    which_model: str = "TFIM",
 ):
     # avoid the "unused arguments" warning
     # warnings.filterwarnings("ignore")
@@ -134,8 +162,19 @@ def workflow_nq(
     vqe_l_dir = f"{n_qubits_max}q_{get_optimal_n_layers(n_qubits_max)}l"
     vqe_s_dir = f"{n_qubits_max-1}q_{get_optimal_n_layers(n_qubits_max-1)}l"
 
-    gs_dirname_l = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/{vqe_l_dir}")
-    gs_dirname_s = Path(res_sim_dir(), f"gs_vqe_{int(J*100)}j/vqe/{vqe_s_dir}")
+    model_dir = f"gs_vqe_{int(J*100)}j"
+
+    if "HL" in which_model:
+        if len(which_model.split("_")) == 3:
+            hl = int(which_model.split("_")[-1])
+        else:
+            hl = 10
+        model_dir += f"_{hl}hl"
+    if "ladder" in which_model:
+        model_dir += "_ladder"
+
+    gs_dirname_l = Path(res_sim_dir(), f"{model_dir}/vqe/{vqe_l_dir}")
+    gs_dirname_s = Path(res_sim_dir(), f"{model_dir}/vqe/{vqe_s_dir}")
 
     elem_dirname_l = Path(
         res_sim_dir(),
@@ -147,7 +186,7 @@ def workflow_nq(
     )
 
     edm = ExperimentDataManager(
-        f"vqe_workflow_tfim_hadam_{which_hadamard_test}_{provider_name}_{n_shots}shots",
+        f"vqe_workflow_{which_model}_hadam_{which_hadamard_test}_{provider_name}_{n_shots}shots",
         dry_run=dry_run,
     )
 
@@ -160,6 +199,7 @@ def workflow_nq(
             "group_size": group_size,
             "n_qubits": n_qubits_max,
             "n_shots": n_shots,
+            "which_model": which_model,
         },
     }
     if "sweep" in which_algorithms:
@@ -174,6 +214,7 @@ def workflow_nq(
             ks,
             group_size,
             which_hadamard_test,
+            which_model,
         )
 
         out_dict["results"]["sweep"] = {
@@ -181,6 +222,10 @@ def workflow_nq(
             "dict_s": sweep_dict_s,
             "disp": sweep_disp,
         }
+        mc_disp = mc_disp_from_res_dict(
+            ks, out_dict, "sweep", n_mc_samples, to_eotm=True
+        )
+        out_dict["results"]["sweep"]["mc_disp"] = mc_disp
 
     if "vqe" in which_algorithms:
         print("== VQE ==")
@@ -212,8 +257,10 @@ def workflow_nq(
     fig = plot_all_backends_dispersions_montecarlo(out_dict)
 
     edm.save_figure(fig, fig_shape="double-y")
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":
-    workflow_nq_aqt(True)
+    style()
+    workflow_nq_sweep_aqt_hl(False)
+    workflow_nq_sweep_aqt_hl(False)
