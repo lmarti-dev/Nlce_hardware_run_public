@@ -447,7 +447,7 @@ def get_backend_sampler(
     backend: BACKEND_ALIAS,
 ) -> SamplerV2 | AQTSampler:
 
-    if isinstance(backend, AQTResource):
+    if isinstance(backend, AQTResource) or backend.name == "AQT20":
         sampler = AQTSampler(backend)
 
     elif isinstance(
@@ -487,6 +487,9 @@ def backend_sample(
             payload,
             shots=int(n_shots),
         )
+    elif isinstance(backend, AQTResource) or backend.name == "AQT20":
+        payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
+        job = sampler.run(payload, parameter_values=None, shots=n_shots)
 
     elif isinstance(backend, (IQMBackend, IQMFakeBackend, MQPBackend)):
         payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
@@ -499,10 +502,6 @@ def backend_sample(
                 dd_mode=DDMode.ENABLED,
             ),
         )
-
-    elif isinstance(backend, AQTResource):
-        payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
-        job = sampler.run(payload, parameter_values=None, shots=n_shots)
 
     elif isinstance(backend, (NotABackend)):
         initial_layout = list(range(circuit.num_qubits))
@@ -519,14 +518,6 @@ def backend_sample(
     return job
 
 
-def delete_non_picklable(estimator: AQTEstimator):
-    try:
-        # easy V2 primitive conversion
-        del estimator._backend._http_client
-    except Exception:
-        pass
-
-
 def backend_estimate(
     backend: BACKEND_ALIAS,
     observables: Union[SparsePauliOp, list[SparsePauliOp]],
@@ -537,7 +528,7 @@ def backend_estimate(
 
     # I believe only AQT now runs on V1, QExa can use V2 prims. (except the passmanager lol)
     # need MQPBackend in there because the AQT real backend is provided by MQP
-    if isinstance(backend, (AQTResource, MQPBackend)):
+    if isinstance(backend, (AQTResource, MQPBackend)) or backend.name == "AQT20":
         # can't replace it with EstimatorV1
         estimator = AQTEstimator(backend)
         estimator.set_transpile_options(optimization_level=3)
@@ -580,12 +571,12 @@ def backend_estimate(
     return job
 
 
-def sample_based_estimation(
+def manual_hamiltonian_circuits(
     backend: BACKEND_ALIAS,
     circuit: QuantumCircuit,
     hamiltonian: SparsePauliOp,
     n_shots: int,
-) -> BaseRuntimeJob:
+) -> list[QuantumCircuit]:
     if HAM_NAME_VAR not in hamiltonian.__dict__:
         raise ValueError("Expected the hamiltonian to have name")
     if hamiltonian.__dict__[HAM_NAME_VAR] == "TFIM":
@@ -607,11 +598,7 @@ def sample_based_estimation(
         for pauli in odd_paulis:
             x_circ_odd = measure_pauli_circuit(x_circ_odd, pauli, False)
 
-        payload = circuits_to_sampler_payload(
-            backend, [z_circ, x_circ_even, x_circ_odd], None, "v1"
-        )
-        job = backend.run(payload, shots=n_shots)
-        return job
+        return [z_circ, x_circ_even, x_circ_odd]
 
     else:
         raise ValueError(

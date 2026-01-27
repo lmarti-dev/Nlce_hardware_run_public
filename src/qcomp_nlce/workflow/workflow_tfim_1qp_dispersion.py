@@ -49,7 +49,7 @@ def workflow_nq_qexa(dry_run):
     J = 1
     which_backends = [
         # "real_backend",
-        "fake_backend",
+        # "fake_backend",
         "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "QEXA"
@@ -95,9 +95,9 @@ def workflow_nq_aqt(dry_run):
 
     J = 1
     which_backends = [
-        "fake_backend",
         # "real_backend",
-        "statevector",
+        "fake_backend",
+        # "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
@@ -119,8 +119,8 @@ def workflow_nq_sweep_aqt_hl(dry_run):
 
     J = 1
     which_backends = [
+        "real_backend",
         "fake_backend",
-        # "real_backend",
         "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
@@ -257,10 +257,9 @@ def workflow_nq(
     fig = plot_all_backends_dispersions_montecarlo(out_dict)
 
     edm.save_figure(fig, fig_shape="double-y")
-    # plt.show()
+    plt.show()
 
 
 if __name__ == "__main__":
     style()
-    workflow_nq_sweep_aqt_hl(False)
-    workflow_nq_sweep_aqt_hl(False)
+    workflow_nq_aqt(True)

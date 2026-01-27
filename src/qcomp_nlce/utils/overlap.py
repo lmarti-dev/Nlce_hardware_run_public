@@ -42,7 +42,8 @@ from qcomp_nlce.utils.unscented_transform import (
 from qcomp_nlce.utils.hardware import (
     is_hardware_run,
     BACKEND_ALIAS,
-    sample_based_estimation,
+    manual_hamiltonian_circuits,
+    circuits_to_sampler_payload,
 )
 
 from qcomp_nlce.utils.stats import sum_std, mean_std
@@ -363,7 +364,7 @@ def stefan_hadamard_test(
     y: str,
     backend: BACKEND_ALIAS = "statevector",
     counting_method: Literal["estimator", "samples"] = "estimator",
-    n_reps: int = 2,
+    n_reps: int = 10,
 ):
 
     # this is Stefan Wolf's test, a bit modified though
@@ -751,45 +752,67 @@ def measure_matrix_elements(
 
 
 def estimation_from_sample_based(
-    res: PrimitiveResult, hamiltonian: SparsePauliOp
+    res: PrimitiveResult, hamiltonian: SparsePauliOp, n_reps: int
 ) -> tuple[complex, complex]:
 
-    if hamiltonian.__dict__[HAM_NAME_VAR] == "TFIM":
-        ratio = get_tfim_ratio(hamiltonian)
-        zs = []
-        z_stds = []
-        for ind_z in range(hamiltonian.num_qubits):
-            val, std = trace_out_estimation(res.get_counts()[0], ind_z)
-            zs.append(val)
-            z_stds.append(std)
+    counts = res.get_counts()
+    fvals = []
+    fstds = []
+    for rep in range(n_reps):
+        if hamiltonian.__dict__[HAM_NAME_VAR] == "TFIM":
+            ratio = get_tfim_ratio(hamiltonian)
+            zs = []
+            z_stds = []
+            for ind_z in range(hamiltonian.num_qubits):
+                val, std = trace_out_estimation(counts[0 + 3 * rep], ind_z)
+                zs.append(val)
+                z_stds.append(std)
 
-        n_even = len(list(res.get_counts()[1].keys())[0].replace(" ", ""))
-        n_odd = len(list(res.get_counts()[2].keys())[0].replace(" ", ""))
+            n_even = len(list(counts[1 + 3 * rep].keys())[0].replace(" ", ""))
+            n_odd = len(list(counts[2 + 3 * rep].keys())[0].replace(" ", ""))
 
-        xxs_even = []
-        xxs_even_stds = []
-        xxs_odd = []
-        xxs_odd_stds = []
-        for ind_x_even in range(n_even):
-            val, std = trace_out_estimation(res.get_counts()[1], ind_x_even)
-            xxs_even.append(val)
-            xxs_even_stds.append(std)
-        for ind_x_odd in range(n_odd):
-            val, std = trace_out_estimation(res.get_counts()[2], ind_x_odd)
-            xxs_odd.append(val)
-            xxs_odd_stds.append(std)
+            xxs_even = []
+            xxs_even_stds = []
+            xxs_odd = []
+            xxs_odd_stds = []
+            for ind_x_even in range(n_even):
+                val, std = trace_out_estimation(counts[1 + 3 * rep], ind_x_even)
+                xxs_even.append(val)
+                xxs_even_stds.append(std)
+            for ind_x_odd in range(n_odd):
+                val, std = trace_out_estimation(counts[2 + 3 * rep], ind_x_odd)
+                xxs_odd.append(val)
+                xxs_odd_stds.append(std)
 
-        fval = -sum(zs) + -ratio * (sum(xxs_even) + sum(xxs_odd))
-        fstd = np.sqrt(
-            sum_std(
+            fval = -sum(zs) + -ratio * (sum(xxs_even) + sum(xxs_odd))
+            fstd = sum_std(
                 [
                     sum_std(z_stds),
                     ratio * sum_std([sum_std(xxs_even_stds), sum_std(xxs_odd_stds)]),
                 ]
             )
-        )
+            fvals.append(fval)
+            fstds.append(fstd)
+    ffval = np.mean(fvals)
+    ffstd = sum_std(fstds)
+    return ffval, ffstd
 
-    return fval, fstd
+
+def measure_manual_circuit(
+    backend: BACKEND_ALIAS,
+    circuit: QuantumCircuit,
+    hamiltonian: SparsePauliOp,
+    n_shots: int,
+    n_reps: int,
+):
+    [z_circ, x_circ_even, x_circ_odd] = manual_hamiltonian_circuits(
+        backend, circuit, hamiltonian, n_shots
+    )
+
+    job = circuit_sampling_job(
+        [z_circ, x_circ_even, x_circ_odd] * n_reps, None, backend, n_shots
+    )
+    return job
 
 
 def measure_hamiltonian_element_manual(
@@ -808,9 +831,9 @@ def measure_hamiltonian_element_manual(
         for x_ind in x_inds:
             circ_out.x(x_ind)
         circ_out.compose(circuit, inplace=True)
-        job = sample_based_estimation(backend, circ_out, hamiltonian, n_shots)
+        job = measure_manual_circuit(backend, circ_out, hamiltonian, n_shots, n_reps)
         res = job.result()
-        return estimation_from_sample_based(res, hamiltonian)
+        return estimation_from_sample_based(res, hamiltonian, n_reps)
     else:
         d = ["+", "-", "+i", "-i"]
         stds = []
@@ -818,9 +841,9 @@ def measure_hamiltonian_element_manual(
         for k in d:
             circ_p = prep_circ_superpos(x, y, k)
             circ_p.compose(circuit, inplace=True)
-            job = sample_based_estimation(backend, circ_p, hamiltonian, n_shots)
+            job = measure_manual_circuit(backend, circ_p, hamiltonian, n_shots, n_reps)
             res = job.result()
-            val, std = estimation_from_sample_based(res, hamiltonian)
+            val, std = estimation_from_sample_based(res, hamiltonian, n_reps)
             vals.append(val)
             stds.append(std)
 
@@ -837,7 +860,7 @@ def measure_hamiltonian_element(
     parameters: np.ndarray,
     backend: BACKEND_ALIAS,
     n_shots: int,
-    n_reps: int = 2,
+    n_reps: int = 10,
 ) -> tuple[complex, complex]:
     if x == y:
         circ_out = QuantumCircuit(circuit.num_qubits)
@@ -954,7 +977,9 @@ def measure_hamiltonian_elements(
                 pass
                 print(f"Already computed {ind_x}, {ind_y}")
             else:
-                if backend != "statevector" and "IQM" in backend.name:
+                if backend != "statevector" and (
+                    "IQM" in backend.name or "aqt" in backend.__module__
+                ):
                     val, std = measure_hamiltonian_element_manual(
                         hamiltonian, circuit, x, y, parameters, backend, n_shots
                     )

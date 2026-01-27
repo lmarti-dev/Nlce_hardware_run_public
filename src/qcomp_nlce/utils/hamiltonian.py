@@ -200,9 +200,11 @@ def TFIM(
             idty[q + n_qubits] = "X"
             cross_J += -J * SparsePauliOp("".join(idty))
         idty = SparsePauliOp("I" * n_qubits)
-
-        hamiltonian_h = hamiltonian_h ^ idty + idty ^ hamiltonian2_h
-        hamiltonian_J = hamiltonian_J ^ idty + idty ^ hamiltonian2_J + cross_J
+        temp_h = hamiltonian_h.copy()
+        temp_J = hamiltonian_J.copy()
+        hamiltonian_h = (temp_h ^ idty) + (idty ^ hamiltonian2_h)
+        hamiltonian_J = (temp_J ^ idty) + (idty ^ hamiltonian2_J)
+        hamiltonian_J += cross_J
 
     if split_parts:
         # J: XX h: Z

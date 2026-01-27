@@ -7,7 +7,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 
-def w_circ(n_qubits: int):
+def ghz_circ(n_qubits: int):
     c = QuantumCircuit(n_qubits)
     c.h(0)
     for n in range(n_qubits - 1):
@@ -18,10 +18,10 @@ def w_circ(n_qubits: int):
 
 def hardware_run():
     n_qubits = 8
-    circ = w_circ(n_qubits)
-    edm = ExperimentDataManager("w_test_all_backends", project="nlce", dry_run=False)
+    circ = ghz_circ(n_qubits)
+    edm = ExperimentDataManager("ght_test_all_backends", project="nlce", dry_run=False)
 
-    for provider_name, n_shots in (("IQM", int(2e4)),):
+    for provider_name, n_shots in (("AQT", int(2e2)),):
         backend = get_backend(n_qubits, provider_name)
         job = backend_sample(backend, circ, None, n_shots)
         counts = get_counts_from_res(job.result(), n_qubits, 0)
@@ -38,9 +38,9 @@ def hardware_run():
 
 
 def load_and_plot(fpath: Path = None, title: str = None):
-    edm = ExperimentDataManager("w_test_path", project="nlce", dry_run=False)
+    edm = ExperimentDataManager("ghz_test_path", project="nlce", dry_run=False)
     if fpath is None:
-        title = "QExa20, 2000 shots"
+        title = "AQT20, 2000 shots"
         fpath = r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2025_12_12\w_test_all_backends_00004\run_00000\data\grapefruit_00000.json"
     with open(fpath, "r", encoding="utf8") as f:
         counts = json.loads(f.read())

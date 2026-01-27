@@ -263,27 +263,27 @@ def get_heff_values(
     solve: bool = True,
 ):
 
-    print(f"Using {which_hadamard_test} hadamard test")
-    print("-- Computing <j|U|k> --")
-    elements_dict = loop_measure_1qp_elements_v2(
-        circuit=elem_circuit,
-        which_backends=which_backends,
-        solve=solve,
-        provider_name=provider_name,
-        n_shots=n_shots,
-        group_size=group_size,
-        which_hadamard_test=which_hadamard_test,
-    )
+    # print(f"Using {which_hadamard_test} hadamard test")
+    # print("-- Computing <j|U|k> --")
+    # elements_dict = loop_measure_1qp_elements_v2(
+    #     circuit=elem_circuit,
+    #     which_backends=which_backends,
+    #     solve=solve,
+    #     provider_name=provider_name,
+    #     n_shots=n_shots,
+    #     group_size=group_size,
+    #     which_hadamard_test=which_hadamard_test,
+    # )
 
-    print("-- Computing ground state energy --")
-    ground_state_dict = loop_measure_ground_state_energy_subspace_sampling_v2(
-        hamiltonian=hamiltonian,
-        circuit=gs_circuit,
-        which_backends=which_backends,
-        n_shots=n_shots,
-        provider_name=provider_name,
-        solve=solve,
-    )
+    # print("-- Computing ground state energy --")
+    # ground_state_dict = loop_measure_ground_state_energy_subspace_sampling_v2(
+    #     hamiltonian=hamiltonian,
+    #     circuit=gs_circuit,
+    #     which_backends=which_backends,
+    #     n_shots=n_shots,
+    #     provider_name=provider_name,
+    #     solve=solve,
+    # )
 
     print("-- Computing <j|U* H U|k> --")
     expectations_dict = loop_measure_1qp_expectations_v2(
