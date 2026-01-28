@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 
 from qcomp_nlce.utils.folders import res_sim_dir
+from qcomp_nlce.utils.results import show_diffs
 from Nlce_hardware_run.src.qcomp_nlce.utils.workflow_tfim_1d import (
     vqe_dispersion,
     tfim_ed_dispersion,
@@ -97,7 +98,7 @@ def workflow_nq_aqt(dry_run):
     which_backends = [
         # "real_backend",
         "fake_backend",
-        # "statevector",
+        "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
@@ -257,6 +258,7 @@ def workflow_nq(
     fig = plot_all_backends_dispersions_montecarlo(out_dict)
 
     edm.save_figure(fig, fig_shape="double-y")
+    show_diffs(out_dict, "fake_backend")
     plt.show()
 
 

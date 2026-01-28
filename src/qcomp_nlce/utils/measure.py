@@ -1,7 +1,6 @@
 from qiskit.primitives import StatevectorSampler, PrimitiveJob, StatevectorEstimator
 from qcomp_nlce.utils.hardware import backend_sample, backend_estimate, BACKEND_ALIAS
 from qcomp_nlce.utils.hamiltonian import to_bitstring
-from qcomp_nlce.utils.circuit import parameters_exist
 from qcomp_nlce.utils.statevector import (
     sv_estimate_observables,
     sv_estimate_observables_jobs,
@@ -11,7 +10,7 @@ from qiskit_ibm_runtime import IBMBackend
 from qiskit_ibm_runtime.base_runtime_job import BaseRuntimeJob
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
 from qiskit import ClassicalRegister, QuantumCircuit
-from typing import Union
+from typing import Union, Dict
 from qiskit.primitives import PrimitiveResult
 
 try:

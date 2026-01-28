@@ -10,6 +10,7 @@ from qcomp_nlce.utils import (
     get_backend,
     hamming_weight_states,
     measure_hamiltonian_elements,
+    measure_hamiltonian_elements_v2,
     BACKEND_ALIAS,
     get_backend_name,
     BACKEND_TYPES,
@@ -81,7 +82,7 @@ def measure_1qp_expectations_v2(
 
     if which_backend == "real_backend":
         with Session(backend) as s:
-            comp_vals, stds = measure_hamiltonian_elements(
+            comp_vals, stds = measure_hamiltonian_elements_v2(
                 hamiltonian,
                 circuit,
                 comp_states,
@@ -91,7 +92,7 @@ def measure_1qp_expectations_v2(
                 n_shots,
             )
     else:
-        comp_vals, stds = measure_hamiltonian_elements(
+        comp_vals, stds = measure_hamiltonian_elements_v2(
             hamiltonian,
             circuit,
             comp_states,

@@ -13,9 +13,13 @@ from qcomp_nlce.utils.hardware import BACKEND_TYPES
 
 import matplotlib.pyplot as plt
 import numpy as np
+from typing import Literal
 
 
-def average_result_matrices(dicts: list[dict]) -> dict:
+def average_result_matrices(
+    dicts: list[dict],
+    to_average: list[Literal["eld", "exd", "gsd"]] = ["eld", "exd", "gsd"],
+) -> dict:
 
     n_dicts = len(dicts)
 
@@ -27,36 +31,38 @@ def average_result_matrices(dicts: list[dict]) -> dict:
         for backend in out_d["results"]["vqe"][si]["eld"]:
             if backend != "system":
                 for mnd in ("eld", "exd"):
-                    out_d["results"]["vqe"][si][mnd][backend]["values"] = np.mean(
-                        list(
-                            d["results"]["vqe"][si][mnd][backend]["values"]
-                            for d in dicts
-                        ),
-                        axis=0,
-                    )
-                    out_d["results"]["vqe"][si][mnd][backend]["stds"] = mean_std(
-                        list(
-                            d["results"]["vqe"][si][mnd][backend]["stds"] for d in dicts
-                        ),
-                        axis=0,
-                    )
-
-                out_d["results"]["vqe"][si]["gsd"][backend]["energy"] = np.mean(
-                    np.array(
-                        list(
-                            d["results"]["vqe"][si]["gsd"][backend]["energy"]
-                            for d in dicts
+                    if mnd in to_average:
+                        out_d["results"]["vqe"][si][mnd][backend]["values"] = np.mean(
+                            list(
+                                d["results"]["vqe"][si][mnd][backend]["values"]
+                                for d in dicts
+                            ),
+                            axis=0,
+                        )
+                        out_d["results"]["vqe"][si][mnd][backend]["stds"] = mean_std(
+                            list(
+                                d["results"]["vqe"][si][mnd][backend]["stds"]
+                                for d in dicts
+                            ),
+                            axis=0,
+                        )
+                if "gsd" in to_average:
+                    out_d["results"]["vqe"][si]["gsd"][backend]["energy"] = np.mean(
+                        np.array(
+                            list(
+                                d["results"]["vqe"][si]["gsd"][backend]["energy"]
+                                for d in dicts
+                            )
                         )
                     )
-                )
-                out_d["results"]["vqe"][si]["gsd"][backend]["std"] = mean_std(
-                    np.array(
-                        list(
-                            d["results"]["vqe"][si]["gsd"][backend]["std"]
-                            for d in dicts
+                    out_d["results"]["vqe"][si]["gsd"][backend]["std"] = mean_std(
+                        np.array(
+                            list(
+                                d["results"]["vqe"][si]["gsd"][backend]["std"]
+                                for d in dicts
+                            )
                         )
                     )
-                )
 
     for si in ("dict_l", "dict_s"):
         for backend in out_d["results"]["vqe"][si]["eld"]:
@@ -127,9 +133,9 @@ def show_diffs(d, which_backend: BACKEND_TYPES):
         vals_be = d["results"]["vqe"]["dict_l"][which][which_backend]["values"]
         vals_true = d["results"]["vqe"]["dict_l"][which]["system"]["values"]
 
-        print(which_backend)
+        print(f"-- {which_backend} --")
         pretty_print(vals_be)
-        print("TRUE")
+        print(f"TRUE")
         pretty_print(vals_true)
         print("DIFF")
         pretty_print_diff(vals_be, vals_true)

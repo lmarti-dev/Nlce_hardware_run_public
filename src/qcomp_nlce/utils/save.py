@@ -81,7 +81,7 @@ def load_optimized_vqe(dirname: str):
     return hamiltonian, circuit, weights, ground_energy
 
 
-TempListType = list[tuple[tuple[int, int], tuple[complex, complex]]]
+TempListType = list[tuple[tuple[int | str, int | str], tuple[complex, complex]]]
 # l[ii] = ((ind_x,ind_y),(val,std))
 
 
@@ -111,22 +111,20 @@ def add_tmp_entry_and_save(
     return l
 
 
+def tmp_get_item(l: TempListType, ind_x: int, ind_y: int) -> tuple[complex, complex]:
+    if not tmp_entry_exists(l, ind_x, ind_y):
+        raise ValueError("Item doesn't exist")
+    else:
+        for k in l:
+            if ind_x == k[0][0] and ind_y == k[0][1]:
+                return k[1]
+
+
 def tmp_entry_exists(l: TempListType, ind_x: int, ind_y: int):
     for k in l:
         if ind_x == k[0][0] and ind_y == k[0][1]:
             return True
     return False
-
-
-def rebuild_matrices_from_tmp(l: TempListType, n: int) -> tuple[np.array, np.array]:
-    vals = np.zeros((n, n), dtype=complex)
-    stds = np.zeros((n, n), dtype=complex)
-    for k in l:
-        ind_x = k[0][0]
-        ind_y = k[0][1]
-        vals[ind_x, ind_y] = k[1][0]
-        stds[ind_x, ind_y] = k[1][1]
-    return vals, stds
 
 
 def tmp_filename(circuit: QuantumCircuit, which_backend: str):

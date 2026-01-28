@@ -3,7 +3,6 @@ from qcomp_nlce.utils.dispersion import dispersion_1d_thermodynamic
 from qcomp_nlce.utils.constants import ALGORITHMS_ALIAS
 from qcomp_nlce.utils.effective_hamiltonian import H_effective
 from qcomp_nlce.utils.save import load_result_matrices
-from qcomp_nlce.utils.hardware import get_provider_version
 from pathlib import Path
 
 

@@ -6,7 +6,6 @@ from qcomp_nlce.utils.measure import (
     circuit_estimation_job,
     circuit_sampling_job,
     get_counts_from_res,
-    convert_count_keys,
     std_from_shots,
     trace_out_estimation,
 )
@@ -29,8 +28,9 @@ from qcomp_nlce.utils.save import (
     tmp_entry_exists,
     add_tmp_entry_and_save,
     load_tmp_item,
-    rebuild_matrices_from_tmp,
+    tmp_get_item,
     tmp_filename,
+    TempListType,
 )
 
 from qcomp_nlce.utils.unscented_transform import (
@@ -50,7 +50,10 @@ from qcomp_nlce.utils.stats import sum_std, mean_std
 
 from qiskit.primitives import EstimatorResult, PrimitiveResult
 
-from typing import Union, Tuple, Literal
+from typing import Union, Tuple, Literal, Dict
+
+
+OFFDIAG_SYMS = ["+", "-", "+i", "-i"]
 
 
 def custom_idx_groups_of_n(total_len: int, group_size: int = 2):
@@ -744,14 +747,14 @@ def measure_matrix_elements(
                         )
                     print(f"{ind_x} - {ind_y}: {jUk:.3f}, {kUj:.3f} ({std:.4f})")
     if on_hardware:
-        vals, stds = rebuild_matrices_from_tmp(computed_values, len(comp_states))
+        vals, stds = rebuild_eld_matrices_from_tmp(computed_values, len(comp_states))
     # somehow indices are all messy
     vals = reorder_matrix_elems(vals)
     stds = reorder_matrix_elems(stds)
     return vals, stds
 
 
-def estimation_from_sample_based(
+def estimation_from_samples(
     res: PrimitiveResult, hamiltonian: SparsePauliOp, n_reps: int
 ) -> tuple[complex, complex]:
 
@@ -833,7 +836,7 @@ def measure_hamiltonian_element_manual(
         circ_out.compose(circuit, inplace=True)
         job = measure_manual_circuit(backend, circ_out, hamiltonian, n_shots, n_reps)
         res = job.result()
-        return estimation_from_sample_based(res, hamiltonian, n_reps)
+        return estimation_from_samples(res, hamiltonian, n_reps)
     else:
         d = ["+", "-", "+i", "-i"]
         stds = []
@@ -843,13 +846,41 @@ def measure_hamiltonian_element_manual(
             circ_p.compose(circuit, inplace=True)
             job = measure_manual_circuit(backend, circ_p, hamiltonian, n_shots, n_reps)
             res = job.result()
-            val, std = estimation_from_sample_based(res, hamiltonian, n_reps)
+            val, std = estimation_from_samples(res, hamiltonian, n_reps)
             vals.append(val)
             stds.append(std)
 
         val = (vals[0] - vals[1]) / 2 + 1j * (vals[2] - vals[3]) / 2
         std = sum_std(stds[0:2]) + 1j * sum_std(stds[2:4])
         return val, std
+
+
+def estimate_ham_with_reps(
+    hamiltonian: SparsePauliOp,
+    circuit: QuantumCircuit,
+    n_shots: int,
+    backend: BACKEND_ALIAS,
+    n_reps: int,
+):
+    job = circuit_estimation_job(
+        [circuit for _ in range(n_reps)], [hamiltonian], None, backend, n_shots
+    )
+
+    res = job.result()
+    if n_reps == 1:
+        if isinstance(res, EstimatorResult):
+            return res.values[0], np.sqrt(res.metadata[0]["variance"])
+        else:
+            return res[0].data.evs, res[0].data.stds
+    else:
+        if isinstance(res, EstimatorResult):
+            return np.mean([res.values[k] for k in range(n_reps)]), mean_std(
+                np.array([np.sqrt(res.metadata[k]["variance"]) for k in range(n_reps)])
+            )
+        else:
+            return np.mean([res[k].data.evs for k in range(n_reps)]), mean_std(
+                np.array([res[k].data.stds for k in range(n_reps)])
+            )
 
 
 def measure_hamiltonian_element(
@@ -868,29 +899,7 @@ def measure_hamiltonian_element(
         for x_ind in x_inds:
             circ_out.x(x_ind)
         circ_out.compose(circuit, inplace=True)
-        if n_reps > 1:
-            circ_out = [circ_out for _ in range(n_reps)]
-        job = circuit_estimation_job(
-            circ_out, [hamiltonian], parameters, backend, n_shots
-        )
-
-        res = job.result()
-        if n_reps == 1:
-            if isinstance(res, EstimatorResult):
-                return res.values[0], np.sqrt(res.metadata[0]["variance"])
-            else:
-                return res[0].data.evs, res[0].data.stds
-        else:
-            if isinstance(res, EstimatorResult):
-                return np.mean([res.values[k] for k in range(n_reps)]), mean_std(
-                    np.array(
-                        [np.sqrt(res.metadata[k]["variance"]) for k in range(n_reps)]
-                    )
-                )
-            else:
-                return np.mean([res[k].data.evs for k in range(n_reps)]), mean_std(
-                    np.array([res[k].data.stds for k in range(n_reps)])
-                )
+        return estimate_ham_with_reps(hamiltonian, circ_out, n_shots, backend, n_reps)
 
     else:
         d = ["+", "-", "+i", "-i"]
@@ -977,9 +986,7 @@ def measure_hamiltonian_elements(
                 pass
                 print(f"Already computed {ind_x}, {ind_y}")
             else:
-                if backend != "statevector" and (
-                    "IQM" in backend.name or "aqt" in backend.__module__
-                ):
+                if backend != "statevector" and ("IQM" in backend.name):
                     val, std = measure_hamiltonian_element_manual(
                         hamiltonian, circuit, x, y, parameters, backend, n_shots
                     )
@@ -1002,7 +1009,147 @@ def measure_hamiltonian_elements(
                     )
     # this is correct!
     if on_hardware:
-        vals, stds = rebuild_matrices_from_tmp(computed_values, len(states))
+        vals, stds = rebuild_exd_matrices_from_tmp(computed_values, len(states))
     vals = reorder_matrix_elems(vals)[::-1, ::-1]
     stds = reorder_matrix_elems(stds)[::-1, ::-1]
     return vals, stds
+
+
+def measure_hamiltonian_elements_v2(
+    hamiltonian: SparsePauliOp,
+    circuit: QuantumCircuit,
+    states: list[str],
+    parameters: np.ndarray,
+    backend: BACKEND_ALIAS,
+    which_backend: str,
+    n_shots: int,
+    n_reps: int = 10,
+):
+
+    vals = np.zeros((len(states), len(states)), dtype=complex)
+    stds = np.zeros((len(states), len(states)), dtype=complex)
+
+    on_hardware = is_hardware_run(which_backend)
+
+    if on_hardware:
+        filename = (
+            f"{tmp_filename(circuit,which_backend)}/measure_hamiltonian_elements.json"
+        )
+        try:
+            computed_values = load_tmp_item(filename)
+        except FileNotFoundError:
+            print("Starting from scratch (expectations)")
+            computed_values = []
+
+    for ind_x, x in enumerate(states):
+        for ind_y, y in enumerate(states[ind_x:]):
+            ind_y = ind_x + ind_y
+
+            if ind_x == ind_y:
+                if on_hardware and tmp_entry_exists(computed_values, ind_x, ind_y):
+                    print(f"Already computed {ind_x}, {ind_y}")
+                    val, std = tmp_get_item(computed_values, ind_x, ind_y)
+                    pass
+
+                else:
+                    val, std = measure_hamiltonian_element(
+                        hamiltonian, circuit, x, y, parameters, backend, n_shots, n_reps
+                    )
+                    if on_hardware:
+                        computed_values = add_tmp_entry_and_save(
+                            filename, computed_values, val, std, ind_x, ind_y
+                        )
+                    print(
+                        f"{ind_x} - {ind_y} - {complex(val):.4f} ({complex(std):.4f})"
+                    )
+            else:
+                d = OFFDIAG_SYMS
+                vd = {}
+                for k in d:
+                    sind_x = str(ind_x) + k
+                    sind_y = str(ind_y) + k
+                    if on_hardware and tmp_entry_exists(
+                        computed_values, sind_x, sind_y
+                    ):
+                        print(f"Already computed {sind_x}, {sind_y}")
+                        vd[k] = tmp_get_item(computed_values, sind_x, sind_y)
+                    else:
+                        circ_p = prep_circ_superpos(x, y, k)
+                        circ_p.compose(circuit, inplace=True)
+                        t_val, t_std = estimate_ham_with_reps(
+                            hamiltonian, circ_p, n_shots, backend, n_reps
+                        )
+                        vd[k] = (t_val, t_std)
+
+                        if on_hardware:
+                            computed_values = add_tmp_entry_and_save(
+                                filename, computed_values, t_val, t_std, sind_x, sind_y
+                            )
+                            computed_values = add_tmp_entry_and_save(
+                                filename,
+                                computed_values,
+                                t_val.conj(),
+                                t_std,
+                                sind_y,
+                                sind_x,
+                            )
+                        print(
+                            f"{sind_x} - {sind_y} - {complex(val):.4f} ({complex(std):.4f})"
+                        )
+                val, std = compute_off_diagonal_element(vd)
+
+            if ind_x != ind_y:
+                vals[ind_x, ind_y] = np.conj(val)
+                stds[ind_x, ind_y] = std
+            vals[ind_y, ind_x] = val
+            stds[ind_y, ind_x] = std
+
+    # this is correct!
+    vals = reorder_matrix_elems(vals)[::-1, ::-1]
+    stds = reorder_matrix_elems(stds)[::-1, ::-1]
+    return vals, stds
+
+
+def rebuild_exd_matrices_from_tmp(l: TempListType, n: int) -> tuple[np.array, np.array]:
+    # this function is wrong somehow
+    # It  flips the complex sign of the upper triangle
+    # don't know what causes it.
+    vals = np.zeros((n, n), dtype=complex)
+    stds = np.zeros((n, n), dtype=complex)
+
+    for ind_x in range(n):
+        for ind_y in range(n):
+            if ind_x == ind_y:
+                val, std = tmp_get_item(l, ind_x, ind_y)
+                vals[ind_x, ind_y] = val
+                stds[ind_x, ind_y] = std
+            else:
+                vd = {}
+                for k in OFFDIAG_SYMS:
+                    vd[k] = tmp_get_item(l, str(ind_x) + k, str(ind_y) + k)
+                val, std = compute_off_diagonal_element(vd)
+                vals[ind_x, ind_y] = val
+                stds[ind_x, ind_y] = std
+    return vals, stds
+
+
+def rebuild_eld_matrices_from_tmp(l: TempListType, n: int) -> tuple[np.array, np.array]:
+    vals = np.zeros((n, n), dtype=complex)
+    stds = np.zeros((n, n), dtype=complex)
+
+    for ind_x in range(n):
+        for ind_y in range(n):
+            val, std = tmp_get_item(l, ind_x, ind_y)
+            vals[ind_x, ind_y] = val
+            stds[ind_x, ind_y] = std
+
+    return vals, stds
+
+
+def compute_off_diagonal_element(
+    d: Dict[str, tuple[complex, complex]],
+) -> tuple[complex, complex]:
+    val = (d["+"][0] - d["-"][0]) / 2 + 1j * (d["+i"][0] - d["-i"][0]) / 2
+    stds = [np.sqrt(d[k][1]) for k in d]
+    std = sum_std(stds[0:2]) + 1j * sum_std(stds[2:4])
+    return val, std
