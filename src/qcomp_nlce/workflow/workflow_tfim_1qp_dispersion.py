@@ -4,7 +4,7 @@ import numpy as np
 
 from qcomp_nlce.utils.folders import res_sim_dir
 from qcomp_nlce.utils.results import show_diffs
-from Nlce_hardware_run.src.qcomp_nlce.utils.workflow_tfim_1d import (
+from qcomp_nlce.utils.workflow_utils import (
     vqe_dispersion,
     tfim_ed_dispersion,
     sweep_dispersion,
@@ -116,11 +116,11 @@ def workflow_nq_aqt(dry_run):
     )
 
 
-def workflow_nq_sweep_aqt_hl(dry_run):
+def workflow_nq_aqt_sweep(dry_run):
 
     J = 1
     which_backends = [
-        "real_backend",
+        # "real_backend",
         "fake_backend",
         "statevector",
     ]
@@ -137,7 +137,32 @@ def workflow_nq_sweep_aqt_hl(dry_run):
         which_backends,
         ["sweep"],
         J,
-        which_model="TFIM_ladder",
+        n_steps=20,
+    )
+
+
+def workflow_nq_sweep_aqt_hl(dry_run):
+
+    J = 1
+    which_backends = [
+        "real_backend",
+        "fake_backend",
+        "statevector",
+    ]
+    provider_name: PROVIDER_ALIAS = "AQT"
+    n_shots = int(200)
+    which_hadamard_test = "stefan"
+    n_qubits_max = 5
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["vqe"],
+        J,
+        which_model="TFIM_hl",
         n_steps=20,
     )
 
@@ -201,6 +226,11 @@ def workflow_nq(
             "n_qubits": n_qubits_max,
             "n_shots": n_shots,
             "which_model": which_model,
+            "n_steps": n_steps,
+            "n_mc_samples": n_mc_samples,
+            "which_algorithms": which_algorithms,
+            "which_backends": which_backends,
+            "which_hadamard_test": which_hadamard_test,
         },
     }
     if "sweep" in which_algorithms:
@@ -255,6 +285,8 @@ def workflow_nq(
     out_dict["results"]["ed"] = {"disp": {"statevector": ed_disp}}
     edm.save_dict(out_dict)
 
+    edm.var_dump(**out_dict["inputs"])
+
     fig = plot_all_backends_dispersions_montecarlo(out_dict)
 
     edm.save_figure(fig, fig_shape="double-y")
@@ -264,4 +296,4 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt(True)
+    workflow_nq_aqt_sweep(True)
