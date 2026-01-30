@@ -124,10 +124,21 @@ def workflow_nq_aqt_sweep(dry_run):
         "fake_backend",
         "statevector",
     ]
-    provider_name: PROVIDER_ALIAS = "AQT"
+    provider_name: PROVIDER_ALIAS = "AQT_BETTER_100"
     n_shots = int(2000)
     which_hadamard_test = "stefan"
     n_qubits_max = 5
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["sweep"],
+        J,
+        n_steps=10,
+    )
     workflow_nq(
         dry_run,
         n_qubits_max,
@@ -290,10 +301,10 @@ def workflow_nq(
     fig = plot_all_backends_dispersions_montecarlo(out_dict)
 
     edm.save_figure(fig, fig_shape="double-y")
-    show_diffs(out_dict, "fake_backend")
-    plt.show()
+    # show_diffs(out_dict, "fake_backend")
+    # plt.show()
 
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt_sweep(True)
+    workflow_nq_aqt_sweep(False)

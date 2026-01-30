@@ -21,25 +21,32 @@ from qiskit_aqt_provider.aqt_resource import (
     AQTResource,
     make_transpiler_target,
 )
-
-if TYPE_CHECKING:  # pragma: no cover
-    from qiskit_aqt_provider.aqt_provider import AQTProvider, OfflineSimulator
+from qiskit_aqt_provider.api_client import Resource
+from qiskit_aqt_provider.aqt_provider import AQTProvider, OfflineSimulator
 
 
 TargetT = TypeVar("TargetT", bound=Target)
 
 
 def aqt_better_fake_backend(improve_noise: float):
-    resource_id = (
-        OfflineSimulator(
-            id="offline_simulator_noise",
-            name="Offline noisy simulator (but better than actual)",
-            noisy=True,
-        ),
+    simulator = OfflineSimulator(
+        id="offline_simulator_noise",
+        name="Offline noisy simulator (but better than actual)",
+        noisy=True,
     )
+
     provider = AQTProvider("ANY_ACCESS_TOKEN_WORKS_FOR_OFFLINE_USE")
     backend = OfflineSimulatorResourceBetter(
-        provider, resource_id, True, improve_noise=improve_noise
+        provider=provider,
+        resource_id=Resource(
+            workspace_id="default",
+            resource_id=simulator.id,
+            resource_name=simulator.name,
+            resource_type="offline_simulator",
+            available_qubits=20,
+        ),
+        with_noise_model=True,
+        improve_noise=improve_noise,
     )
     backend._target = make_transpiler_target(Target, None)
     return backend

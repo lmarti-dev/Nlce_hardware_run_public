@@ -5,17 +5,29 @@ from data_manager import ExperimentDataManager
 
 style()
 
-runs = (
+runs_current = (
     r"C:\Users\Moi4\Desktop\current\FAU\phd\data\2026_01_29\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00001",
     r"C:\Users\Moi4\Desktop\current\FAU\phd\data\2026_01_29\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots",
 )
+
+
+runs_10improvement = (
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_01_30\vqe_workflow_TFIM_hadam_stefan_AQT_BETTER_10_2000shots",
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_01_30\vqe_workflow_TFIM_hadam_stefan_AQT_BETTER_10_2000shots_00001",
+)
+
+runs_100improvement = (
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_01_30\vqe_workflow_TFIM_hadam_stefan_AQT_BETTER_100_2000shots",
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_01_30\vqe_workflow_TFIM_hadam_stefan_AQT_BETTER_100_2000shots_00001",
+)
+
 dry_run = False
 m_edm = ExperimentDataManager(
-    "plot_sweep_comparison_aqt_current", project="nlce", dry_run=dry_run
+    "plot_sweep_comparison_aqt_10_improve", project="nlce", dry_run=dry_run
 )
 
 dicts = []
-for r in runs:
+for r in runs_100improvement:
     edm = ExperimentDataManager.load(r)
     d = edm.load_last_saved_data_file
     dicts.append(d)
