@@ -1,4 +1,10 @@
 
+# ── USER INPUT ────────────────────────────────────────────────────────────────
+J = 1.0                  # Ising coupling
+H = 1                    # transverse field strength
+HL = 0.0                 # longitudinal field strength
+HAS_LONGITUDINAL = False # whether the circuit has longitudinal field rotations
+# ──────────────────────────────────────────────────────────────────────────────
 
 import re
 import sys
@@ -82,18 +88,17 @@ def build_hva_circuit_from_julia_params(
     return circuit
 
 
-def generate_gs(n_qubits: int, J: float, hl: float, params: np.ndarray):
+def generate_gs(n_qubits: int, n_layers: int, J: float, h: float, hl: float,
+                has_longitudinal_field: bool, params: np.ndarray):
     """Generate and save ground state VQE data (mirrors vqe_gs_simulations.py)."""
-    h = 1
     hamiltonian = TFIM(n_qubits, h, J, periodic=False, longitudinal_field=hl)
-    n_layers = get_optimal_n_layers(hamiltonian.num_qubits)
-    has_lf = hl != 0.0
 
-    circuit = build_hva_circuit_from_julia_params(n_qubits, n_layers, params, has_longitudinal_field=has_lf)
+    circuit = build_hva_circuit_from_julia_params(n_qubits, n_layers, params,
+                                                  has_longitudinal_field=has_longitudinal_field)
     ground_energy = get_ground_energy(hamiltonian)
 
     n_xx = n_qubits - 1
-    n_x = n_qubits if has_lf else 0
+    n_x = n_qubits if has_longitudinal_field else 0
     n_z = n_qubits
     expected_params = n_layers * (n_xx + n_x + n_z)
     assert len(params) == expected_params, (
@@ -110,19 +115,18 @@ def generate_gs(n_qubits: int, J: float, hl: float, params: np.ndarray):
     save_optimized_vqe(save_path, hamiltonian, circuit, weights, ground_energy, dry_run=False)
 
 
-def generate_elem(n_qubits: int, J: float, hl: float, params: np.ndarray):
+def generate_elem(n_qubits: int, n_layers: int, J: float, h: float, hl: float,
+                  has_longitudinal_field: bool, params: np.ndarray):
     """Generate and save elementary (1qp) VQE data (mirrors vqe_1qp_simulations.py)."""
-    h = 1
     ham_j, ham_h = TFIM(n_qubits, h, J, periodic=False, split_parts=True, longitudinal_field=hl)
     hamiltonian = ham_j + ham_h
-    n_layers = get_optimal_n_layers(hamiltonian.num_qubits)
-    has_lf = hl != 0.0
 
-    circuit = build_hva_circuit_from_julia_params(n_qubits, n_layers, params, has_longitudinal_field=has_lf)
+    circuit = build_hva_circuit_from_julia_params(n_qubits, n_layers, params,
+                                                  has_longitudinal_field=has_longitudinal_field)
     ground_energy = get_ground_energy(hamiltonian)
 
     n_xx = n_qubits - 1
-    n_x = n_qubits if has_lf else 0
+    n_x = n_qubits if has_longitudinal_field else 0
     n_z = n_qubits
     expected_params = n_layers * (n_xx + n_x + n_z)
     assert len(params) == expected_params, (
@@ -154,14 +158,20 @@ def main(data_dir: Path = None):
         cfg = parse_filename(filepath.name)
         params = load_params(filepath)
 
+        n_qubits = cfg["n_qubits"]
+        n_layers = get_optimal_n_layers(n_qubits)
+
         print(f"[{i+1}/{len(csv_files)}] {filepath.name} -> "
-              f"type={cfg['type']}, n_qubits={cfg['n_qubits']}, "
-              f"J={cfg['J']}, hl={cfg['hl']}, n_params={len(params)}")
+              f"type={cfg['type']}, N={n_qubits}, layers={n_layers}, "
+              f"J={cfg['J']}, H={H}, hl={cfg['hl']}, "
+              f"longitudinal={HAS_LONGITUDINAL}, n_params={len(params)}")
 
         if cfg["type"] == "gs":
-            generate_gs(cfg["n_qubits"], cfg["J"], cfg["hl"], params)
+            generate_gs(n_qubits, n_layers, cfg["J"], H, cfg["hl"],
+                        HAS_LONGITUDINAL, params)
         elif cfg["type"] == "1qp":
-            generate_elem(cfg["n_qubits"], cfg["J"], cfg["hl"], params)
+            generate_elem(n_qubits, n_layers, cfg["J"], H, cfg["hl"],
+                          HAS_LONGITUDINAL, params)
         else:
             print(f"  WARNING: unknown type '{cfg['type']}', skipping")
 
