@@ -26,6 +26,7 @@ def get_sweep_function(kind: str):
 
 
 def sweep_time_from_steps(ham_0: SparsePauliOp, ham_1: SparsePauliOp, n_steps: int):
+    # arXiv:2509.00171v1
     max_ham_end = get_max_energy(ham_0)
     max_ham_start = get_max_energy(ham_1)
     alpha = abs(max_ham_start) + abs(max_ham_end)

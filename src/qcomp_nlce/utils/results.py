@@ -1,5 +1,5 @@
 import copy
-from Nlce_hardware_run.src.qcomp_nlce.utils.workflow_tfim_1d import (
+from qcomp_nlce.utils.workflow_utils import (
     heff_backend_type,
     dispersion_all_backends,
 )
@@ -19,6 +19,12 @@ from typing import Literal
 def average_result_matrices(
     dicts: list[dict],
     to_average: list[Literal["eld", "exd", "gsd"]] = ["eld", "exd", "gsd"],
+    backends: list[BACKEND_TYPES] = [
+        "statevector",
+        "fake_backend",
+        "real_backend",
+        "system",
+    ],
 ) -> dict:
 
     n_dicts = len(dicts)
@@ -28,7 +34,7 @@ def average_result_matrices(
     out_d["inputs"]["n_shots"] = 200 * n_dicts
 
     for si in ("dict_l", "dict_s"):
-        for backend in out_d["results"]["vqe"][si]["eld"]:
+        for backend in backends:
             if backend != "system":
                 for mnd in ("eld", "exd"):
                     if mnd in to_average:
@@ -65,7 +71,7 @@ def average_result_matrices(
                     )
 
     for si in ("dict_l", "dict_s"):
-        for backend in out_d["results"]["vqe"][si]["eld"]:
+        for backend in backends:
             if backend != "system":
                 eld = out_d["results"]["vqe"][si]["eld"]
                 gsd = out_d["results"]["vqe"][si]["gsd"]
@@ -129,13 +135,21 @@ def pretty_print(a):
 
 def show_diffs(d, which_backend: BACKEND_TYPES):
     for which in ("eld", "exd"):
-        print(which)
-        vals_be = d["results"]["vqe"]["dict_l"][which][which_backend]["values"]
-        vals_true = d["results"]["vqe"]["dict_l"][which]["system"]["values"]
+        for algorithm in d["results"].keys():
+            print(f"{which} -- {algorithm}")
+            vals_be = d["results"][algorithm]["dict_l"][which][which_backend]["values"]
+            vals_true = d["results"][algorithm]["dict_l"][which]["system"]["values"]
 
-        print(f"-- {which_backend} --")
-        pretty_print(vals_be)
-        print(f"TRUE")
-        pretty_print(vals_true)
-        print("DIFF")
-        pretty_print_diff(vals_be, vals_true)
+            print(f"-- {which_backend} --")
+            pretty_print(vals_be)
+            print(f"TRUE")
+            pretty_print(vals_true)
+            print("DIFF")
+            pretty_print_diff(vals_be, vals_true)
+
+
+BACKEND_LABELS = {
+    "fake_backend": "Noisy simulation",
+    "real_backend": "Hardware results",
+    "statevector": "Noiseless simulation (with sampling)",
+}

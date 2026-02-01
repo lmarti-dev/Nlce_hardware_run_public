@@ -98,8 +98,14 @@ from qcomp_nlce.utils.circuit import (
     circ_stats,
     measure_pauli_circuit,
 )
+
+from qcomp_nlce.utils.aqt_utils import (
+    aqt_better_fake_backend,
+    OfflineSimulatorResourceBetter,
+)
 from qcomp_nlce.utils.hamiltonian import get_tfim_ratio, get_tfim_xx, HAM_NAME_VAR
 from qiskit_ibm_runtime import QiskitRuntimeService, IBMBackend
+
 
 BACKEND_TYPES = Literal["statevector", "fake_backend", "real_backend"]
 
@@ -116,6 +122,7 @@ PROVIDER_ALIAS = Literal[
     "IQM_PERFECT",
     "IQM_REALLYGOOD",
     "IQM_PRETTYGOOD",
+    "AQT_BETTER",
 ]
 
 
@@ -212,6 +219,13 @@ def get_appropriate_fake_backend(
         return IQMFakeReallyGood()
     elif which == "IQM_PERFECT":
         return IQMFakePerfect()
+    elif "AQT_BETTER" in which:
+        if len(which.split("_")) == 3:
+            n_improve = float(which.split("_")[-1])
+        else:
+            n_improve = 2
+        return aqt_better_fake_backend(n_improve)
+
     else:
         raise ValueError(f"Expected a provider, got: {which}")
 
@@ -263,7 +277,7 @@ def compute_mean_circ_stats(circs: list | QuantumCircuit, verbose: bool = False)
 
 
 def is_hardware_run(which_backend: str):
-    return which_backend == "fake_backend"
+    return which_backend == "real_backend"
 
 
 def compile_circuit_for_backend(
@@ -549,7 +563,9 @@ def backend_estimate(
         }
         if parameters != []:
             kwargs.update({"parameters": parameters})
-        if not isinstance(backend, OfflineSimulatorResource):
+        if not isinstance(
+            backend, (OfflineSimulatorResource, OfflineSimulatorResourceBetter)
+        ):
             kwargs.update({"qasm3": True, "queued": True})
         job = estimator.run(**kwargs)
     else:

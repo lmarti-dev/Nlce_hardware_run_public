@@ -367,7 +367,7 @@ def stefan_hadamard_test(
     y: str,
     backend: BACKEND_ALIAS = "statevector",
     counting_method: Literal["estimator", "samples"] = "estimator",
-    n_reps: int = 10,
+    n_reps: int = 1,
 ):
 
     # this is Stefan Wolf's test, a bit modified though
@@ -1023,7 +1023,7 @@ def measure_hamiltonian_elements_v2(
     backend: BACKEND_ALIAS,
     which_backend: str,
     n_shots: int,
-    n_reps: int = 10,
+    n_reps: int = 1,
 ):
 
     vals = np.zeros((len(states), len(states)), dtype=complex)
