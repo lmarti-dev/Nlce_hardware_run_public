@@ -31,6 +31,7 @@ def loop_measure_1qp_expectations_v2(
     solve: bool = True,
     provider_name: str = "IBM",
     n_shots: int = 1e3,
+    n_reps: int = 1,
 ):
     n_qubits = circuit.num_qubits
     comp_states = hamming_weight_states(n_qubits, 1)
@@ -42,9 +43,17 @@ def loop_measure_1qp_expectations_v2(
         "system": {"n_qubits": circuit.num_qubits, "values": true_comp_vals},
     }
     for which_backend in which_backends:
+        if which_backend == "statevector":
+            n_shots *= n_reps
         print(f"==== {which_backend} ====")
         item = measure_1qp_expectations_v2(
-            hamiltonian, circuit, which_backend, true_comp_vals, provider_name, n_shots
+            hamiltonian,
+            circuit,
+            which_backend,
+            true_comp_vals,
+            provider_name,
+            n_shots,
+            n_reps=n_reps,
         )
         d[which_backend] = item[which_backend]
     return d
@@ -57,6 +66,7 @@ def measure_1qp_expectations_v2(
     true_comp_vals: np.ndarray = None,
     provider_name: str = "IBM",
     n_shots: int = 1e3,
+    n_reps: int = 1,
 ) -> np.ndarray:
 
     n_qubits = circuit.num_qubits
@@ -90,6 +100,7 @@ def measure_1qp_expectations_v2(
                 backend,
                 which_backend,
                 n_shots,
+                n_reps=n_reps,
             )
     else:
         comp_vals, stds = measure_hamiltonian_elements_v2(
@@ -100,6 +111,7 @@ def measure_1qp_expectations_v2(
             backend,
             which_backend,
             n_shots,
+            n_reps=n_reps,
         )
     print(f"{which_backend} ({bn})")
     td = compare_with_true(true_comp_vals, comp_vals, bn)

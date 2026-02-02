@@ -11,6 +11,7 @@ from qcomp_nlce.utils import (
     HADAMARD_TESTS,
     get_backend_name,
     BACKEND_ALIAS,
+    BACKEND_TYPES,
     circuit_to_matrix,
 )
 from pathlib import Path
@@ -22,12 +23,13 @@ HOME = Path(__file__).parent
 
 def loop_measure_1qp_elements_v2(
     circuit: QuantumCircuit,
-    which_backends: list[str],
+    which_backends: list[BACKEND_TYPES],
     solve: bool = True,
     provider_name: str = "IBM",
     n_shots: int = 1e3,
     group_size: int = None,
     which_hadamard_test: str = "full",
+    n_reps: int = 1,
 ):
     n_qubits = circuit.num_qubits
     comp_states = hamming_weight_states(n_qubits, 1)
@@ -45,6 +47,8 @@ def loop_measure_1qp_elements_v2(
 
     for which_backend in which_backends:
         print(f"==== {which_backend} ====")
+        if which_backend == "statevector":
+            n_shots *= n_reps
         item = measure_1qp_elements_v2(
             circuit,
             which_backend,
@@ -53,6 +57,7 @@ def loop_measure_1qp_elements_v2(
             n_shots,
             group_size,
             which_hadamard_test,
+            n_reps=n_reps,
         )
         d[which_backend] = item[which_backend]
     return d
@@ -66,6 +71,7 @@ def measure_1qp_elements_v2(
     n_shots: int = 1e3,
     group_size: int = None,
     which_hadamard_test: HADAMARD_TESTS = "full",
+    n_reps: int = 1,
 ):
 
     n_qubits = circuit.num_qubits
@@ -110,6 +116,7 @@ def measure_1qp_elements_v2(
                 n_shots,
                 custom_idx=custom_idx,
                 which_hadamard_test=which_hadamard_test,
+                n_reps=n_reps,
             )
     else:
         comp_vals, stds = measure_matrix_elements(
@@ -121,6 +128,7 @@ def measure_1qp_elements_v2(
             n_shots,
             custom_idx=custom_idx,
             which_hadamard_test=which_hadamard_test,
+            n_reps=n_reps,
         )
     print(f"{which_backend} ({bn})")
     td = compare_with_true(true_comp_vals, comp_vals, bn)

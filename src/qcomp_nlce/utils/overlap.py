@@ -367,7 +367,7 @@ def stefan_hadamard_test(
     y: str,
     backend: BACKEND_ALIAS = "statevector",
     counting_method: Literal["estimator", "samples"] = "estimator",
-    n_reps: int = 1,
+    n_reps: int = 10,
 ):
 
     # this is Stefan Wolf's test, a bit modified though
@@ -546,6 +546,7 @@ def measure_matrix_element(
     which_hadamard_test: HADAMARD_TESTS = "estimator",
     custom_idx: list[list[int]] = None,
     handcraft: bool = True,
+    n_reps: int = 1,
 ) -> Union[complex, tuple[complex, complex]]:
 
     # This computes <x|U|y>
@@ -570,7 +571,14 @@ def measure_matrix_element(
         else:
             counting_method = "estimator"
         ol, std = stefan_hadamard_test(
-            circuit, parameters, n_shots, x, y, backend, counting_method=counting_method
+            circuit,
+            parameters,
+            n_shots,
+            x,
+            y,
+            backend,
+            counting_method=counting_method,
+            n_reps=n_reps,
         )
         return ol, std
 
@@ -632,23 +640,9 @@ def measure_matrix_element(
         res = job.result()
         return get_hadam_estimator(res)
 
-    elif which_hadamard_test == "iterative":
-        raise ValueError("This area is out of service chief")
-        circ_out = circuit_with_init(circuit, x, y)
-
-        ol = iterative_hadamard_test_estimator(
-            circ_out,
-            parameters,
-            n_shots,
-            backend,
-            custom_idx=custom_idx,
-            handcraft=handcraft,
-        )
-        return ol
-
     else:
         raise ValueError(
-            f"Expected full, estimator, or iterative, got {which_hadamard_test}"
+            f"Expected full, estimator, or stefan, got {which_hadamard_test}"
         )
 
 
@@ -674,6 +668,7 @@ def measure_matrix_elements(
     which_hadamard_test: str,
     custom_idx: list[list[int]] = None,
     handcraft: bool = True,
+    n_reps: int = 1,
 ) -> np.ndarray:
 
     vals = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
@@ -707,6 +702,7 @@ def measure_matrix_elements(
                         which_hadamard_test,
                         custom_idx=custom_idx,
                         handcraft=handcraft,
+                        n_reps=n_reps,
                     )
                     vals[ind_x, ind_y] = jUk
                     stds[ind_x, ind_y] = std
@@ -733,6 +729,7 @@ def measure_matrix_elements(
                         which_hadamard_test,
                         custom_idx=custom_idx,
                         handcraft=handcraft,
+                        n_reps=n_reps,
                     )
                     vals[ind_x, ind_y] = jUk
                     vals[ind_y, ind_x] = kUj
@@ -1023,7 +1020,7 @@ def measure_hamiltonian_elements_v2(
     backend: BACKEND_ALIAS,
     which_backend: str,
     n_shots: int,
-    n_reps: int = 1,
+    n_reps: int = 10,
 ):
 
     vals = np.zeros((len(states), len(states)), dtype=complex)

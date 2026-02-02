@@ -125,6 +125,13 @@ PROVIDER_ALIAS = Literal[
     "AQT_BETTER",
 ]
 
+BACKEND_LABELS = {
+    "fake_backend": "Noisy",
+    "real_backend": "QPU",
+    "statevector": "Noiseless",
+    "ed": "ED",
+}
+
 
 def get_aqt_backend(n_qubits: int) -> MQPBackend:
     if n_qubits > 12:

@@ -146,10 +146,3 @@ def show_diffs(d, which_backend: BACKEND_TYPES):
             pretty_print(vals_true)
             print("DIFF")
             pretty_print_diff(vals_be, vals_true)
-
-
-BACKEND_LABELS = {
-    "fake_backend": "Noisy simulation",
-    "real_backend": "Hardware results",
-    "statevector": "Noiseless simulation (with sampling)",
-}

@@ -96,7 +96,7 @@ def workflow_nq_aqt(dry_run):
 
     J = 1
     which_backends = [
-        # "real_backend",
+        "real_backend",
         "fake_backend",
         "statevector",
     ]
@@ -113,6 +113,7 @@ def workflow_nq_aqt(dry_run):
         which_backends,
         ["vqe"],
         J,
+        n_reps=10,
     )
 
 
@@ -190,6 +191,7 @@ def workflow_nq(
     n_steps: int = 1,
     n_mc_samples: int = 10000,
     which_model: str = "TFIM",
+    n_reps: int = 1,
 ):
     # avoid the "unused arguments" warning
     # warnings.filterwarnings("ignore")
@@ -199,27 +201,29 @@ def workflow_nq(
     vqe_l_dir = f"{n_qubits_max}q_{get_optimal_n_layers(n_qubits_max)}l"
     vqe_s_dir = f"{n_qubits_max-1}q_{get_optimal_n_layers(n_qubits_max-1)}l"
 
-    model_dir = f"gs_vqe_{int(J*100)}j"
+    model_dir = f"vqe_{int(J*100)}j"
 
     if "HL" in which_model:
         if len(which_model.split("_")) == 3:
             hl = int(which_model.split("_")[-1])
         else:
             hl = 10
-        model_dir += f"_{hl}hl"
+    else:
+        hl = 0
+    model_dir += f"_{hl}hl"
     if "ladder" in which_model:
         model_dir += "_ladder"
 
-    gs_dirname_l = Path(res_sim_dir(), f"{model_dir}/vqe/{vqe_l_dir}")
-    gs_dirname_s = Path(res_sim_dir(), f"{model_dir}/vqe/{vqe_s_dir}")
+    gs_dirname_l = Path(res_sim_dir(), f"gs_{model_dir}/vqe/{vqe_l_dir}")
+    gs_dirname_s = Path(res_sim_dir(), f"gs_{model_dir}/vqe/{vqe_s_dir}")
 
     elem_dirname_l = Path(
         res_sim_dir(),
-        f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/{vqe_l_dir}",
+        f"elem_{model_dir}/vqe/cost_offdiag/{vqe_l_dir}",
     )
     elem_dirname_s = Path(
         res_sim_dir(),
-        f"elem_vqe_{int(J*100)}j/vqe/cost_offdiag/{vqe_s_dir}",
+        f"elem_{model_dir}/vqe/cost_offdiag/{vqe_s_dir}",
     )
 
     edm = ExperimentDataManager(
@@ -242,6 +246,7 @@ def workflow_nq(
             "which_algorithms": which_algorithms,
             "which_backends": which_backends,
             "which_hadamard_test": which_hadamard_test,
+            "n_reps": n_reps,
         },
     }
     if "sweep" in which_algorithms:
@@ -257,6 +262,7 @@ def workflow_nq(
             group_size,
             which_hadamard_test,
             which_model,
+            n_reps,
         )
 
         out_dict["results"]["sweep"] = {
@@ -282,6 +288,7 @@ def workflow_nq(
             ks,
             group_size,
             which_hadamard_test,
+            n_reps=n_reps,
         )
 
         out_dict["results"]["vqe"] = {
@@ -302,9 +309,9 @@ def workflow_nq(
 
     edm.save_figure(fig, fig_shape="double-y")
     # show_diffs(out_dict, "fake_backend")
-    # plt.show()
+    plt.show()
 
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt_sweep(False)
+    workflow_nq_aqt(False)

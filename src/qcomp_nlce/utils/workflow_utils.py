@@ -23,6 +23,8 @@ from qcomp_nlce.utils.dispersion import (
     dispersion_1d_thermodynamic,
     exact_dispersion_1qp_1d,
 )
+
+from qcomp_nlce.utils.hardware import BACKEND_LABELS
 import io
 import json
 from qiskit import QuantumCircuit
@@ -57,6 +59,7 @@ def vqe_dispersion(
     ks: np.ndarray,
     group_size: int,
     which_hadamard_test: str,
+    n_reps: int,
 ):
     dict_l = vqe_heff(
         gs_dirname_l,
@@ -66,6 +69,7 @@ def vqe_dispersion(
         n_shots,
         group_size,
         which_hadamard_test,
+        n_reps=n_reps,
     )
     dict_s = vqe_heff(
         gs_dirname_s,
@@ -75,6 +79,7 @@ def vqe_dispersion(
         n_shots,
         group_size,
         which_hadamard_test,
+        n_reps=n_reps,
     )
 
     return dict_l, dict_s, dispersion_all_backends(dict_l, dict_s, ks)
@@ -91,6 +96,7 @@ def sweep_dispersion(
     group_size: int,
     which_hadamard_test: str,
     which_model: str = "TFIM",
+    n_reps: int = 1,
 ):
     dict_l = sweep_heff(
         n_qubits_max,
@@ -102,6 +108,7 @@ def sweep_dispersion(
         group_size,
         which_hadamard_test,
         which_model=which_model,
+        n_reps=n_reps,
     )
     dict_s = sweep_heff(
         n_qubits_max - 1,
@@ -113,6 +120,7 @@ def sweep_dispersion(
         group_size,
         which_hadamard_test,
         which_model=which_model,
+        n_reps=n_reps,
     )
 
     return dict_l, dict_s, dispersion_all_backends(dict_l, dict_s, ks)
@@ -126,6 +134,7 @@ def vqe_heff(
     n_shots: int,
     group_size: int,
     which_hadamard_test: str,
+    n_reps: int = 1,
 ) -> dict:
 
     hamiltonian1, elem_circuit, elem_weights, ground_energy = load_optimized_vqe(
@@ -156,6 +165,7 @@ def vqe_heff(
         n_shots,
         group_size,
         which_hadamard_test,
+        n_reps=n_reps,
     )
 
 
@@ -200,6 +210,7 @@ def sweep_heff(
     group_size: int,
     which_hadamard_test: str,
     which_model: str = "TFIM",
+    n_reps: int = 1,
 ):
     ham_j, ham_h = pick_model(n_qubits, J, which_model)
     hamiltonian = ham_j + ham_h
@@ -228,6 +239,7 @@ def sweep_heff(
         n_shots,
         group_size,
         which_hadamard_test,
+        n_reps=n_reps,
     )
 
 
@@ -261,6 +273,7 @@ def get_heff_values(
     group_size: int = None,
     which_hadamard_test: str = "stefan",
     solve: bool = True,
+    n_reps: int = 1,
 ):
 
     print(f"Using {which_hadamard_test} hadamard test")
@@ -273,6 +286,7 @@ def get_heff_values(
         n_shots=n_shots,
         group_size=group_size,
         which_hadamard_test=which_hadamard_test,
+        n_reps=n_reps,
     )
 
     print("-- Computing ground state energy --")
@@ -368,27 +382,23 @@ def plot_all_backends_dispersions_montecarlo(_d: dict) -> plt.Figure:
         if circ == "ed":
             disp = res[circ]["disp"]
             for be in disp:
-                ax.plot(ks, disp[be], label=f"{circ} - {be}")
+                ax.plot(ks, disp[be], label=BACKEND_LABELS[circ])
         else:
             disp = res[circ]["disp"]
             for be in res[circ]["mc_disp"]:
                 ax.errorbar(
                     ks,
-                    res[circ]["mc_disp"][be]["mean"],
-                    res[circ]["mc_disp"][be]["std"],
-                    label=f"{circ} montecarlo - {be}",
-                )
-                ax.plot(
-                    ks,
                     disp[be],
-                    "x-",
-                    label=f"{circ} - {be}",
+                    res[circ]["mc_disp"][be]["std"],
+                    label=BACKEND_LABELS[be],
+                    capsize=2,
                 )
+
     if "which_model" not in _d["inputs"].keys():
         which_model = "TFIM"
     else:
         which_model = _d["inputs"]["which_model"]
     if which_model == "TFIM":
-        ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="analytic")
+        ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="Analytic")
     ax.legend()
     return fig
