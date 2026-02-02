@@ -1,0 +1,26 @@
+from data_manager import ExperimentDataManager
+from qcomp_nlce.utils.workflow_utils import (
+    plot_all_backends_dispersions_montecarlo,
+)
+import matplotlib.pyplot as plt
+from fauplotstyle import style
+
+
+style()
+
+dry_run = False
+m_edm = ExperimentDataManager("plot_tfim_qpu_result", project="nlce", dry_run=dry_run)
+fpath = r"C:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_02\vqe_workflow_TFIM_hadam_stefan_AQT_200shots_00001"
+
+
+edm = ExperimentDataManager.load(fpath)
+d = edm.load_last_saved_data_file
+
+fig = plot_all_backends_dispersions_montecarlo(d)
+
+m_edm.var_dump(fpath=fpath)
+m_edm.save_figure(
+    fig, filename="tfim_qpu_results", fig_shape="double-y", add_timestamp=False
+)
+
+plt.show()

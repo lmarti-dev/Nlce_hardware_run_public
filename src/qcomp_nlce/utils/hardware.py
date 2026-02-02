@@ -128,7 +128,7 @@ PROVIDER_ALIAS = Literal[
 BACKEND_LABELS = {
     "fake_backend": "Noisy",
     "real_backend": "QPU",
-    "statevector": "Noiseless",
+    "statevector": "SV",
     "ed": "ED",
 }
 

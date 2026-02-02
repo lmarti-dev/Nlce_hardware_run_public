@@ -130,7 +130,9 @@ def res_dict_sampler(_d: dict, circ: ALGORITHMS_ALIAS, to_eotm: bool) -> dict[ca
     fac = 1
     if to_eotm:
         n_shots = _d["inputs"]["n_shots"]
-        fac = 1 / np.sqrt(n_shots)
+        n_reps = _d["inputs"]["n_reps"]
+
+        fac = 1 / np.sqrt(n_shots * n_reps)
 
     for be in res["dict_l"]["eld"]:
         if be != "system":

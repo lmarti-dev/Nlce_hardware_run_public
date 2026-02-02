@@ -386,12 +386,25 @@ def plot_all_backends_dispersions_montecarlo(_d: dict) -> plt.Figure:
         else:
             disp = res[circ]["disp"]
             for be in res[circ]["mc_disp"]:
+                if be == "real_backend":
+                    fmt = "x-"
+                    linewidth = 1.5
+                    capsize = 2
+                    markersize = 5
+                else:
+                    fmt = "o--"
+                    linewidth = 0.75
+                    capsize = 1
+                    markersize = 4
                 ax.errorbar(
                     ks,
                     disp[be],
                     res[circ]["mc_disp"][be]["std"],
+                    fmt=fmt,
+                    linewidth=linewidth,
                     label=BACKEND_LABELS[be],
-                    capsize=2,
+                    capsize=capsize,
+                    markersize=markersize,
                 )
 
     if "which_model" not in _d["inputs"].keys():
@@ -400,5 +413,9 @@ def plot_all_backends_dispersions_montecarlo(_d: dict) -> plt.Figure:
         which_model = _d["inputs"]["which_model"]
     if which_model == "TFIM":
         ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="Analytic")
-    ax.legend()
+    ax.legend(
+        ncol=2,
+        fontsize="x-small",
+        columnspacing=1,
+    )
     return fig

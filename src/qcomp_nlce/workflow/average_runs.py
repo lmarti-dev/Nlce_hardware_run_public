@@ -1,4 +1,3 @@
-import copy
 from data_manager import ExperimentDataManager
 from qcomp_nlce.utils.workflow_utils import (
     plot_all_backends_dispersions_montecarlo,
