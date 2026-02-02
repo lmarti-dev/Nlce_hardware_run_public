@@ -314,4 +314,4 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt(False)
+    workflow_nq_aqt(True)

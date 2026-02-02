@@ -249,7 +249,9 @@ def load_and_plot(fpath: Path):
     plot_all_backends_dispersions(d)
 
 
-def heff_backend_type(eld: dict, gsd: dict, exd: dict, which_backend: BACKEND_TYPES):
+def heff_backend_type(
+    eld: dict, gsd: dict, exd: dict, which_backend: BACKEND_TYPES, take_o
+):
     overlap = eld[which_backend]["values"]
     one_qp_expectation = exd[which_backend]["values"]
     if which_backend == "system":
