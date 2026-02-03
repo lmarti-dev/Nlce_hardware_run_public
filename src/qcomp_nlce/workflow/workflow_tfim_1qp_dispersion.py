@@ -121,7 +121,7 @@ def workflow_nq_aqt_sweep(dry_run):
 
     J = 1
     which_backends = [
-        # "real_backend",
+        "real_backend",
         "fake_backend",
         "statevector",
     ]
@@ -153,11 +153,11 @@ def workflow_nq_aqt_sweep(dry_run):
     )
 
 
-def workflow_nq_sweep_aqt_hl(dry_run):
+def workflow_nq_aqt_hl(dry_run):
 
-    J = 1
+    J = 0.8
     which_backends = [
-        "real_backend",
+        # "real_backend",
         "fake_backend",
         "statevector",
     ]
@@ -174,8 +174,8 @@ def workflow_nq_sweep_aqt_hl(dry_run):
         which_backends,
         ["vqe"],
         J,
-        which_model="TFIM_hl",
-        n_steps=20,
+        which_model="TFIM_hl_10",
+        n_reps=10,
     )
 
 
@@ -289,6 +289,7 @@ def workflow_nq(
             group_size,
             which_hadamard_test,
             n_reps=n_reps,
+            which_model=which_model,
         )
 
         out_dict["results"]["vqe"] = {
@@ -314,4 +315,4 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt(True)
+    workflow_nq_aqt_hl(True)

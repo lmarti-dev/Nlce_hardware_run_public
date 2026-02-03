@@ -60,6 +60,7 @@ def vqe_dispersion(
     group_size: int,
     which_hadamard_test: str,
     n_reps: int,
+    which_model: str = "TFIM",
 ):
     dict_l = vqe_heff(
         gs_dirname_l,
@@ -70,6 +71,7 @@ def vqe_dispersion(
         group_size,
         which_hadamard_test,
         n_reps=n_reps,
+        which_model=which_model,
     )
     dict_s = vqe_heff(
         gs_dirname_s,
@@ -80,6 +82,7 @@ def vqe_dispersion(
         group_size,
         which_hadamard_test,
         n_reps=n_reps,
+        which_model=which_model,
     )
 
     return dict_l, dict_s, dispersion_all_backends(dict_l, dict_s, ks)
@@ -135,6 +138,7 @@ def vqe_heff(
     group_size: int,
     which_hadamard_test: str,
     n_reps: int = 1,
+    which_model: str = "TFIM",
 ) -> dict:
 
     hamiltonian1, elem_circuit, elem_weights, ground_energy = load_optimized_vqe(
@@ -144,7 +148,13 @@ def vqe_heff(
     elem_circuit = apply_parameters(elem_circuit, elem_weights[-1])
     ratio = get_tfim_ratio(hamiltonian1)
     name_part = baptize_circuit(
-        "dim1d", "vqe", n_qubits, ratio, provider_name, n_shots, which_hadamard_test
+        f"dim1d_{which_model}",
+        "vqe",
+        n_qubits,
+        ratio,
+        provider_name,
+        n_shots,
+        which_hadamard_test,
     )
     elem_circuit.metadata["tmpname"] = name_part
     hamiltonian2, gs_circuit, gs_weights, ground_energy = load_optimized_vqe(gs_dirname)
@@ -227,7 +237,13 @@ def sweep_heff(
     )
     ratio = get_tfim_ratio(hamiltonian)
     name_part = baptize_circuit(
-        "dim1d", "sweep", n_qubits, ratio, provider_name, n_shots, which_hadamard_test
+        f"dim1d_{which_model}",
+        "sweep",
+        n_qubits,
+        ratio,
+        provider_name,
+        n_shots,
+        which_hadamard_test,
     )
     circuit.metadata["tmpname"] = f"sweep_circuit_{name_part}"
     return get_heff_values(
@@ -249,9 +265,7 @@ def load_and_plot(fpath: Path):
     plot_all_backends_dispersions(d)
 
 
-def heff_backend_type(
-    eld: dict, gsd: dict, exd: dict, which_backend: BACKEND_TYPES, take_o
-):
+def heff_backend_type(eld: dict, gsd: dict, exd: dict, which_backend: BACKEND_TYPES):
     overlap = eld[which_backend]["values"]
     one_qp_expectation = exd[which_backend]["values"]
     if which_backend == "system":
