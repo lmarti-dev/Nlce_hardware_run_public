@@ -44,6 +44,16 @@ def sv_estimate_observables(
     return result
 
 
+def circmat_observables(
+    circuit: QuantumCircuit,
+    observables: np.ndarray,
+    parameters: np.ndarray,
+):
+    col = circuit_to_matrix(apply_parameters(circuit, parameters, False))[:, 0]
+    vv = observables @ col
+    return col.conj().dot(vv)
+
+
 def sv_expectation_observables(
     circuit: QuantumCircuit,
     observables: list[SparsePauliOp],
@@ -77,13 +87,19 @@ def optimize_circuit(
 
     if cost is None:
 
+        # def cost(xk: np.ndarray):
+        #     result = sv_expectation_observables(
+        #         circuit=circuit,
+        #         observables=[hamiltonian],
+        #         parameters=xk,
+        #     )
+        #     return result[0]
+
+        mat = hamiltonian.to_matrix()
+
         def cost(xk: np.ndarray):
-            result = sv_expectation_observables(
-                circuit=circuit,
-                observables=[hamiltonian],
-                parameters=xk,
-            )
-            return result[0]
+            xk = np.real(xk)
+            return circmat_observables(circuit, mat, xk)
 
     def jac(x: np.ndarray) -> np.ndarray:
         out = np.zeros_like(x)
@@ -104,7 +120,7 @@ def optimize_circuit(
     if initial_params is None:
         initial_params = np.zeros((len(circuit.parameters)))
 
-    #kwargs = {"method": "COBYLA", "bounds": circuit.num_parameters * [(0, np.pi)]}
+    # kwargs = {"method": "COBYLA", "bounds": circuit.num_parameters * [(0, np.pi)]}
     # kwargs = {"method": "CG", "options": {"maxiter": 500}}
     kwargs = {"method": "CG"}
 
@@ -185,19 +201,24 @@ def single_x(ind: int, n_qubits: int) -> SparsePauliOp:
 
 
 def estimate_observable_1qp_initial_state(
-    circuit: QuantumCircuit, parameters: np.ndarray, observable: SparsePauliOp
+    circuit: QuantumCircuit,
+    parameters: np.ndarray,
+    observable: SparsePauliOp | np.ndarray,
+    inds: list[int] = None,
 ) -> np.ndarray:
     n_qubits = circuit.num_qubits
-    circuit_out = apply_parameters(circuit, parameters)
+    circuit_out = apply_parameters(circuit, parameters, False)
 
     umat = circuit_to_matrix(circuit_out)
-
-    omat = observable.to_matrix(False)
+    if isinstance(observable, np.ndarray):
+        omat = observable
+    else:
+        omat = observable.to_matrix(False)
 
     uHu = umat.T.conj() @ omat @ umat
-
-    comp_states = hamming_weight_states(n_qubits, 1)
-    inds = [from_bitstring(b, n_qubits, True) for b in comp_states]
+    if inds is None:
+        comp_states = hamming_weight_states(n_qubits, 1)
+        inds = [from_bitstring(b, n_qubits, True) for b in comp_states]
 
     return uHu[np.ix_(inds, inds)]
 

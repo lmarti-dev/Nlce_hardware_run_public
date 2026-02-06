@@ -137,9 +137,9 @@ def sample_counts_circuit(
 
 
 def convert_count_keys(counts: dict, n_qubits: int):
-    int_keys = any([set(str(k)).issubset(set(("0", "1"))) for k in counts])
+    bin_keys = all([set(str(k)).issubset(set(("0", "1"))) for k in counts])
     counts_out = {}
-    if int_keys:
+    if not bin_keys:
         for k in counts:
             nk = to_bitstring(k, n_qubits, False)
             counts_out[nk] = counts[k]

@@ -54,12 +54,17 @@ def remove_null_param_gates(circuit: QuantumCircuit) -> QuantumCircuit:
     return c_out
 
 
-def apply_parameters(circuit: QuantumCircuit, parameters: np.ndarray) -> QuantumCircuit:
+def apply_parameters(
+    circuit: QuantumCircuit, parameters: np.ndarray, remove_null_params: bool = True
+) -> QuantumCircuit:
     options = {}
     if parameters_exist(parameters):
         param_dict = parameters_dict(circuit, parameters)
         options["parameter_map"] = param_dict
-        return remove_null_param_gates(circuit.assign_parameters(param_dict))
+        c = circuit.assign_parameters(param_dict)
+        if remove_null_params:
+            c = remove_null_param_gates(c)
+        return c
     else:
         return circuit
 

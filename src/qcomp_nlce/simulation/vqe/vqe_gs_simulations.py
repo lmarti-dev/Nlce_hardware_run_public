@@ -11,14 +11,24 @@ from qcomp_nlce.utils import (
 )
 
 
-def train_and_save(n_qubits: int, J: float, dirname: str, dry_run: bool):
+def train_and_save(
+    n_qubits: int,
+    J: float,
+    hl: float,
+    dirname: str,
+    dry_run: bool,
+    ladder: bool = False,
+):
     periodic = False
     h = 1
-    hamiltonian = TFIM(n_qubits, h, J, periodic=periodic, longitudinal_field=0.1)
-    n_layers = 2*get_optimal_n_layers(hamiltonian.num_qubits)
+    hamiltonian = TFIM(
+        n_qubits, h, J, periodic=periodic, longitudinal_field=hl, ladder=ladder
+    )
+    n_qubits = hamiltonian.num_qubits
+    print(f"{n_qubits} qubits, J/h={J}, ladder: {ladder}, hl: {hl:.4f}")
+    n_layers = get_optimal_n_layers(hamiltonian.num_qubits)
 
     circuit = get_hva_vqe(hamiltonian, n_layers=n_layers, unique_weights=True)
-    # circuit = get_custom_vqe(4, n_layers=2)
     ground_energy = get_ground_energy(hamiltonian)
 
     print(f"The circuit depth is {circuit.depth()}")
@@ -42,10 +52,12 @@ def train_and_save(n_qubits: int, J: float, dirname: str, dry_run: bool):
     )
 
 
-dry_run = False
-J_range = ( 0.8,)
-hl=0.1
-for n_qubits in (5,):
-    for J in J_range:
-        dirname = f"gs_vqe_{int(J*100)}j_{int(hl*100)}hl"
-        train_and_save(n_qubits, J, dirname, dry_run)
+if __name__ == "__main__":
+    dry_run = False
+    J_range = (1.0,)
+    hl = 0.0
+    ladder = True
+    for n_qubits in (2, 3):
+        for J in J_range:
+            dirname = f"gs_vqe_{int(J*100)}j_{int(hl*100)}hl" + "_ladder" * int(ladder)
+            train_and_save(n_qubits, J, hl, dirname, dry_run, ladder)

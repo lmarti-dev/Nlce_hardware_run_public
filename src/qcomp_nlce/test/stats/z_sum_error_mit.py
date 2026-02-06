@@ -31,20 +31,22 @@ def aqt_sample_job(backend, circuit: QuantumCircuit, n_shots: int):
     return job
 
 
-def estimate_z_field(counts, error_mitigation: bool) -> tuple[float, float, int]:
+def estimate_z_field(
+    counts, error_mitigation: bool
+) -> tuple[np.ndarray, np.ndarray, int]:
     n_qubits = len(list(counts.keys())[0])
     kept_counts = 0
     count_0 = np.zeros(n_qubits)
     count_1 = np.zeros(n_qubits)
-    for ind in range(n_qubits):
-        for ks in counts.keys():
-            # if bitstring is even, z_parity is broken
-            is_sim = True
-            if error_mitigation and sum([int(kk) for kk in ks]) % 2 == 0:
-                is_sim = False
-            else:
-                kept_counts += counts[ks]
-            if is_sim:
+    for ks in counts.keys():
+        # if bitstring is even, z_parity is broken
+        is_sim = True
+        if error_mitigation and sum([int(kk) for kk in ks]) % 2 == 0:
+            is_sim = False
+        else:
+            kept_counts += counts[ks]
+        if is_sim:
+            for ind in range(n_qubits):
                 if ks[ind] == "0":
                     count_0[ind] += counts[ks]
                 elif ks[ind] == "1":
@@ -116,8 +118,14 @@ def measure_jk(
             vd["without"][k].append(std)
             vd["without"][k].append(n_shots)
         return {
-            "with": (*compute_off_diagonal_element(vd["with"]), vd["with"][2]),
-            "without": (*compute_off_diagonal_element(vd["without"]), vd["without"][2]),
+            "with": (
+                *compute_off_diagonal_element(vd["with"]),
+                {k: vd["with"][k][2] for k in d},
+            ),
+            "without": (
+                *compute_off_diagonal_element(vd["without"]),
+                {k: vd["without"][k][2] for k in d},
+            ),
         }
 
 
@@ -144,7 +152,7 @@ def ideal_z_strings(circuit: QuantumCircuit, x: str, y: str):
 
 if __name__ == "__main__":
 
-    dry_run = True
+    dry_run = False
 
     edm = ExperimentDataManager(
         "error_mitigation_test_aqt", dry_run=dry_run, project="nlce"
@@ -168,17 +176,17 @@ if __name__ == "__main__":
     circuit = apply_parameters(circuit, elem_weights[-1])
 
     comp_states = hamming_weight_states(n_qubits_max, 1)
-    true_vals = np.zeros((n_qubits_max, n_qubits_max, n_qubits_max))
+    true_vals = np.zeros((n_qubits_max, n_qubits_max, n_qubits_max), dtype=complex)
     fake_vals = {
         "with": [
-            np.zeros((n_qubits_max, n_qubits_max, n_qubits_max)),
-            np.zeros((n_qubits_max, n_qubits_max, n_qubits_max)),
-            0,
+            np.zeros((n_qubits_max, n_qubits_max, n_qubits_max), dtype=complex),
+            np.zeros((n_qubits_max, n_qubits_max, n_qubits_max), dtype=complex),
+            np.zeros((n_qubits_max, n_qubits_max), dtype=dict),
         ],
         "without": [
-            np.zeros((n_qubits_max, n_qubits_max, n_qubits_max)),
-            np.zeros((n_qubits_max, n_qubits_max, n_qubits_max)),
-            0,
+            np.zeros((n_qubits_max, n_qubits_max, n_qubits_max), dtype=complex),
+            np.zeros((n_qubits_max, n_qubits_max, n_qubits_max), dtype=complex),
+            np.zeros((n_qubits_max, n_qubits_max), dtype=dict),
         ],
     }
 
@@ -190,7 +198,7 @@ if __name__ == "__main__":
 
                 fake_vals[k][0][ind_x, ind_y, :] = d[k][0]
                 fake_vals[k][1][ind_x, ind_y, :] = d[k][1]
-                fake_vals[k][2] = d[k][2]
+                fake_vals[k][2][ind_x, ind_y] = d[k][2]
 
     edm.save_dict(
         {

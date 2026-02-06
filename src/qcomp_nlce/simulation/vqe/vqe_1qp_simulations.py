@@ -15,6 +15,8 @@ from qcomp_nlce.utils import (
     apply_parameters,
     get_min_gap,
     get_optimal_n_layers,
+    hamming_weight_states,
+    from_bitstring,
 )
 
 from qiskit import QuantumCircuit
@@ -27,9 +29,14 @@ from typing import Callable
 def get_cost_offdiag(
     circuit: QuantumCircuit, hamiltonian: SparsePauliOp
 ) -> Callable[[np.ndarray], float]:
+    mat = hamiltonian.to_matrix(False)
+    mat2 = mat**2
+    comp_states = hamming_weight_states(n_qubits, 1)
+    inds = [from_bitstring(b, n_qubits, True) for b in comp_states]
+
     def cost(xk: np.ndarray) -> float:
-        a_mat = estimate_observable_1qp_initial_state(circuit, xk, hamiltonian)
-        b_mat = estimate_observable_1qp_initial_state(circuit, xk, hamiltonian**2)
+        a_mat = estimate_observable_1qp_initial_state(circuit, xk, mat, inds)
+        b_mat = estimate_observable_1qp_initial_state(circuit, xk, mat2, inds)
         return np.abs(np.trace(b_mat) - np.sum(np.abs(a_mat) ** 2))
 
     return cost
@@ -89,14 +96,24 @@ def train_and_save(
     which_cost: str,
     dry_run: bool,
     n_layers: int = None,
+    ladder: bool = False,
 ):
-    print(f"{n_qubits} qubits, J/h={J}")
-    periodic = False
     h = 1
-    ham_j, ham_h = TFIM(n_qubits, h, J, periodic=False, split_parts=True, longitudinal_field=0.1)
+    ham_j, ham_h = TFIM(
+        n_qubits,
+        h,
+        J,
+        periodic=False,
+        split_parts=True,
+        longitudinal_field=hl,
+        ladder=ladder,
+    )
     hamiltonian = ham_j + ham_h
+    print(f"{n_qubits} qubits, J/h={J}, ladder: {ladder}, hl: {hl:.4f}")
+
+    n_qubits = hamiltonian.num_qubits
     if n_layers is None:
-        n_layers = 2*get_optimal_n_layers(hamiltonian.num_qubits)
+        n_layers = get_optimal_n_layers(hamiltonian.num_qubits)
     circuit = get_hva_vqe(hamiltonian, n_layers=n_layers, unique_weights=True)
 
     # circuit = get_custom_vqe(4, n_layers=2)
@@ -116,11 +133,17 @@ def train_and_save(
     gs_dirname = f"gs_vqe_{int(J*100)}j_{int(hl*100)}hl"
     gs_vqe_path = get_save_directory(f"{gs_dirname}/vqe/{n_qubits}q_{n_layers}l")
     _, _, gs_weights, _ = load_optimized_vqe(gs_vqe_path)
-    initial_params = np.real(gs_weights[-1])  # Take the last (final optimized) set of parameters
+    initial_params = np.real(
+        gs_weights[-1]
+    )  # Take the last (final optimized) set of parameters
     # print(initial_params.shape)
     # # Original initial_params setup:
     # initial_params = 0.1 * np.ones((len(circuit.parameters),))
-
+    if len(initial_params) < len(circuit):
+        len(circuit) < len(initial_params)
+        _init_fill = 0.1 * np.ones((len(circuit)))
+        _init_fill[: len(initial_params)] = initial_params
+        initial_params = _init_fill
     cost_values, params = optimize_circuit(
         circuit,
         hamiltonian,
@@ -138,14 +161,16 @@ def train_and_save(
         dry_run,
     )
 
-hl=0.1
+
 # input here "offdiag" or "sweep"
 if __name__ == "__main__":
     dry_run = False
     which_cost = "offdiag"
-    for n_qubits in (5,):
-        for J in (0.8,):
-            dirname = f"elem_vqe_{int(J*100)}j_{int(hl*100)}hl"
-            train_and_save(n_qubits, J, hl, dirname, which_cost, dry_run)
-
-
+    ladder = True
+    hl = 0.0
+    for n_qubits in (2, 3):
+        for J in (1.0,):
+            dirname = f"elem_vqe_{int(J*100)}j_{int(hl*100)}hl" + "_ladder" * int(
+                ladder
+            )
+            train_and_save(n_qubits, J, hl, dirname, which_cost, dry_run, ladder=ladder)

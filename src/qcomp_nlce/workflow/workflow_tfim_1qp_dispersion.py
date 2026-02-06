@@ -118,6 +118,31 @@ def workflow_nq_aqt(dry_run):
     )
 
 
+def workflow_nq_aqt_ladder(dry_run):
+
+    J = 1
+    which_backends = [
+        # "real_backend",
+        "fake_backend",
+        "statevector",
+    ]
+    provider_name: PROVIDER_ALIAS = "AQT"
+    n_shots = int(200)
+    which_hadamard_test = "stefan"
+    n_qubits_max = 4
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["vqe"],
+        J,
+        n_reps=10,
+    )
+
+
 def workflow_nq_aqt_sweep(dry_run):
 
     J = 1
@@ -199,8 +224,13 @@ def workflow_nq(
     ks = np.linspace(0, np.pi, 21)
     group_size = None
 
+    if "ladder" in which_model:
+        n_qubits_min = n_qubits_max - 2
+    else:
+        n_qubits_min = n_qubits_max - 1
+
     vqe_l_dir = f"{n_qubits_max}q_{get_optimal_n_layers(n_qubits_max)}l"
-    vqe_s_dir = f"{n_qubits_max-1}q_{get_optimal_n_layers(n_qubits_max-1)}l"
+    vqe_s_dir = f"{n_qubits_min}q_{get_optimal_n_layers(n_qubits_min)}l"
 
     model_dir = f"vqe_{int(J*100)}j"
 
@@ -316,4 +346,4 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt_hl(False)
+    workflow_nq_aqt_ladder(True)
