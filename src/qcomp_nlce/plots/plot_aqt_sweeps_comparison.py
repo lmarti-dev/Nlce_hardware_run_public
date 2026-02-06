@@ -76,6 +76,6 @@ for crun in (
         columnspacing=1,
     )
     m_edm.save_figure(
-        fig, filename=f"sweep_aqt_{name}", fig_shape="double-y", add_timestamp=False
+        fig, filename=f"sweep_aqt_{name}", fig_shape="nice-y", add_timestamp=False
     )
     plt.show()
