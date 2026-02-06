@@ -323,6 +323,7 @@ def get_heff_values(
         provider_name=provider_name,
         n_shots=n_shots,
         solve=solve,
+        n_reps=n_reps,
     )
 
     heff = {}

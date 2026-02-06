@@ -50,12 +50,12 @@ def workflow_nq_qexa(dry_run):
     J = 1
     which_backends = [
         # "real_backend",
-        # "fake_backend",
-        "statevector",
+        "fake_backend",
+        # "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "QEXA"
-    n_shots = int(1e4)
-    which_hadamard_test = "stefan"
+    n_shots = int(1e5)
+    which_hadamard_test = "stefan_samples"
     n_qubits_max = 5
     workflow_nq(
         dry_run,
@@ -66,6 +66,7 @@ def workflow_nq_qexa(dry_run):
         which_backends,
         ["vqe"],
         J,
+        n_reps=1,
     )
 
 
@@ -96,13 +97,13 @@ def workflow_nq_aqt(dry_run):
 
     J = 1
     which_backends = [
-        "real_backend",
+        # "real_backend",
         "fake_backend",
-        "statevector",
+        # "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
-    n_shots = int(200)
-    which_hadamard_test = "stefan"
+    n_shots = int(2000)
+    which_hadamard_test = "stefan_samples"
     n_qubits_max = 5
     workflow_nq(
         dry_run,
@@ -113,7 +114,7 @@ def workflow_nq_aqt(dry_run):
         which_backends,
         ["vqe"],
         J,
-        n_reps=10,
+        n_reps=1,
     )
 
 
@@ -157,7 +158,7 @@ def workflow_nq_aqt_hl(dry_run):
 
     J = 0.8
     which_backends = [
-        # "real_backend",
+        "real_backend",
         "fake_backend",
         "statevector",
     ]
@@ -315,4 +316,4 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt_hl(True)
+    workflow_nq_aqt_hl(False)

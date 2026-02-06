@@ -62,21 +62,30 @@ def circuit_estimation_job(
     return job
 
 
-def trace_out_estimation(counts: dict, ind: int) -> tuple[float, float]:
+def trace_out_estimation(counts: dict, ind: int, z_sym: bool) -> tuple[float, float]:
     assert all(ind < len(k) for k in counts.keys())
     count_0 = 0
     count_1 = 0
     for k in counts.keys():
         # random spaces in my bitstrings?
+        # actually meant to tell you that you didn't measure a qubit
+        # oh my god how many different ways are there
+        # there's a collective agreement not to represent bitstirng
         ks = k.replace(" ", "")
-        if ks[ind] == "0":
-            count_0 += counts[k]
-        elif ks[ind] == "1":
-            count_1 += counts[k]
-        else:
-            raise ValueError(
-                f"Expected bitstring to be either zeros or ones, got {k[ind]}"
-            )
+        is_sim = True
+        if z_sym:
+            # if bitstring is even, z_parity is broken
+            if sum([int(kk) for kk in ks]) % 2 == 0:
+                is_sim = False
+        if is_sim:
+            if ks[ind] == "0":
+                count_0 += counts[k]
+            elif ks[ind] == "1":
+                count_1 += counts[k]
+            else:
+                raise ValueError(
+                    f"Expected bitstring to be either zeros or ones, got {k[ind]}"
+                )
     return (count_0 - count_1) / (count_0 + count_1), std_from_shots(
         count_1, count_0, count_0 + count_1
     )

@@ -752,7 +752,7 @@ def measure_matrix_elements(
 
 
 def estimation_from_samples(
-    res: PrimitiveResult, hamiltonian: SparsePauliOp, n_reps: int
+    res: PrimitiveResult, hamiltonian: SparsePauliOp, n_reps: int, z_sym: bool = True
 ) -> tuple[complex, complex]:
 
     counts = res.get_counts()
@@ -764,7 +764,7 @@ def estimation_from_samples(
             zs = []
             z_stds = []
             for ind_z in range(hamiltonian.num_qubits):
-                val, std = trace_out_estimation(counts[0 + 3 * rep], ind_z)
+                val, std = trace_out_estimation(counts[0 + 3 * rep], ind_z, z_sym)
                 zs.append(val)
                 z_stds.append(std)
 
@@ -776,11 +776,11 @@ def estimation_from_samples(
             xxs_odd = []
             xxs_odd_stds = []
             for ind_x_even in range(n_even):
-                val, std = trace_out_estimation(counts[1 + 3 * rep], ind_x_even)
+                val, std = trace_out_estimation(counts[1 + 3 * rep], ind_x_even, z_sym)
                 xxs_even.append(val)
                 xxs_even_stds.append(std)
             for ind_x_odd in range(n_odd):
-                val, std = trace_out_estimation(counts[2 + 3 * rep], ind_x_odd)
+                val, std = trace_out_estimation(counts[2 + 3 * rep], ind_x_odd, z_sym)
                 xxs_odd.append(val)
                 xxs_odd_stds.append(std)
 
@@ -806,7 +806,7 @@ def measure_manual_circuit(
     n_reps: int,
 ):
     [z_circ, x_circ_even, x_circ_odd] = manual_hamiltonian_circuits(
-        backend, circuit, hamiltonian, n_shots
+        circuit, hamiltonian
     )
 
     job = circuit_sampling_job(
@@ -959,6 +959,7 @@ def measure_hamiltonian_elements(
     backend: BACKEND_ALIAS,
     which_backend: str,
     n_shots: int,
+    n_reps: int = 1,
 ):
 
     vals = np.zeros((len(states), len(states)), dtype=complex)
@@ -985,11 +986,11 @@ def measure_hamiltonian_elements(
             else:
                 if backend != "statevector" and ("IQM" in backend.name):
                     val, std = measure_hamiltonian_element_manual(
-                        hamiltonian, circuit, x, y, parameters, backend, n_shots
+                        hamiltonian, circuit, x, y, parameters, backend, n_shots, n_reps
                     )
                 else:
                     val, std = measure_hamiltonian_element(
-                        hamiltonian, circuit, x, y, parameters, backend, n_shots
+                        hamiltonian, circuit, x, y, parameters, backend, n_shots, n_reps
                     )
                 vals[ind_x, ind_y] = val.conj()
                 vals[ind_y, ind_x] = val

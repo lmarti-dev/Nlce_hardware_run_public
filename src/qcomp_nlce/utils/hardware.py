@@ -99,10 +99,17 @@ from qcomp_nlce.utils.circuit import (
     measure_pauli_circuit,
 )
 
-from qcomp_nlce.utils.aqt_utils import (
-    aqt_better_fake_backend,
-    OfflineSimulatorResourceBetter,
-)
+try:
+    from qcomp_nlce.utils.aqt_utils import (
+        aqt_better_fake_backend,
+        OfflineSimulatorResourceBetter,
+    )
+except ModuleNotFoundError:
+    aqt_better_fake_backend: lambda x: ...
+
+    class OfflineSimulatorResourceBetter: ...
+
+
 from qcomp_nlce.utils.hamiltonian import get_tfim_ratio, get_tfim_xx, HAM_NAME_VAR
 from qiskit_ibm_runtime import QiskitRuntimeService, IBMBackend
 
@@ -304,6 +311,7 @@ def compile_circuit_for_backend(
             coupling_map=backend.coupling_map,
             scheduling_method="move_routing_rz_optimization_ignores_barriers",
         )
+
         # isa_circuit = transpile_to_IQM(
         #     circuit,
         #     backend=backend,
@@ -595,10 +603,8 @@ def backend_estimate(
 
 
 def manual_hamiltonian_circuits(
-    backend: BACKEND_ALIAS,
     circuit: QuantumCircuit,
     hamiltonian: SparsePauliOp,
-    n_shots: int,
 ) -> list[QuantumCircuit]:
     if HAM_NAME_VAR not in hamiltonian.__dict__:
         raise ValueError("Expected the hamiltonian to have name")
