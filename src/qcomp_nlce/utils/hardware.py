@@ -291,7 +291,7 @@ def compute_mean_circ_stats(circs: list | QuantumCircuit, verbose: bool = False)
 
 
 def is_hardware_run(which_backend: str):
-    return which_backend == "real_backend"
+    return which_backend == "fake_backend"
 
 
 def compile_circuit_for_backend(

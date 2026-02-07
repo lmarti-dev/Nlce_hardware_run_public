@@ -129,7 +129,7 @@ def workflow_nq_aqt_ladder(dry_run):
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
     which_hadamard_test = "stefan"
-    n_qubits_max = 4
+    n_qubits_max = 6
     workflow_nq(
         dry_run,
         n_qubits_max,
@@ -139,6 +139,7 @@ def workflow_nq_aqt_ladder(dry_run):
         which_backends,
         ["vqe"],
         J,
+        which_model="TFIM_ladder",
         n_reps=10,
     )
 

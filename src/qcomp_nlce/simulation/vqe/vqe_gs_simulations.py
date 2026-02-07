@@ -46,7 +46,7 @@ def train_and_save(
         f"{dirname}/vqe/{n_qubits}q_{n_layers}l",
         hamiltonian,
         circuit,
-        params,
+        np.real(params),
         ground_energy,
         dry_run,
     )

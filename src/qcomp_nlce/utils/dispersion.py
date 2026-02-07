@@ -28,9 +28,10 @@ def dispersion_1d_thermodynamic(
 ) -> float:
 
     # Compute the difference between the sums of the "big" and "small" arrays
-    N = H_eff_Nb.shape[0]
+    Nb = H_eff_Nb.shape[0]
+    Ns = H_eff_Ns.shape[0]
     func_w = np.array(
-        cluster_dispersion(N, H_eff_Nb, k) - cluster_dispersion(N - 1, H_eff_Ns, k)
+        cluster_dispersion(Nb, H_eff_Nb, k) - cluster_dispersion(Ns, H_eff_Ns, k)
     ).real
 
     # Return the final computed value
@@ -41,7 +42,7 @@ def exact_dispersion_1qp_1d(j: float, k: np.ndarray):
     return 2 * np.sqrt(1 + j**2 - 2 * j * np.cos(k))
 
 
-def heff_n_expectation_values_1d(n_qubits: int) -> int:
+def heff_n_expectation_values_1d(n_qubits: int, hl: bool = False) -> int:
 
     total = 0
 
@@ -52,8 +53,13 @@ def heff_n_expectation_values_1d(n_qubits: int) -> int:
         # 1 per diagonal, 4 per nondiagonal element
         # for a 1d ising model, one needs 3 circuits to measure the Hamiltonian:
         # 1 for sum Z, 1 for odd XX, and 1 for even XX.
-        # so 3 ttotal
-        expectations = 3 * (q + 4 * sum(range(1, q)))
+        # so 3 totl
+        # if Hl, there's one more for the X field.
+        if hl:
+            ff = 4
+        else:
+            ff = 3
+        expectations = ff * (q + 4 * sum(range(1, q)))
         gs = 1
         total += sum([overlap, expectations, gs])
     return total
