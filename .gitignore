@@ -185,4 +185,5 @@ hardware/
 
 venv_aqt/
 
-zne_
+zne_dispersion.py
+evaluate_energy.py

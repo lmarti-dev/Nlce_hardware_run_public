@@ -38,6 +38,72 @@ def dispersion_1d_thermodynamic(
     return func_w
 
 
+def _ladder_coordinates(n_rungs: int) -> list[tuple[int, int]]:
+    """Return (x, y) coordinates for each qubit in a ladder.
+
+    Qubit ordering matches TFIM ladder Hamiltonian:
+        indices 0..n_rungs-1         -> chain 1: (rung, leg=0)
+        indices n_rungs..2*n_rungs-1 -> chain 2: (rung, leg=1)
+
+    Returns list of (x, y) tuples where x = rung index, y = leg index.
+    """
+    coords = []
+    for leg in range(2):
+        for rung in range(n_rungs):
+            coords.append((rung, leg))
+    return coords
+
+
+def cluster_dispersion_ladder(
+    n_rungs: int, H_effective: np.ndarray, kx: float, ky: float
+) -> float:
+    """Fourier transform H_eff for a ladder cluster at momentum (kx, ky).
+
+    Following the 2D convention from the Julia code:
+      - For n_x > n_y (n_rungs > 2): sum both orientations
+            cos(hopx*kx + hopy*ky) + cos(hopx*ky + hopy*kx)
+      - For n_x == n_y (2x2): single orientation
+            cos(hopx*kx + hopy*ky)
+
+    Here n_x = n_rungs, n_y = 2.
+    """
+    n_sites = 2 * n_rungs
+    coords = _ladder_coordinates(n_rungs)
+    n_x = n_rungs
+    n_y = 2
+
+    total = 0.0
+    for i in range(n_sites):
+        for j in range(n_sites):
+            hopx = coords[j][0] - coords[i][0]
+            hopy = coords[j][1] - coords[i][1]
+
+            if n_x > n_y:
+                fourier = H_effective[i, j] * np.cos(hopx * kx + hopy * ky)
+                fourier += H_effective[i, j] * np.cos(hopx * ky + hopy * kx)
+            else:  # n_x == n_y (2x2 case)
+                fourier = H_effective[i, j] * np.cos(hopx * kx + hopy * ky)
+
+            total += fourier
+
+    return total
+
+
+def dispersion_ladder_thermodynamic(
+    kx: float, ky: float, H_eff_Nb: np.ndarray, H_eff_Ns: np.ndarray
+) -> float:
+    """NLCE dispersion for ladder: E(Nx2) - E((N-1)x2).
+
+    Returns the real-valued NLCE-subtracted dispersion at momentum (kx, ky).
+    """
+    Nb = H_eff_Nb.shape[0] // 2  # number of rungs in bigger cluster
+    Ns = H_eff_Ns.shape[0] // 2  # number of rungs in smaller cluster
+    return (
+        cluster_dispersion_ladder(Nb, H_eff_Nb, kx, ky)
+        - cluster_dispersion_ladder(Ns, H_eff_Ns, kx, ky)
+    )
+
+
 def exact_dispersion_1qp_1d(j: float, k: np.ndarray):
     return 2 * np.sqrt(1 + j**2 - 2 * j * np.cos(k))
 
