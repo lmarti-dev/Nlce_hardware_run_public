@@ -302,4 +302,4 @@ def generate_dispersion_data_ladder(
 
 
 if __name__ == "__main__":
-    generate_dispersion_data_ladder(J=0.328, hl=0.0, cluster_pairs=[(4, 3), (3, 2)])
+    generate_dispersion_data_ladder(J=0.328, hl=0.0, cluster_pairs=[(3, 2), (2, 2)])
