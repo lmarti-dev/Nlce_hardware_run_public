@@ -30,7 +30,7 @@ from qcomp_nlce.utils.statevector import hamming_weight_states, estimate_observa
 from qcomp_nlce.utils.hamiltonian import from_bitstring, TFIM, get_ground_energy, get_tfim_ratio, HAM_NAME_VAR
 from qcomp_nlce.utils.effective_hamiltonian import H_effective, H_effective_ed
 from qcomp_nlce.utils.vqe import get_optimal_n_layers
-from qcomp_nlce.utils.workflow_tfim_1d import get_heff_values
+from qcomp_nlce.utils.workflow_utils import get_heff_values
 
 
 # ── Paths ────────────────────────────────────────────────────────────────────
@@ -57,7 +57,7 @@ def _load_vqe_data(n_rungs: int, J: float, hl: float) -> dict:
     n_layers = get_optimal_n_layers(total_qubits)
 
     gs_dir = str(get_save_directory(
-        f"gs_vqe_{int(J*100)}j_{int(hl*100)}hl_ladder/vqe/{total_qubits}q_{n_layers}l"
+        f"gs_vqe_{int(J*100)}j_{int(hl*100)}hl_ladder/vqe/{n_rungs}x2q_{n_layers}l"
     ))
     elem_dir = str(get_save_directory(
         f"elem_vqe_{int(J*100)}j_{int(hl*100)}hl_ladder/vqe/cost_offdiag/{n_rungs}x2q_{n_layers}l"
@@ -218,7 +218,7 @@ def generate_dispersion_data_ladder(
         metadata.npz              — run parameters
     """
     if cluster_pairs is None:
-        cluster_pairs = [(4, 3), (3, 2)]
+        cluster_pairs = [(3, 2), (2, 2)]
 
     all_n = sorted(set(n for pair in cluster_pairs for n in pair))
 
@@ -271,19 +271,20 @@ def generate_dispersion_data_ladder(
             except Exception as e:
                 print(f"  {label} SV shots rep {rep} failed: {e}")
 
-        # Fake backend (multiple reps)
+        # # Fake backend (multiple reps) — disabled for now
+        # n_fb_done = 0
+        # for rep in range(n_repetitions):
+        #     try:
+        #         print(f"  {label} fake_backend rep {rep+1}/{n_repetitions}")
+        #         heff, mc = compute_heff_backend(
+        #             vqe, "fake_backend", provider_name, n_shots, which_hadamard_test, rep,
+        #         )
+        #         save_heff(cdir, f"H_eff_fake_backend_rep{rep}", heff)
+        #         save_mc_ingredients(cdir, f"mc_fake_backend_rep{rep}", mc)
+        #         n_fb_done += 1
+        #     except Exception as e:
+        #         print(f"  {label} fake_backend rep {rep} failed: {e}")
         n_fb_done = 0
-        for rep in range(n_repetitions):
-            try:
-                print(f"  {label} fake_backend rep {rep+1}/{n_repetitions}")
-                heff, mc = compute_heff_backend(
-                    vqe, "fake_backend", provider_name, n_shots, which_hadamard_test, rep,
-                )
-                save_heff(cdir, f"H_eff_fake_backend_rep{rep}", heff)
-                save_mc_ingredients(cdir, f"mc_fake_backend_rep{rep}", mc)
-                n_fb_done += 1
-            except Exception as e:
-                print(f"  {label} fake_backend rep {rep} failed: {e}")
 
         # Save metadata
         save_metadata(
@@ -295,7 +296,7 @@ def generate_dispersion_data_ladder(
             n_sv_shots_completed=n_sv_done,
             n_fb_completed=n_fb_done,
         )
-        print(f"  {label} done ({n_sv_done} sv_shots, {n_fb_done} fb reps) -> {cdir}")
+        print(f"  {label} done ({n_sv_done} sv_shots) -> {cdir}")
 
     print(f"{'='*60}\n")
     print("Data generation complete.")

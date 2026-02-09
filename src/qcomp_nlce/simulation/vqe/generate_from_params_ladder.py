@@ -1,6 +1,6 @@
 
 # ── USER INPUT ────────────────────────────────────────────────────────────────
-J = 1.0                  # Ising coupling (overridden by file-parsed value)
+J = 0.328                # Ising coupling (overridden by file-parsed value)
 H = 1                    # transverse field strength
 HL = 0.0                 # longitudinal field strength
 HAS_LONGITUDINAL = False # whether the circuit has longitudinal field rotations
@@ -14,10 +14,10 @@ from pathlib import Path
 from qiskit import QuantumCircuit
 from qcomp_nlce.utils import (
     get_ground_energy,
-    TFIM,
     save_optimized_vqe,
     get_optimal_n_layers,
 )
+from qcomp_nlce.utils.hamiltonian import TFIM_ladder
 
 JULIA_DATA_DIR = Path(__file__).parent.parent / "julia_data" / "TFIM_ladder"  # simulation/julia_data/TFIM_ladder
 
@@ -48,28 +48,27 @@ def load_params(filepath: Path) -> np.ndarray:
     return np.loadtxt(filepath, delimiter=",")
 
 
-def get_ladder_bonds(n_qubits_per_chain: int):
-    """Return the list of (i, j) bonds for a 2-leg ladder.
+def get_ladder_bonds(m: int, n: int = 2):
+    """Return the list of (i, j) bonds for an m x n lattice.
 
-    Qubit layout: chain 1 is qubits [0, ..., n-1],
-                  chain 2 is qubits [n, ..., 2n-1].
+    Matches Julia's bond_coordinates + graph convention:
+      - Sites are indexed column-major: site = i + j*m
+        where i = 0..m-1 (rung index), j = 0..n-1 (leg index).
+      - Bonds are all pairs (a, b) with a < b and Euclidean distance == 1,
+        iterated in order of increasing a, then increasing b.
 
-    Bond order matches TFIM hamiltonian construction:
-      1) Chain 1 intra-chain bonds: (0,1), (1,2), ..., (n-2, n-1)
-      2) Chain 2 intra-chain bonds: (n, n+1), (n+1, n+2), ..., (2n-2, 2n-1)
-      3) Rung bonds: (0, n), (1, n+1), ..., (n-1, 2n-1)
+    For a ladder (n=2), m = n_rungs.
     """
-    n = n_qubits_per_chain
+    total = m * n
+    # Column-major coordinates: site s -> (s % m, s // m)
+    coords = [(s % m, s // m) for s in range(total)]
     bonds = []
-    # Chain 1 bonds
-    for i in range(n - 1):
-        bonds.append((i, i + 1))
-    # Chain 2 bonds
-    for i in range(n, 2 * n - 1):
-        bonds.append((i, i + 1))
-    # Rung bonds
-    for i in range(n):
-        bonds.append((i, i + n))
+    for a in range(total):
+        for b in range(a + 1, total):
+            dx = coords[b][0] - coords[a][0]
+            dy = coords[b][1] - coords[a][1]
+            if dx * dx + dy * dy == 1:
+                bonds.append((a, b))
     return bonds
 
 
@@ -90,7 +89,7 @@ def build_hva_circuit_from_julia_params_ladder(
     total_qubits = 2 * n_qubits_per_chain
     circuit = QuantumCircuit(total_qubits)
 
-    bonds = get_ladder_bonds(n_qubits_per_chain)
+    bonds = get_ladder_bonds(n_qubits_per_chain, 2)
     n_xx = len(bonds)
     n_x = total_qubits if has_longitudinal_field else 0
     n_z = total_qubits
@@ -118,7 +117,7 @@ def build_hva_circuit_from_julia_params_ladder(
 def generate_gs(n_qubits_per_chain: int, n_layers: int, J: float, h: float, hl: float,
                 has_longitudinal_field: bool, params: np.ndarray):
     """Generate and save ground state VQE data for ladder geometry."""
-    hamiltonian = TFIM(n_qubits_per_chain, h, J, periodic=False, longitudinal_field=hl, ladder=True)
+    hamiltonian = TFIM_ladder(n_qubits_per_chain, h, J, longitudinal_field=hl)
     total_qubits = hamiltonian.num_qubits
 
     circuit = build_hva_circuit_from_julia_params_ladder(
@@ -126,7 +125,7 @@ def generate_gs(n_qubits_per_chain: int, n_layers: int, J: float, h: float, hl: 
         has_longitudinal_field=has_longitudinal_field)
     ground_energy = get_ground_energy(hamiltonian)
 
-    bonds = get_ladder_bonds(n_qubits_per_chain)
+    bonds = get_ladder_bonds(n_qubits_per_chain, 2)
     n_xx = len(bonds)
     n_x = total_qubits if has_longitudinal_field else 0
     n_z = total_qubits
@@ -139,7 +138,7 @@ def generate_gs(n_qubits_per_chain: int, n_layers: int, J: float, h: float, hl: 
     weights = [params]
 
     dirname = f"gs_vqe_{int(J*100)}j_{int(hl*100)}hl_ladder"
-    save_path = f"{dirname}/vqe/{total_qubits}q_{n_layers}l"
+    save_path = f"{dirname}/vqe/{n_qubits_per_chain}x2q_{n_layers}l"
 
     print(f"  Saving to res_sim/{save_path}/")
     save_optimized_vqe(save_path, hamiltonian, circuit, weights, ground_energy, dry_run=False)
@@ -148,8 +147,8 @@ def generate_gs(n_qubits_per_chain: int, n_layers: int, J: float, h: float, hl: 
 def generate_elem(n_qubits_per_chain: int, n_layers: int, J: float, h: float, hl: float,
                   has_longitudinal_field: bool, params: np.ndarray):
     """Generate and save elementary (1qp) VQE data for ladder geometry."""
-    ham_j, ham_h = TFIM(n_qubits_per_chain, h, J, periodic=False, split_parts=True,
-                        longitudinal_field=hl, ladder=True)
+    ham_j, ham_h = TFIM_ladder(n_qubits_per_chain, h, J, split_parts=True,
+                               longitudinal_field=hl)
     hamiltonian = ham_j + ham_h
     total_qubits = hamiltonian.num_qubits
 
@@ -158,7 +157,7 @@ def generate_elem(n_qubits_per_chain: int, n_layers: int, J: float, h: float, hl
         has_longitudinal_field=has_longitudinal_field)
     ground_energy = get_ground_energy(hamiltonian)
 
-    bonds = get_ladder_bonds(n_qubits_per_chain)
+    bonds = get_ladder_bonds(n_qubits_per_chain, 2)
     n_xx = len(bonds)
     n_x = total_qubits if has_longitudinal_field else 0
     n_z = total_qubits

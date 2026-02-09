@@ -217,6 +217,48 @@ def TFIM(
     return hamiltonian
 
 
+def TFIM_ladder(
+    n_rungs: int,
+    h: float,
+    J: float,
+    periodic: bool = False,
+    split_parts: bool = False,
+) -> SparsePauliOp:
+    """TFIM on a ladder with column-major site ordering.
+
+    Site indexing: site = rung + leg * n_rungs
+        leg 0 (chain 1): qubits 0 .. n_rungs-1
+        leg 1 (chain 2): qubits n_rungs .. 2*n_rungs-1
+
+    Matches Julia's bond_coordinates + graph convention.
+    """
+    total = 2 * n_rungs
+
+    # XX bonds: all nearest-neighbour pairs on the ladder
+    hamiltonian_J = 0.0 * SparsePauliOp("I" * total)
+    for a in range(total):
+        ax, ay = a % n_rungs, a // n_rungs
+        for b in range(a + 1, total):
+            bx, by = b % n_rungs, b // n_rungs
+            if (bx - ax) ** 2 + (by - ay) ** 2 == 1:
+                idty = ["I"] * total
+                idty[a] = "X"
+                idty[b] = "X"
+                hamiltonian_J += -J * SparsePauliOp("".join(idty))
+
+    # Z field on every qubit
+    hamiltonian_h = -h * field_pauli_sum(total, "Z")
+
+    # Longitudinal X field
+    
+    if split_parts:
+        return hamiltonian_J, hamiltonian_h
+
+    hamiltonian = hamiltonian_J + hamiltonian_h
+    hamiltonian.__dict__[HAM_NAME_VAR] = "TFIM"
+    return hamiltonian
+
+
 def hamming_weight(bitstring: str) -> int:
     return sum([1 if x == "1" else 0 for x in bitstring])
 
