@@ -344,9 +344,11 @@ def get_heff_values(
     }
 
 
-def tfim_ed_dispersion(n_qubits_max: int, J: float, ks: np.ndarray):
-    hamiltonian_l = TFIM(n_qubits_max, 1, J)
-    hamiltonian_s = TFIM(n_qubits_max - 1, 1, J)
+def tfim_ed_dispersion(
+    n_qubits_max: int, J: float, ks: np.ndarray, hl: float = 0.0, ladder: bool = True
+):
+    hamiltonian_l = TFIM(n_qubits_max, 1, J, longitudinal_field=hl, ladder=ladder)
+    hamiltonian_s = TFIM(n_qubits_max - 1, 1, J, longitudinal_field=hl, ladder=ladder)
     return ed_dispersion(hamiltonian_l, hamiltonian_s, ks)
 
 

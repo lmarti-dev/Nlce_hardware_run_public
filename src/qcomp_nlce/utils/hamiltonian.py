@@ -155,6 +155,11 @@ def TFIM(
     ladder: bool = False,
 ) -> SparsePauliOp:
 
+    if ladder:
+        return TFIM_ladder(
+            n_rungs=n_qubits, h=h, J=J, periodic=periodic, split_parts=split_parts
+        )
+
     hamiltonian_J = sum(
         [
             -J * SparsePauliOp(s * "I" + "XX" + (n_qubits - 2 - s) * "I")
@@ -212,7 +217,7 @@ def TFIM(
 
     hamiltonian = hamiltonian_J + hamiltonian_h
 
-    hamiltonian.__dict__[HAM_NAME_VAR] = "TFIM"
+    hamiltonian.__dict__[HAM_NAME_VAR] = "TFIM" + "_ladder" * ladder
 
     return hamiltonian
 
@@ -250,12 +255,12 @@ def TFIM_ladder(
     hamiltonian_h = -h * field_pauli_sum(total, "Z")
 
     # Longitudinal X field
-    
+
     if split_parts:
         return hamiltonian_J, hamiltonian_h
 
     hamiltonian = hamiltonian_J + hamiltonian_h
-    hamiltonian.__dict__[HAM_NAME_VAR] = "TFIM"
+    hamiltonian.__dict__[HAM_NAME_VAR] = "TFIM_ladder"
     return hamiltonian
 
 

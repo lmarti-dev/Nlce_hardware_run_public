@@ -123,7 +123,7 @@ def workflow_nq_aqt_ladder(dry_run):
     J = 0.20
     which_backends = [
         # "real_backend",
-        "fake_backend",
+        # "fake_backend",
         "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
@@ -227,7 +227,7 @@ def workflow_nq(
     ladder_model = "ladder" in which_model
     if ladder_model:
         qubits_max_str = f"{n_qubits_max}x2"
-        qubits_min_str = f"{n_qubits_max - 2}x2"
+        qubits_min_str = f"{n_qubits_max - 1}x2"
 
     else:
         qubits_max_str = str(n_qubits_max)
@@ -337,7 +337,7 @@ def workflow_nq(
         mc_disp = mc_disp_from_res_dict(ks, out_dict, "vqe", n_mc_samples, to_eotm=True)
         out_dict["results"]["vqe"]["mc_disp"] = mc_disp
 
-    ed_disp = tfim_ed_dispersion(n_qubits_max, J, ks)
+    ed_disp = tfim_ed_dispersion(n_qubits_max, J, ks, hl=hl, ladder=ladder_model)
     out_dict["results"]["ed"] = {"disp": {"statevector": ed_disp}}
     edm.save_dict(out_dict)
 
