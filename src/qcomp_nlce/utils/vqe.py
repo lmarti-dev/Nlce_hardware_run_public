@@ -28,7 +28,9 @@ def get_custom_vqe(n_qubits: int, n_layers: int) -> QuantumCircuit:
     return circuit
 
 
-def get_optimal_n_layers(n_qubits: int) -> int:
+def get_optimal_n_layers(n_qubits: int, ladder: bool = False) -> int:
+    if ladder:
+        return n_qubits
     return int(np.ceil(n_qubits / 2))
 
 

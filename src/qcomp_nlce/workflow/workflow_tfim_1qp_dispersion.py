@@ -120,7 +120,7 @@ def workflow_nq_aqt(dry_run):
 
 def workflow_nq_aqt_ladder(dry_run):
 
-    J = 1
+    J = 0.20
     which_backends = [
         # "real_backend",
         "fake_backend",
@@ -129,7 +129,7 @@ def workflow_nq_aqt_ladder(dry_run):
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
     which_hadamard_test = "stefan"
-    n_qubits_max = 6
+    n_qubits_max = 4
     workflow_nq(
         dry_run,
         n_qubits_max,
@@ -224,14 +224,19 @@ def workflow_nq(
     # warnings.filterwarnings("ignore")
     ks = np.linspace(0, np.pi, 21)
     group_size = None
+    ladder_model = "ladder" in which_model
+    if ladder_model:
+        qubits_max_str = f"{n_qubits_max}x2"
+        qubits_min_str = f"{n_qubits_max - 2}x2"
 
-    if "ladder" in which_model:
-        n_qubits_min = n_qubits_max - 2
     else:
-        n_qubits_min = n_qubits_max - 1
+        qubits_max_str = str(n_qubits_max)
+        qubits_min_str = str(n_qubits_max - 1)
 
-    vqe_l_dir = f"{n_qubits_max}q_{get_optimal_n_layers(n_qubits_max)}l"
-    vqe_s_dir = f"{n_qubits_min}q_{get_optimal_n_layers(n_qubits_min)}l"
+    vqe_l_dir = f"{qubits_max_str}q_{get_optimal_n_layers(n_qubits_max,ladder_model)}l"
+    vqe_s_dir = (
+        f"{qubits_min_str}q_{get_optimal_n_layers(n_qubits_max-1,ladder_model)}l"
+    )
 
     model_dir = f"vqe_{int(J*100)}j"
 
