@@ -65,6 +65,13 @@ def heff_n_expectation_values_1d(n_qubits: int, hl: bool = False) -> int:
     return total
 
 
+def heff_n_expectation_values_ladder(n_qubits: int) -> int:
+    total = 0
+    for q in (n_qubits - 2, n_qubits):
+        total += 2 * q**2 + 4 * (q + 4 * sum(range(1, q))) + 1
+    return total
+
+
 def heff_n_expectation_values_2d(n_qubits: int) -> int:
     total = 0
 
@@ -90,3 +97,7 @@ def heff_n_expectation_values_2d(n_qubits: int) -> int:
 # def heff_n_expectation_values_1d(n_qubits: int) -> int:
 #     ...
 #     return total
+
+
+if __name__ == "__main__":
+    ...

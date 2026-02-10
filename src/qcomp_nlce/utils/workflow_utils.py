@@ -430,6 +430,9 @@ def plot_all_backends_dispersions_montecarlo(_d: dict) -> plt.Figure:
         which_model = _d["inputs"]["which_model"]
     if which_model == "TFIM":
         ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="Analytic")
+
+    ax.set_ylabel(r"$\omega(k)$")
+    ax.set_xlabel("$k$")
     ax.legend(
         ncol=2,
         fontsize="x-small",

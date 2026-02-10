@@ -5,7 +5,7 @@ from fauplotstyle import style
 from data_manager import ExperimentDataManager
 
 style()
-n_qubits = 5
+n_qubits = 4
 h = 1
 J = 1
 ham_j, ham_h = TFIM(n_qubits=n_qubits, h=h, J=J, split_parts=True)
@@ -28,7 +28,7 @@ ax.set_xlabel(r"Normalized sweep parameter")
 ax.set_ylabel(r"Energy")
 
 edm = ExperimentDataManager(
-    "plot_ising_longfield_model_start_lf", project="nlce", dry_run=False
+    "plot_ising_longfield_model_start_lf", project="nlce", dry_run=True
 )
 
 edm.var_dump(j=J, h=h, n_qubits=n_qubits)

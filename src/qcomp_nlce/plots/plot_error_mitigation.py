@@ -27,8 +27,9 @@ edm = ExperimentDataManager(
 
 
 aqt_fpath = r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_06\error_mitigation_test_aqt_00001\run_00000\data\watermelon_00000.json"
+ibm_fpath = r"C:/Users/Moi4/Desktop/current/FAU/phd/data\2026_02_09\error_mitigation_test_ibm_00001\run_00000\data\crabapple_00000.json"
 
-jobj = load_json(aqt_fpath)
+jobj = load_json(ibm_fpath)
 
 
 fig, ax = plt.subplots()
@@ -84,13 +85,13 @@ for k in ("with", "without"):
     print(f"error {k}")
     pretty_print(errors[k])
 
-error_improvement_perc = (errors["with"] - errors["without"]) / errors["without"]
+error_improvement_perc = errors["with"] - errors["without"]
 
 pretty_print(error_improvement_perc)
 
 
 print(f"MEAN PERCENTAGE IMPROVEMENT: {np.mean(error_improvement_perc)}")
 
-jjj = 0
+# jjj = 0
 
-pretty_print_diff(true_vals[:, :, jjj], fake_vals["with"][0][:, :, jjj])
+# pretty_print_diff(true_vals[:, :, jjj], fake_vals["with"][0][:, :, jjj])

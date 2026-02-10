@@ -211,6 +211,12 @@ def get_appropriate_fake_backend(
         return AQTProvider("ANY_TOKEN_WORKS_FOR_OFFLINE_SIM").get_backend(
             "offline_simulator_noise"
         )
+    elif which == "AQT_PERFECT":
+        if n_qubits > 12:
+            raise ValueError(f"Maximum number of qubits is 12, requested: {n_qubits}")
+        return AQTProvider("ANY_TOKEN_WORKS_FOR_OFFLINE_SIM").get_backend(
+            "offline_simulator_no_noise"
+        )
     elif which == "IQM" or which == "QEXA":
         n_qubits += 2
         # counting ancillas and resonators!
@@ -497,8 +503,8 @@ def get_backend_sampler(
 
 
 def backend_sample(
-    backend,
-    circuit,
+    backend: BACKEND_ALIAS,
+    circuit: QuantumCircuit,
     parameters: np.ndarray,
     n_shots: int,
 ) -> BaseRuntimeJob:

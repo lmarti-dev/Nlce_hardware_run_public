@@ -12,16 +12,26 @@ from qcomp_nlce.utils import (
     convert_count_keys,
     circuit_to_matrix,
     from_bitstring,
+    backend_sample,
 )
-
 from pathlib import Path
 from qiskit import QuantumCircuit, ClassicalRegister
 import numpy as np
 
-from qiskit_aqt_provider.primitives import AQTSampler
+from qcomp_nlce.utils.results import pretty_print, pretty_print_diff
+
+try:
+    from qiskit_aqt_provider.primitives import AQTSampler
+except ModuleNotFoundError:
+
+    class AQTSampler: ...
+
+
 from data_manager import ExperimentDataManager
 
 from qiskit.quantum_info import SparsePauliOp
+
+from qiskit.primitives import PrimitiveResult
 
 
 def aqt_sample_job(backend, circuit: QuantumCircuit, n_shots: int):
@@ -29,6 +39,10 @@ def aqt_sample_job(backend, circuit: QuantumCircuit, n_shots: int):
     sampler.set_transpile_options(optimization_level=3)
     job = sampler.run(circuit, options={"shots": n_shots})
     return job
+
+
+def ibm_sample_job(backend, circuit: QuantumCircuit, n_shots: int):
+    return backend_sample(backend, circuit, None, n_shots)
 
 
 def estimate_z_field(
@@ -56,9 +70,15 @@ def estimate_z_field(
 
 
 def get_counts(res, n_shots: int, n_qubits: int):
-    qd = convert_count_keys(res.quasi_dists[0], n_qubits)
-    for k in qd:
-        qd[k] = int(qd[k] * n_shots)
+    if isinstance(res, PrimitiveResult):
+        qd = res[0].join_data().get_counts()
+    else:
+        try:
+            qd = convert_count_keys(res.quasi_dists[0], n_qubits)
+            for k in qd:
+                qd[k] = int(qd[k] * n_shots)
+        except AttributeError:
+            qd = res.get_counts()
     return qd
 
 
@@ -88,7 +108,11 @@ def measure_jk(
             circ.x(x_ind)
         circ.compose(circuit, inplace=True)
         circ.measure_all()
-        job = aqt_sample_job(backend, circ, n_shots)
+        if "OfflineSimulatorResource" == backend.__class__.__name__:
+            job = aqt_sample_job(backend, circ, n_shots)
+        else:
+            job = ibm_sample_job(backend, circ, n_shots)
+
         res = job.result()
         counts = get_counts(res, n_shots, n_qubits)
         return {
@@ -150,17 +174,17 @@ def ideal_z_strings(circuit: QuantumCircuit, x: str, y: str):
     return vals
 
 
-if __name__ == "__main__":
+def measure_all_matrix_elements():
 
     dry_run = False
 
     edm = ExperimentDataManager(
-        "error_mitigation_test_aqt", dry_run=dry_run, project="nlce"
+        "error_mitigation_test_ibm", dry_run=dry_run, project="nlce"
     )
 
     n_qubits_max = 5
     J = 1
-    n_shots = 2000
+    n_shots = 1e8
     backend = get_appropriate_fake_backend(n_qubits_max, "AQT")
 
     model_dir = f"vqe_{int(J*100)}j_0hl"
@@ -206,3 +230,71 @@ if __name__ == "__main__":
             "results": {"true_vals": true_vals, "fake_vals": fake_vals},
         }
     )
+
+
+if __name__ == "__main__":
+
+    dry_run = True
+
+    n_qubits_max = 5
+    J = 1
+    n_shots = 1e8
+    provider_name = "IBM"
+
+    edm = ExperimentDataManager(
+        f"error_mitigation_test_{provider_name}", dry_run=dry_run, project="nlce"
+    )
+
+    backend = get_appropriate_fake_backend(n_qubits_max, provider_name)
+
+    if "AQT" in provider_name and n_shots > 2000:
+        n_shots = 2000
+
+    model_dir = f"vqe_{int(J*100)}j_0hl"
+    vqe_dir = f"{n_qubits_max}q_{get_optimal_n_layers(n_qubits_max)}l"
+    elem_dirname = Path(
+        res_sim_dir(),
+        f"elem_{model_dir}/vqe/cost_offdiag/{vqe_dir}",
+    )
+
+    hamiltonian1, circuit, elem_weights, ground_energy = load_optimized_vqe(
+        elem_dirname
+    )
+    circuit = apply_parameters(circuit, elem_weights[-1])
+
+    true_vals = np.zeros((n_qubits_max), dtype=complex)
+    fake_vals = {
+        "with": [
+            np.zeros((n_qubits_max), dtype=complex),
+            np.zeros((n_qubits_max), dtype=complex),
+            0,
+        ],
+        "without": [
+            np.zeros((n_qubits_max), dtype=complex),
+            np.zeros((n_qubits_max), dtype=complex),
+            0,
+        ],
+    }
+
+    bs = "01000"
+    true_vals[:] = ideal_z_strings(circuit, bs, bs)
+
+    d = measure_jk(backend, n_shots, circuit, bs, bs)
+
+    for k in ("with", "without"):
+        fake_vals[k][0][:] = d[k][0]
+        fake_vals[k][1][:] = d[k][1]
+        fake_vals[k][2] = d[k][2]
+
+    edm.save_dict(
+        {
+            "inputs": {"n_qubits_max": n_qubits_max, "J": J, "n_shots": n_shots},
+            "results": {"true_vals": true_vals, "fake_vals": fake_vals},
+        }
+    )
+
+    print(f"n_shots without: {fake_vals['without'][2]}, with: {fake_vals['with'][2]}")
+    print("Without")
+    pretty_print_diff(true_vals, fake_vals["without"][0])
+    print("With")
+    pretty_print_diff(true_vals, fake_vals["with"][0])
