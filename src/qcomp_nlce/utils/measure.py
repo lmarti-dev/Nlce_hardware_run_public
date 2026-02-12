@@ -70,7 +70,7 @@ def trace_out_estimation(counts: dict, ind: int, z_sym: bool) -> tuple[float, fl
         # random spaces in my bitstrings?
         # actually meant to tell you that you didn't measure a qubit
         # oh my god how many different ways are there
-        # there's a collective agreement not to represent bitstirng
+        # there's a collective agreement not to represent bitstirng coherently
         ks = k.replace(" ", "")
         is_sim = True
         if z_sym:

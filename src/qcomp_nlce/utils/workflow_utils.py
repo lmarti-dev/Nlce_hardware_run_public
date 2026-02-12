@@ -389,7 +389,9 @@ def plot_multiple_dispersions_1d(_l: list[dict]) -> plt.Figure:
     return fig
 
 
-def plot_all_backends_dispersions_montecarlo(_d: dict) -> plt.Figure:
+def plot_all_backends_dispersions_montecarlo(
+    _d: dict, which_circ: list = None
+) -> plt.Figure:
 
     ks = _d["inputs"]["ks"]
     j = _d["inputs"]["J"]
@@ -397,7 +399,10 @@ def plot_all_backends_dispersions_montecarlo(_d: dict) -> plt.Figure:
     fig, ax = plt.subplots()
     res = _d["results"]
 
-    for circ in res:
+    if which_circ is None:
+        which_circ = res.keys()
+
+    for circ in which_circ:
         if circ == "ed":
             disp = res[circ]["disp"]
             for be in disp:
@@ -430,7 +435,7 @@ def plot_all_backends_dispersions_montecarlo(_d: dict) -> plt.Figure:
         which_model = "TFIM"
     else:
         which_model = _d["inputs"]["which_model"]
-    if which_model == "TFIM":
+    if which_model == "TFIM" or which_model == "TFIM_0hl":
         ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="Analytic")
 
     ax.set_ylabel(r"$\omega(k)$")

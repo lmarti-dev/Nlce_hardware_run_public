@@ -22,10 +22,15 @@ runs_100improvement = (
 )
 
 
+runs_80j = (
+    r"C:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_12\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00001",
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_12\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00002",
+)
 for crun in (
-    ("current", runs_current),
-    ("10x_better", runs_10improvement),
-    ("100x_better", runs_100improvement),
+    # ("current", runs_current),
+    # ("10x_better", runs_10improvement),
+    # ("100x_better", runs_100improvement),
+    ("80j", runs_80j),
 ):
     name = crun[0]
     fpaths = crun[1]

@@ -95,15 +95,15 @@ def workflow_nq_iqm_manual(dry_run):
 
 def workflow_nq_aqt(dry_run):
 
-    J = 1
+    J = 0.8
     which_backends = [
         # "real_backend",
         "fake_backend",
-        # "statevector",
+        "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(2000)
-    which_hadamard_test = "stefan_samples"
+    which_hadamard_test = "stefan"
     n_qubits_max = 5
     workflow_nq(
         dry_run,
@@ -112,9 +112,22 @@ def workflow_nq_aqt(dry_run):
         provider_name,
         n_shots,
         which_backends,
-        ["vqe"],
+        ["vqe", "sweep"],
         J,
         n_reps=1,
+        n_steps=10,
+    )
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["sweep"],
+        J,
+        n_reps=1,
+        n_steps=20,
     )
 
 
@@ -247,7 +260,7 @@ def workflow_nq(
             hl = 10
     else:
         hl = 0
-    model_dir += f"_{hl}hl"
+    model_dir += f"_{str(hl)}hl"
     if "ladder" in which_model:
         model_dir += "_ladder"
 
@@ -352,4 +365,4 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt_ladder(True)
+    workflow_nq_aqt(False)
