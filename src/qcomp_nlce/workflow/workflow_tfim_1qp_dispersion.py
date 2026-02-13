@@ -136,14 +136,14 @@ def workflow_nq_aqt_ladder(dry_run):
 
     J = 0.20
     which_backends = [
-        # "real_backend",
+        "real_backend",
         # "fake_backend",
-        "statevector",
+        # "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
     which_hadamard_test = "stefan"
-    n_qubits_max = 4
+    n_qubits_max = 3
     workflow_nq(
         dry_run,
         n_qubits_max,
@@ -153,8 +153,9 @@ def workflow_nq_aqt_ladder(dry_run):
         which_backends,
         ["vqe"],
         J,
-        which_model="TFIM_ladder",
         n_reps=10,
+        hl=0,
+        ladder=True,
     )
 
 
@@ -172,18 +173,18 @@ def workflow_nq_aqt_hl(dry_run):
     n_qubits_max = 5
     n_reps = 1
 
-    workflow_nq(
-        dry_run,
-        n_qubits_max,
-        which_hadamard_test,
-        provider_name,
-        n_shots,
-        which_backends,
-        ["vqe"],
-        J=0.5,
-        n_reps=n_reps,
-        hl=0.1,
-    )
+    # workflow_nq(
+    #     dry_run,
+    #     n_qubits_max,
+    #     which_hadamard_test,
+    #     provider_name,
+    #     n_shots,
+    #     which_backends,
+    #     ["vqe"],
+    #     J=0.5,
+    #     n_reps=n_reps,
+    #     hl=0.1,
+    # )
 
     for J in (0.8, 1.0):
         for hl in (0.1, 0.5, 1.0):
@@ -341,9 +342,9 @@ def workflow_nq(
 
     edm.save_figure(fig, fig_shape="double-y")
     # show_diffs(out_dict, "fake_backend")
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt_hl(True)
+    workflow_nq_aqt_ladder(True)

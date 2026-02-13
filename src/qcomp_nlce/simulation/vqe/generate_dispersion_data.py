@@ -21,10 +21,23 @@ import numpy as np
 from copy import deepcopy
 from pathlib import Path
 
-from qcomp_nlce.utils.save import load_optimized_vqe, get_save_directory, baptize_circuit
+from qcomp_nlce.utils.save import (
+    load_optimized_vqe,
+    get_save_directory,
+    baptize_circuit,
+)
 from qcomp_nlce.utils.circuit import apply_parameters, circuit_to_matrix
-from qcomp_nlce.utils.statevector import hamming_weight_states, estimate_observable_1qp_initial_state
-from qcomp_nlce.utils.hamiltonian import from_bitstring, TFIM, get_ground_energy, get_tfim_ratio, HAM_NAME_VAR
+from qcomp_nlce.utils.statevector import (
+    hamming_weight_states,
+    estimate_observable_1qp_initial_state,
+)
+from qcomp_nlce.utils.hamiltonian import (
+    from_bitstring,
+    TFIM,
+    get_ground_energy,
+    get_tfim_ratio,
+    HAM_NAME_VAR,
+)
 from qcomp_nlce.utils.effective_hamiltonian import H_effective, H_effective_ed
 from qcomp_nlce.utils.vqe import get_optimal_n_layers
 from qcomp_nlce.utils.workflow_tfim_1d import get_heff_values
@@ -45,14 +58,21 @@ def _cluster_dir(N: int, J: float, hl: float) -> Path:
 
 # ── VQE data loader (cached per cluster) ────────────────────────────────────
 
+
 def _load_vqe_data(N: int, J: float, hl: float) -> dict:
     """
     Load VQE circuits and weights once for cluster size N.
     Returns a dict with everything needed for all computation types.
     """
     n_layers = get_optimal_n_layers(N)
-    gs_dir = str(get_save_directory(f"gs_vqe_{int(J*100)}j_{int(hl*100)}hl/vqe/{N}q_{n_layers}l"))
-    elem_dir = str(get_save_directory(f"elem_vqe_{int(J*100)}j_{int(hl*100)}hl/vqe/cost_offdiag/{N}q_{n_layers}l"))
+    gs_dir = str(
+        get_save_directory(f"gs_vqe_{int(J*100)}j_{int(hl*100)}hl/vqe/{N}q_{n_layers}l")
+    )
+    elem_dir = str(
+        get_save_directory(
+            f"elem_vqe_{int(J*100)}j_{int(hl*100)}hl/vqe/cost_offdiag/{N}q_{n_layers}l"
+        )
+    )
 
     ham_gs, gs_circuit, gs_weights, _ = load_optimized_vqe(gs_dir)
     ham_elem, elem_circuit, elem_weights, _ = load_optimized_vqe(elem_dir)
@@ -71,7 +91,6 @@ def _load_vqe_data(N: int, J: float, hl: float) -> dict:
         "elem_weights": elem_weights,
         "elem_bound": elem_bound,
     }
-
 
 
 def compute_heff_ed(N: int, J: float, hl: float) -> np.ndarray:
@@ -126,9 +145,8 @@ def compute_heff_backend(
     hamiltonian.__dict__[HAM_NAME_VAR] = "TFIM"
 
     n_qubits = hamiltonian.num_qubits
-    ratio = get_tfim_ratio(hamiltonian)
     base_name = baptize_circuit(
-        "dim1d", "vqe", n_qubits, ratio, provider_name, n_shots, which_hadamard_test
+        "dim1d", "vqe", n_qubits, provider_name, n_shots, which_hadamard_test
     )
     tmpname = f"{base_name}_{which_backend}_rep{rep_index}"
 
@@ -139,7 +157,9 @@ def compute_heff_backend(
     elem_circ.metadata["tmpname"] = tmpname
 
     result = get_heff_values(
-        gs_circ, elem_circ, hamiltonian,
+        gs_circ,
+        elem_circ,
+        hamiltonian,
         which_backends=[which_backend],
         provider_name=provider_name,
         n_shots=n_shots,
@@ -165,6 +185,7 @@ def compute_heff_backend(
 
 
 # ── Save helpers ─────────────────────────────────────────────────────────────
+
 
 def save_heff(cdir: Path, label: str, heff: np.ndarray):
     np.save(cdir / f"{label}.npy", heff)
@@ -193,6 +214,7 @@ def save_metadata(cdir: Path, **kwargs):
 
 
 # ── Main workflow ────────────────────────────────────────────────────────────
+
 
 def generate_dispersion_data(
     J: float = 0.8,
@@ -249,9 +271,13 @@ def generate_dispersion_data(
             save_gs_energies(cdir, E_ED, E_SV)
 
             err = E_SV - E_ED
-            print(f"{N:<6} {E_SV:<16.10f} {E_ED:<16.10f} {err:<+16.10f} {abs(err/E_ED):<12.2e}")
+            print(
+                f"{N:<6} {E_SV:<16.10f} {E_ED:<16.10f} {err:<+16.10f} {abs(err/E_ED):<12.2e}"
+            )
         except Exception as e:
-            print(f"{N:<6} {'FAILED':<16} {E_ED:<16.10f} {'---':<16} {'---':<12}  ({e})")
+            print(
+                f"{N:<6} {'FAILED':<16} {E_ED:<16.10f} {'---':<16} {'---':<12}  ({e})"
+            )
 
         # Statevector with shot noise (multiple reps)
         n_sv_done = 0
@@ -259,7 +285,12 @@ def generate_dispersion_data(
             try:
                 print(f"  N={N} SV shots rep {rep+1}/{n_repetitions}")
                 heff, mc = compute_heff_backend(
-                    vqe, "statevector", provider_name, n_shots, which_hadamard_test, rep,
+                    vqe,
+                    "statevector",
+                    provider_name,
+                    n_shots,
+                    which_hadamard_test,
+                    rep,
                 )
                 save_heff(cdir, f"H_eff_sv_shots_rep{rep}", heff)
                 save_mc_ingredients(cdir, f"mc_sv_shots_rep{rep}", mc)
@@ -273,7 +304,12 @@ def generate_dispersion_data(
             try:
                 print(f"  N={N} fake_backend rep {rep+1}/{n_repetitions}")
                 heff, mc = compute_heff_backend(
-                    vqe, "fake_backend", provider_name, n_shots, which_hadamard_test, rep,
+                    vqe,
+                    "fake_backend",
+                    provider_name,
+                    n_shots,
+                    which_hadamard_test,
+                    rep,
                 )
                 save_heff(cdir, f"H_eff_fake_backend_rep{rep}", heff)
                 save_mc_ingredients(cdir, f"mc_fake_backend_rep{rep}", mc)
@@ -284,7 +320,10 @@ def generate_dispersion_data(
         # Save metadata
         save_metadata(
             cdir,
-            J=J, hl=hl, N=N, n_shots=n_shots,
+            J=J,
+            hl=hl,
+            N=N,
+            n_shots=n_shots,
             provider_name=provider_name,
             which_hadamard_test=which_hadamard_test,
             n_repetitions=n_repetitions,

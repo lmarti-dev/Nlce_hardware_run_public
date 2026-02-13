@@ -182,10 +182,9 @@ def baptize_circuit(
     prefix: str,
     method: ALGORITHMS_ALIAS,
     n_qubits: int,
-    ratio: float,
     provider_name: str,
     n_shots: int,
     which_hadamard_test: str,
 ) -> str:
 
-    return f"{prefix}_{method}_{n_qubits}_{int(ratio*100)}j_{provider_name}_{n_shots}shots_{which_hadamard_test}_test"
+    return f"{prefix}_{method}_{n_qubits}_{provider_name}_{n_shots}shots_{which_hadamard_test}_test"

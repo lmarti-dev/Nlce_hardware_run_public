@@ -152,12 +152,10 @@ def vqe_heff(
     )
     n_qubits = hamiltonian1.num_qubits
     elem_circuit = apply_parameters(elem_circuit, elem_weights[-1])
-    ratio = get_tfim_ratio(hamiltonian1)
     name_part = baptize_circuit(
         f"dim1d_{which_model}",
         "vqe",
         n_qubits,
-        ratio,
         provider_name,
         n_shots,
         which_hadamard_test,
@@ -226,12 +224,10 @@ def sweep_heff(
         total_time=total_time,
         n_steps=n_steps,
     )
-    ratio = get_tfim_ratio(hamiltonian)
     name_part = baptize_circuit(
         f"dim1d_{which_model}",
         "sweep",
         n_qubits,
-        ratio,
         provider_name,
         n_shots,
         which_hadamard_test,
