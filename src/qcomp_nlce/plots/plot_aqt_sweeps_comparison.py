@@ -27,10 +27,36 @@ runs_80j_0hl = (
     r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_12\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00002",
 )
 
-runs_80j_50hl = (
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\vqe_workflow_TFIM_hl_50_hadam_stefan_AQT_2000shots_00001",
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\vqe_workflow_TFIM_hl_50_hadam_stefan_AQT_2000shots_00002",
+runs_80j_10hl = (
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_80j_10hl_hadam_stefan_AQT_2000shots_00001",
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_80j_10hl_hadam_stefan_AQT_2000shots_00002",
 )
+
+runs_80j_50hl = (
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_80j_50hl_hadam_stefan_AQT_2000shots",
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_80j_50hl_hadam_stefan_AQT_2000shots_00001",
+)
+
+runs_80j_100hl = (
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_80j_100hl_hadam_stefan_AQT_2000shots",
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_80j_100hl_hadam_stefan_AQT_2000shots",
+)
+
+runs_100j_10hl = (
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_100j_10hl_hadam_stefan_AQT_2000shots",
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_100j_10hl_hadam_stefan_AQT_2000shots_00001",
+)
+
+runs_100j_50hl = (
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_100j_50hl_hadam_stefan_AQT_2000shots",
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_100j_50hl_hadam_stefan_AQT_2000shots_00001",
+)
+
+runs_100j_100hl = (
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_100j_100hl_hadam_stefan_AQT_2000shots",
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_100j_100hl_hadam_stefan_AQT_2000shots_00001",
+)
+
 
 dry_run = False
 m_edm = ExperimentDataManager(
@@ -42,7 +68,12 @@ for crun in (
     ("tfim_100j_0hl_10x_better", runs_10improvement),
     ("tfim_100j_0hl_100x_better", runs_100improvement),
     ("tfim_80j_0hl", runs_80j_0hl),
+    ("tfim_80j_10hl", runs_80j_10hl),
     ("tfim_80j_50hl", runs_80j_50hl),
+    ("tfim_80j_100hl", runs_80j_100hl),
+    ("tfim_100j_10hl", runs_100j_10hl),
+    ("tfim_100j_50hl", runs_100j_50hl),
+    ("tfim_100j_100hl", runs_100j_100hl),
 ):
     name = crun[0]
     fpaths = crun[1]
