@@ -222,6 +222,13 @@ def TFIM(
     return hamiltonian
 
 
+def model_str(J: float, hl: float, ladder: bool):
+    name = f"{str(int(J*100))}j_{str(int(hl*100))}hl"
+    if ladder:
+        name += "_ladder"
+    return name
+
+
 def TFIM_ladder(
     n_rungs: int,
     h: float,

@@ -54,8 +54,11 @@ if __name__ == "__main__":
     aqt_fpath = r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_02\vqe_workflow_TFIM_hadam_stefan_AQT_200shots_00001\run_00000\data\macadamias_00000.json"
 
     jobj = load_json(aqt_fpath)
+    if "model_dir" in jobj["inputs"]:
+        which_model = jobj["inputs"]["model_dir"]
+    else:
+        which_model = jobj["inputs"]["which_model"]
 
-    which_model = jobj["inputs"]["which_model"]
     textcolors = ["k", "w"]
 
     fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(8, 6), constrained_layout=True)

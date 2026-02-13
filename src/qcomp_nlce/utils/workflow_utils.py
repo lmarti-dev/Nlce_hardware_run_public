@@ -60,7 +60,7 @@ def vqe_dispersion(
     group_size: int,
     which_hadamard_test: str,
     n_reps: int,
-    which_model: str = "TFIM",
+    which_model: str,
 ):
     dict_l = vqe_heff(
         gs_dirname_l,
@@ -98,8 +98,10 @@ def sweep_dispersion(
     ks: np.ndarray,
     group_size: int,
     which_hadamard_test: str,
-    which_model: str = "TFIM",
+    which_model: str,
     n_reps: int = 1,
+    hl: float = 0,
+    ladder: bool = False,
 ):
     dict_l = sweep_heff(
         n_qubits_max,
@@ -112,6 +114,8 @@ def sweep_dispersion(
         which_hadamard_test,
         which_model=which_model,
         n_reps=n_reps,
+        hl=hl,
+        ladder=ladder,
     )
     dict_s = sweep_heff(
         n_qubits_max - 1,
@@ -124,6 +128,8 @@ def sweep_dispersion(
         which_hadamard_test,
         which_model=which_model,
         n_reps=n_reps,
+        hl=hl,
+        ladder=ladder,
     )
 
     return dict_l, dict_s, dispersion_all_backends(dict_l, dict_s, ks)
@@ -137,8 +143,8 @@ def vqe_heff(
     n_shots: int,
     group_size: int,
     which_hadamard_test: str,
-    n_reps: int = 1,
-    which_model: str = "TFIM",
+    n_reps: int,
+    which_model: str,
 ) -> dict:
 
     hamiltonian1, elem_circuit, elem_weights, ground_energy = load_optimized_vqe(
@@ -164,7 +170,7 @@ def vqe_heff(
     assert hamiltonian1 == hamiltonian2
     hamiltonian = hamiltonian1
 
-    hamiltonian.__dict__[HAM_NAME_VAR] = "TFIM"
+    hamiltonian.__dict__[HAM_NAME_VAR] = which_model
 
     return get_heff_values(
         gs_circuit,
@@ -179,24 +185,7 @@ def vqe_heff(
     )
 
 
-def pick_model(
-    n_qubits: int,
-    J: float,
-    which_model: str,
-):
-    if "ladder" in which_model:
-        ladder = True
-    else:
-        ladder = False
-
-    if "HL" in which_model:
-        if len(which_model.split("_")) == 3:
-            parts = which_model.split("_")
-            hl = int(parts[-1]) / 100
-        else:
-            hl = 0.1
-    else:
-        hl = 0.0
+def pick_model(n_qubits: int, J: float, hl: float, ladder: bool):
 
     ham_j, ham_h = TFIM(
         n_qubits,
@@ -219,10 +208,12 @@ def sweep_heff(
     n_shots: int,
     group_size: int,
     which_hadamard_test: str,
-    which_model: str = "TFIM",
+    which_model: str,
     n_reps: int = 1,
+    hl: float = 0,
+    ladder: bool = False,
 ):
-    ham_j, ham_h = pick_model(n_qubits, J, which_model)
+    ham_j, ham_h = pick_model(n_qubits, J, hl, ladder)
     hamiltonian = ham_j + ham_h
     min_gap = get_min_gap(hamiltonian)
     # the most important thing is to have enough steps!!!
@@ -390,7 +381,7 @@ def plot_multiple_dispersions_1d(_l: list[dict]) -> plt.Figure:
 
 
 def plot_all_backends_dispersions_montecarlo(
-    _d: dict, which_circ: list = None
+    _d: dict, which_circ: list = None, which_model: str = None
 ) -> plt.Figure:
 
     ks = _d["inputs"]["ks"]
@@ -430,12 +421,12 @@ def plot_all_backends_dispersions_montecarlo(
                     capsize=capsize,
                     markersize=markersize,
                 )
-
-    if "which_model" not in _d["inputs"].keys():
-        which_model = "TFIM"
-    else:
-        which_model = _d["inputs"]["which_model"]
-    if which_model == "TFIM" or which_model == "TFIM_0hl":
+    if which_model is None:
+        if "which_model" not in _d["inputs"].keys():
+            which_model = "TFIM_0hl"
+        else:
+            which_model = _d["inputs"]["which_model"]
+    if "_0hl" in which_model and "ladder" not in which_model:
         ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="Analytic")
 
     ax.set_ylabel(r"$\omega(k)$")

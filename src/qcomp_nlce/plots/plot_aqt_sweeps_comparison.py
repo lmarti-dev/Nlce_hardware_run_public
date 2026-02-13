@@ -22,22 +22,30 @@ runs_100improvement = (
 )
 
 
-runs_80j = (
+runs_80j_0hl = (
     r"C:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_12\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00001",
     r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_12\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00002",
 )
+
+runs_80j_50hl = (
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\vqe_workflow_TFIM_hl_50_hadam_stefan_AQT_2000shots_00001",
+    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\vqe_workflow_TFIM_hl_50_hadam_stefan_AQT_2000shots_00002",
+)
+
+dry_run = False
+m_edm = ExperimentDataManager(
+    f"plot_sweep_comparison_aqt", project="nlce", dry_run=dry_run
+)
+
 for crun in (
-    # ("current", runs_current),
-    # ("10x_better", runs_10improvement),
-    # ("100x_better", runs_100improvement),
-    ("80j", runs_80j),
+    ("tfim_100j_0hl_current", runs_current),
+    ("tfim_100j_0hl_10x_better", runs_10improvement),
+    ("tfim_100j_0hl_100x_better", runs_100improvement),
+    ("tfim_80j_0hl", runs_80j_0hl),
+    ("tfim_80j_50hl", runs_80j_50hl),
 ):
     name = crun[0]
     fpaths = crun[1]
-    dry_run = False
-    m_edm = ExperimentDataManager(
-        f"plot_sweep_comparison_aqt_{name}", project="nlce", dry_run=dry_run
-    )
 
     dicts = []
     for r in fpaths:
@@ -70,7 +78,8 @@ for crun in (
     ax.errorbar(ks, fb10, fberr10, capsize=2, fmt="o-", label=f"{fb_label}, 10 steps")
     ax.errorbar(ks, fb20, fberr20, capsize=2, fmt="o-", label=f"{fb_label}, 20 steps")
     ax.plot(ks, ed, "+-", label="ED")
-    ax.plot(ks, ana, "d-", label="Analytic")
+    if "_0hl" in name:
+        ax.plot(ks, ana, "d-", label="Analytic")
 
     ax.set_ylabel(r"$\omega(k)$")
     ax.set_xlabel("$k$")

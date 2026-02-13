@@ -15,6 +15,7 @@ from qcomp_nlce.utils.stats import mc_disp_from_res_dict
 from qcomp_nlce.utils.hardware import PROVIDER_ALIAS, BACKEND_TYPES
 from qcomp_nlce.utils.overlap import HADAMARD_TESTS
 from qcomp_nlce.utils.constants import ALGORITHMS_ALIAS
+from qcomp_nlce.utils.hamiltonian import model_str
 from data_manager import ExperimentDataManager
 
 import matplotlib.pyplot as plt
@@ -157,54 +158,20 @@ def workflow_nq_aqt_ladder(dry_run):
     )
 
 
-def workflow_nq_aqt_sweep(dry_run):
+def workflow_nq_aqt_hl(dry_run):
 
     J = 1
     which_backends = [
-        "real_backend",
-        "fake_backend",
-        "statevector",
-    ]
-    provider_name: PROVIDER_ALIAS = "AQT_BETTER_100"
-    n_shots = int(2000)
-    which_hadamard_test = "stefan"
-    n_qubits_max = 5
-    workflow_nq(
-        dry_run,
-        n_qubits_max,
-        which_hadamard_test,
-        provider_name,
-        n_shots,
-        which_backends,
-        ["sweep"],
-        J,
-        n_steps=10,
-    )
-    workflow_nq(
-        dry_run,
-        n_qubits_max,
-        which_hadamard_test,
-        provider_name,
-        n_shots,
-        which_backends,
-        ["sweep"],
-        J,
-        n_steps=20,
-    )
-
-
-def workflow_nq_aqt_hl(dry_run):
-
-    J = 0.8
-    which_backends = [
-        "real_backend",
+        # "real_backend",
         "fake_backend",
         "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
-    n_shots = int(200)
+    n_shots = int(2000)
     which_hadamard_test = "stefan"
     n_qubits_max = 5
+    n_reps = 1
+
     workflow_nq(
         dry_run,
         n_qubits_max,
@@ -213,10 +180,28 @@ def workflow_nq_aqt_hl(dry_run):
         n_shots,
         which_backends,
         ["vqe"],
-        J,
-        which_model="TFIM_hl_10",
-        n_reps=10,
+        J=0.5,
+        n_reps=n_reps,
+        hl=0.1,
     )
+
+    for J in (0.8, 1.0):
+        for hl in (0.1, 0.5, 1.0):
+
+            for n_steps in (10, 20):
+                workflow_nq(
+                    dry_run,
+                    n_qubits_max,
+                    which_hadamard_test,
+                    provider_name,
+                    n_shots,
+                    which_backends,
+                    ["sweep"],
+                    J,
+                    n_reps=n_reps,
+                    n_steps=n_steps,
+                    hl=hl,
+                )
 
 
 def workflow_nq(
@@ -230,15 +215,15 @@ def workflow_nq(
     J: float,
     n_steps: int = 1,
     n_mc_samples: int = 10000,
-    which_model: str = "TFIM",
     n_reps: int = 1,
+    hl: float = 0,
+    ladder: bool = False,
 ):
     # avoid the "unused arguments" warning
     # warnings.filterwarnings("ignore")
     ks = np.linspace(0, np.pi, 21)
     group_size = None
-    ladder_model = "ladder" in which_model
-    if ladder_model:
+    if ladder:
         qubits_max_str = f"{n_qubits_max}x2"
         qubits_min_str = f"{n_qubits_max - 1}x2"
 
@@ -246,23 +231,15 @@ def workflow_nq(
         qubits_max_str = str(n_qubits_max)
         qubits_min_str = str(n_qubits_max - 1)
 
-    vqe_l_dir = f"{qubits_max_str}q_{get_optimal_n_layers(n_qubits_max,ladder_model)}l"
-    vqe_s_dir = (
-        f"{qubits_min_str}q_{get_optimal_n_layers(n_qubits_max-1,ladder_model)}l"
-    )
+    vqe_l_dir = f"{qubits_max_str}q_{get_optimal_n_layers(n_qubits_max,ladder)}l"
+    vqe_s_dir = f"{qubits_min_str}q_{get_optimal_n_layers(n_qubits_max-1,ladder)}l"
 
-    model_dir = f"vqe_{int(J*100)}j"
-
-    if "HL" in which_model:
-        if len(which_model.split("_")) == 3:
-            hl = int(which_model.split("_")[-1])
-        else:
-            hl = 10
-    else:
-        hl = 0
-    model_dir += f"_{str(hl)}hl"
-    if "ladder" in which_model:
-        model_dir += "_ladder"
+    # dirty trick
+    # now there are multiple names going around
+    # it's too late to centralize
+    # but we can mitigate
+    which_model = model_str(J, hl, ladder)
+    model_dir = "vqe_" + which_model
 
     gs_dirname_l = Path(res_sim_dir(), f"gs_{model_dir}/vqe/{vqe_l_dir}")
     gs_dirname_s = Path(res_sim_dir(), f"gs_{model_dir}/vqe/{vqe_s_dir}")
@@ -277,7 +254,7 @@ def workflow_nq(
     )
 
     edm = ExperimentDataManager(
-        f"vqe_workflow_{which_model}_hadam_{which_hadamard_test}_{provider_name}_{n_shots}shots",
+        f"{'_'.join(which_algorithms)}_workflow_{model_dir}_hadam_{which_hadamard_test}_{provider_name}_{n_shots}shots",
         dry_run=dry_run,
     )
 
@@ -286,17 +263,19 @@ def workflow_nq(
         "inputs": {
             "ks": ks,
             "J": J,
+            "hl": hl,
+            "ladder": ladder,
             "provider_name": provider_name,
             "group_size": group_size,
             "n_qubits": n_qubits_max,
             "n_shots": n_shots,
-            "which_model": which_model,
             "n_steps": n_steps,
             "n_mc_samples": n_mc_samples,
             "which_algorithms": which_algorithms,
             "which_backends": which_backends,
             "which_hadamard_test": which_hadamard_test,
             "n_reps": n_reps,
+            "model_dir": model_dir,
         },
     }
     if "sweep" in which_algorithms:
@@ -313,6 +292,8 @@ def workflow_nq(
             which_hadamard_test,
             which_model,
             n_reps,
+            hl=hl,
+            ladder=ladder,
         )
 
         out_dict["results"]["sweep"] = {
@@ -350,7 +331,7 @@ def workflow_nq(
         mc_disp = mc_disp_from_res_dict(ks, out_dict, "vqe", n_mc_samples, to_eotm=True)
         out_dict["results"]["vqe"]["mc_disp"] = mc_disp
 
-    ed_disp = tfim_ed_dispersion(n_qubits_max, J, ks, hl=hl, ladder=ladder_model)
+    ed_disp = tfim_ed_dispersion(n_qubits_max, J, ks, hl=hl, ladder=ladder)
     out_dict["results"]["ed"] = {"disp": {"statevector": ed_disp}}
     edm.save_dict(out_dict)
 
@@ -365,4 +346,4 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt(False)
+    workflow_nq_aqt_hl(True)
