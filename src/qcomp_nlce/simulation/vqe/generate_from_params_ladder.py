@@ -148,7 +148,7 @@ def generate_elem(n_qubits_per_chain: int, n_layers: int, J: float, h: float, hl
                   has_longitudinal_field: bool, params: np.ndarray):
     """Generate and save elementary (1qp) VQE data for ladder geometry."""
     ham_j, ham_h = TFIM_ladder(n_qubits_per_chain, h, J, split_parts=True,
-                               longitudinal_field=hl)
+                               )
     hamiltonian = ham_j + ham_h
     total_qubits = hamiltonian.num_qubits
 

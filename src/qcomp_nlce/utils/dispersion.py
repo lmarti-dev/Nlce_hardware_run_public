@@ -59,32 +59,18 @@ def cluster_dispersion_ladder(
 ) -> float:
     """Fourier transform H_eff for a ladder cluster at momentum (kx, ky).
 
-    Following the 2D convention from the Julia code:
-      - For n_x > n_y (n_rungs > 2): sum both orientations
-            cos(hopx*kx + hopy*ky) + cos(hopx*ky + hopy*kx)
-      - For n_x == n_y (2x2): single orientation
-            cos(hopx*kx + hopy*ky)
-
-    Here n_x = n_rungs, n_y = 2.
+    Single-orientation cos transform: the ladder has a fixed geometry
+    (n_rungs along x, 2 legs along y), so no rotated-orientation sum.
     """
     n_sites = 2 * n_rungs
     coords = _ladder_coordinates(n_rungs)
-    n_x = n_rungs
-    n_y = 2
 
     total = 0.0
     for i in range(n_sites):
         for j in range(n_sites):
             hopx = coords[j][0] - coords[i][0]
             hopy = coords[j][1] - coords[i][1]
-
-            if n_x > n_y:
-                fourier = H_effective[i, j] * np.cos(hopx * kx + hopy * ky)
-                fourier += H_effective[i, j] * np.cos(hopx * ky + hopy * kx)
-            else:  # n_x == n_y (2x2 case)
-                fourier = H_effective[i, j] * np.cos(hopx * kx + hopy * ky)
-
-            total += fourier
+            total += H_effective[i, j] * np.cos(hopx * kx + hopy * ky)
 
     return total
 

@@ -1,5 +1,3 @@
-from qcomp_nlce.simulation.vqe.plot_dispersion import plot_single_cluster, plot_nlce
+from qcomp_nlce.simulation.vqe.plot_dispersion_ladder import plot_nlce_ladder
 
-plot_single_cluster(N=5, J=1.0, hl=0.0)
-plot_single_cluster(N=4, J=1.0, hl=0.0)
-plot_nlce(cluster_pairs=[(5, 4)], J=1.0, hl=0.0)
+plot_nlce_ladder(cluster_pairs=[(3, 2)], J=0.328, hl=0.0)
