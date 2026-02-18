@@ -27,16 +27,17 @@ import numpy as np
 from data_manager import ExperimentDataManager
 
 
-def compare_expec_gs():
+def compare_expec_gs(provider_name: PROVIDER_ALIAS = "IBM_PERFECT"):
     dry_run = False
     edm = ExperimentDataManager(
-        "classical_shadows_vs_the_world_IBM_GENERIC", project="nlce", dry_run=dry_run
+        f"classical_shadows_vs_the_world_{str(provider_name)}",
+        project="nlce",
+        dry_run=dry_run,
     )
     dirname = Path(res_sim_dir(), f"gs_vqe_100j_0hl/vqe/5q_3l")
 
     hamiltonian, circ, weights, ground_energy = load_optimized_vqe(dirname)
     circ = apply_parameters(circ, weights[-1])
-    provider_name: PROVIDER_ALIAS = "IBM_GENERIC"
     backend = get_appropriate_fake_backend(hamiltonian.num_qubits, provider_name)
     sampler = SamplerV2(backend)
     backend_circ = compile_circuit_for_backend(circ, backend)

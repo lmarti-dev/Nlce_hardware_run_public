@@ -233,6 +233,11 @@ def get_appropriate_fake_backend(
         # and this isn't taken into account here
         n_qubits += 4
         return GenericBackendV2(n_qubits)
+    elif which == "IBM_PERFECT":
+        n_qubits += 4
+        backend = GenericBackendV2(n_qubits)
+        backend.set_options(noise_model=None)
+        return backend
     elif which == "IQM_PRETTYGOOD":
         return IQMFakePrettyGood()
     elif which == "IQM_REALLYGOOD":

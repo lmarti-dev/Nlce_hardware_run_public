@@ -84,9 +84,8 @@ def dispersion_ladder_thermodynamic(
     """
     Nb = H_eff_Nb.shape[0] // 2  # number of rungs in bigger cluster
     Ns = H_eff_Ns.shape[0] // 2  # number of rungs in smaller cluster
-    return (
-        cluster_dispersion_ladder(Nb, H_eff_Nb, kx, ky)
-        - cluster_dispersion_ladder(Ns, H_eff_Ns, kx, ky)
+    return cluster_dispersion_ladder(Nb, H_eff_Nb, kx, ky) - cluster_dispersion_ladder(
+        Ns, H_eff_Ns, kx, ky
     )
 
 
@@ -104,27 +103,31 @@ def heff_n_expectation_values_1d(n_qubits: int, hl: bool = False) -> int:
         overlap = 2 * q**2
         # 1 per diagonal, 4 per nondiagonal element
         # for a 1d ising model, one needs 3 circuits to measure the Hamiltonian:
-        # 1 for sum Z, 1 for odd XX, and 1 for even XX.
-        # so 3 totl
+        # 1 for sum Z, 1 for XX.
+        # so 2 total
         # if Hl, there's one more for the X field.
         if hl:
-            ff = 4
-        else:
             ff = 3
+        else:
+            ff = 2
         expectations = ff * (q + 4 * sum(range(1, q)))
         gs = 1
         total += sum([overlap, expectations, gs])
     return total
 
 
-def heff_n_expectation_values_ladder(n_qubits: int) -> int:
+def heff_n_expectation_values_ladder(n_qubits: int, hl: bool = False) -> int:
     total = 0
+    if hl:
+        ff = 3
+    else:
+        ff = 2
     for q in (n_qubits - 2, n_qubits):
-        total += 2 * q**2 + 4 * (q + 4 * sum(range(1, q))) + 1
+        total += 2 * q**2 + ff * (q + 4 * sum(range(1, q))) + 1
     return total
 
 
-def heff_n_expectation_values_2d(n_qubits: int) -> int:
+def heff_n_expectation_values_2d(n_qubits: int, hl: bool = False) -> int:
     total = 0
 
     # in the 2d case, for the hamiltonian, we have
@@ -132,16 +135,20 @@ def heff_n_expectation_values_2d(n_qubits: int) -> int:
     # so 5 total
 
     # 1D chains: only two largest
+    if hl:
+        ff = 3
+    else:
+        ff = 2
     for m in (n_qubits - 1, n_qubits):
         q = m
-        total += 2 * q**2 + 3 * (q + 4 * sum(range(1, q))) + 1
+        total += 2 * q**2 + ff * (q + 4 * sum(range(1, q))) + 1
 
     # 2D rectangles: m >= n >= 2, boundary only
     for m in range(2, n_qubits + 1):
         for n in range(2, m + 1):
             if m * n <= n_qubits and (m + 2) * (n + 2) > n_qubits:
                 q = m * n
-                total += 2 * q**2 + 5 * (q + 4 * sum(range(1, q))) + 1
+                total += 2 * q**2 + ff * (q + 4 * sum(range(1, q))) + 1
 
     return total
 
