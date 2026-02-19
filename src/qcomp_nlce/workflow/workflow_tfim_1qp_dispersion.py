@@ -71,6 +71,31 @@ def workflow_nq_qexa(dry_run):
     )
 
 
+def workflow_nq_eqe(dry_run):
+
+    J = 1
+    which_backends = [
+        # "real_backend",
+        "fake_backend",
+        # "statevector",
+    ]
+    provider_name: PROVIDER_ALIAS = "EQE"
+    n_shots = int(1e6)
+    which_hadamard_test = "stefan_samples"
+    n_qubits_max = 5
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["vqe"],
+        J,
+        n_reps=1,
+    )
+
+
 def workflow_nq_iqm_manual(dry_run):
     J = 1
     which_backends = [
@@ -347,4 +372,4 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt_ladder(True)
+    workflow_nq_eqe(True)

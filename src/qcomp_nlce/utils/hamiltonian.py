@@ -218,6 +218,9 @@ def TFIM(
     hamiltonian = hamiltonian_J + hamiltonian_h
 
     hamiltonian.__dict__[HAM_NAME_VAR] = "TFIM" + "_ladder" * ladder
+    hamiltonian.__dict__["h"] = h
+    hamiltonian.__dict__["J"] = J
+    hamiltonian.__dict__["hl"] = longitudinal_field
 
     return hamiltonian
 
@@ -261,13 +264,16 @@ def TFIM_ladder(
     # Z field on every qubit
     hamiltonian_h = -h * field_pauli_sum(total, "Z")
 
-    # Longitudinal X field
-
     if split_parts:
         return hamiltonian_J, hamiltonian_h
 
     hamiltonian = hamiltonian_J + hamiltonian_h
-    hamiltonian.__dict__[HAM_NAME_VAR] = "TFIM_ladder"
+
+    hamiltonian.__dict__[HAM_NAME_VAR] = "TFIM" + "_ladder"
+    hamiltonian.__dict__["h"] = h
+    hamiltonian.__dict__["J"] = h
+    hamiltonian.__dict__["hl"] = 0
+
     return hamiltonian
 
 

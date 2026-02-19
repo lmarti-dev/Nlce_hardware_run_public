@@ -537,6 +537,13 @@ def backend_sample(
             payload,
             shots=int(n_shots),
         )
+    elif "name" in backend.__dict__ and (backend.name == "EQE1"):
+        # eqe1 is compiled server-side I believe
+        if isinstance(circuit, list):
+            payload = circuit
+        else:
+            payload = [circuit]
+        job = backend.run(payload, shots=n_shots, no_modify=False)
     elif isinstance(backend, AQTResource) or backend.name == "AQT20":
         payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
         job = sampler.run(payload, parameter_values=None, shots=n_shots)
@@ -629,26 +636,19 @@ def manual_hamiltonian_circuits(
 ) -> list[QuantumCircuit]:
     if HAM_NAME_VAR not in hamiltonian.__dict__:
         raise ValueError("Expected the hamiltonian to have name")
-    if hamiltonian.__dict__[HAM_NAME_VAR] == "TFIM":
+    if "j_0hl" in hamiltonian.__dict__[HAM_NAME_VAR]:
         n_qubits = hamiltonian.num_qubits
         # ZZZ
         z_circ = circuit.copy()
         z_circ.measure_all()
 
         # XX XX XX
-        # even
 
-        x_circ_even = circuit.copy()
-        even_paulis = get_tfim_xx(n_qubits, "even")
-        for pauli in even_paulis:
-            x_circ_even = measure_pauli_circuit(x_circ_even, pauli, False)
+        x_circ = circuit.copy()
+        x_circ.h(range(circuit.num_qubits))
+        x_circ.measure_all()
 
-        x_circ_odd = circuit.copy()
-        odd_paulis = get_tfim_xx(n_qubits, "odd")
-        for pauli in odd_paulis:
-            x_circ_odd = measure_pauli_circuit(x_circ_odd, pauli, False)
-
-        return [z_circ, x_circ_even, x_circ_odd]
+        return [z_circ, x_circ]
 
     else:
         raise ValueError(

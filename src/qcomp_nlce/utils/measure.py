@@ -39,6 +39,8 @@ import numpy as np
 from qiskit_aer import AerJob
 from iqm.qiskit_iqm.iqm_job import IQMJob
 
+from typing import Literal
+
 
 def circuit_estimation_job(
     circuit: QuantumCircuit | list[QuantumCircuit],
@@ -62,33 +64,28 @@ def circuit_estimation_job(
     return job
 
 
-def trace_out_estimation(counts: dict, ind: int, z_sym: bool) -> tuple[float, float]:
-    assert all(ind < len(k) for k in counts.keys())
-    count_0 = 0
-    count_1 = 0
+def trace_out_estimation(
+    counts: dict, ind: list[int], has_parity: Literal[0, 1, False]
+) -> tuple[float, float]:
+    total = 0
+    val = 0
     for k in counts.keys():
+
         # random spaces in my bitstrings?
         # actually meant to tell you that you didn't measure a qubit
         # oh my god how many different ways are there
         # there's a collective agreement not to represent bitstirng coherently
-        ks = k.replace(" ", "")
-        is_sim = True
-        if z_sym:
+        parity_unbroken = True
+        if has_parity in (0, 1):
+
             # if bitstring is even, z_parity is broken
-            if sum([int(kk) for kk in ks]) % 2 == 0:
-                is_sim = False
-        if is_sim:
-            if ks[ind] == "0":
-                count_0 += counts[k]
-            elif ks[ind] == "1":
-                count_1 += counts[k]
-            else:
-                raise ValueError(
-                    f"Expected bitstring to be either zeros or ones, got {k[ind]}"
-                )
-    return (count_0 - count_1) / (count_0 + count_1), std_from_shots(
-        count_1, count_0, count_0 + count_1
-    )
+            if sum([int(kk) for kk in k]) % 2 != has_parity:
+                parity_unbroken = False
+        if parity_unbroken:
+            subs = sum([int(k[jj]) for jj in ind])
+            val += counts[k] * (-1) ** subs
+            total += counts[k]
+    return val / total, 1 - (val / total) ** 2
 
 
 def std_from_shots(n_1: int, n_0: int, n_shots: int) -> float:
