@@ -1,10 +1,16 @@
-from qcomp_nlce.utils import get_backend, backend_sample, get_counts_from_res
+from qcomp_nlce.utils import (
+    get_backend,
+    backend_sample,
+    get_counts_from_res,
+    get_appropriate_fake_backend,
+)
 from qiskit import QuantumCircuit
 from data_manager import ExperimentDataManager
 from qiskit.visualization import plot_distribution
 import os, json
 from pathlib import Path
 import matplotlib.pyplot as plt
+from qiskit import transpile
 
 
 def ghz_circ(n_qubits: int):
@@ -16,25 +22,33 @@ def ghz_circ(n_qubits: int):
     return c
 
 
-def hardware_run():
+def hardware_run(fake: bool):
     n_qubits = 8
     circ = ghz_circ(n_qubits)
-    edm = ExperimentDataManager("ght_test_all_backends", project="nlce", dry_run=False)
 
-    for provider_name, n_shots in (("AQT", int(2e2)),):
+    provider_name = "EQE"
+    n_shots = int(1e6)
+    edm = ExperimentDataManager(
+        f"ghz_test_{provider_name}_{n_shots}", project="nlce", dry_run=False
+    )
+
+    if fake:
+        backend = get_appropriate_fake_backend(n_qubits, provider_name)
+    else:
         backend = get_backend(n_qubits, provider_name)
-        job = backend_sample(backend, circ, None, n_shots)
-        counts = get_counts_from_res(job.result(), n_qubits, 0)
-        edm.save_dict({"counts": counts})
-        edm.var_dump(provider_name=provider_name, n_shots=n_shots)
+    transpiled_circuit = transpile(circ, backend=backend)
+    job = backend.run(transpiled_circuit, shots=n_shots)
+    counts = get_counts_from_res(job.result(), n_qubits, 0)
+    edm.save_dict({"counts": counts})
+    edm.var_dump(provider_name=provider_name, n_shots=n_shots)
 
-        fig = plot_distribution(
-            counts,
-            title=f"{provider_name}, {n_qubits} qubits, {n_shots} shots",
-            number_to_keep=5,
-        )
+    fig = plot_distribution(
+        counts,
+        title=f"{provider_name}, {n_qubits} qubits, {n_shots} shots",
+        number_to_keep=5,
+    )
 
-        edm.save_figure(fig)
+    edm.save_figure(fig)
 
 
 def load_and_plot(fpath: Path = None, title: str = None):
@@ -55,4 +69,4 @@ def load_and_plot(fpath: Path = None, title: str = None):
 
 
 if __name__ == "__main__":
-    hardware_run()
+    hardware_run(False)

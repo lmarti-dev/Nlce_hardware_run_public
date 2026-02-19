@@ -158,6 +158,15 @@ def get_qexa_backend(n_qubits: int) -> MQPBackend:
     return backend
 
 
+def get_eqe_backend(n_qubits: int) -> MQPBackend:
+    if n_qubits > 53:
+        raise ValueError(f"Maximum number of qubits is 53, requested: {n_qubits}")
+    token = get_token("LRZ")
+    provider = MQPProvider(token)
+    backend = provider.get_backend("EQE1")
+    return backend
+
+
 def get_iqm_backend(n_qubits: int) -> "IQMBackend":
     if n_qubits < 20:
         device_name = "garnet"
@@ -187,7 +196,8 @@ def get_backend(n_qubits: int, which: PROVIDER_ALIAS) -> Union[IBMBackend, MQPBa
         return get_iqm_backend(n_qubits)
     elif which == "QEXA":
         return get_qexa_backend(n_qubits)
-
+    elif which == "EQE":
+        return get_eqe_backend(n_qubits)
     else:
         raise ValueError(f"Requested invalid backend: {which}")
 
@@ -217,7 +227,7 @@ def get_appropriate_fake_backend(
         return AQTProvider("ANY_TOKEN_WORKS_FOR_OFFLINE_SIM").get_backend(
             "offline_simulator_no_noise"
         )
-    elif which == "IQM" or which == "QEXA":
+    elif which == "IQM" or which == "QEXA" or which == "EQE":
         n_qubits += 2
         # counting ancillas and resonators!
         if n_qubits <= 5:
