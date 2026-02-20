@@ -752,14 +752,13 @@ def measure_matrix_elements(
 
 
 def estimation_from_samples(
-    res: PrimitiveResult, hamiltonian: SparsePauliOp, z_sym: bool = True
+    res: PrimitiveResult, hamiltonian: SparsePauliOp, z_sym: bool = False
 ) -> tuple[complex, complex]:
 
-    # remember php?
     if z_sym:
         has_parity = 1
     else:
-        has_parity = False
+        has_parity = -1
 
     counts = res.get_counts()
 
@@ -788,7 +787,7 @@ def estimation_from_samples(
         x_vals.append(val)
         x_stds.append(std)
 
-    ffval = sum(x_vals) * J + sum(z_vals) * h
+    ffval = -sum(x_vals) * J - sum(z_vals) * h
     ffstd = sum_std([sum_std(x_stds) * J, sum_std(z_vals) * h])
 
     return ffval, ffstd
@@ -850,6 +849,11 @@ def estimate_ham_with_reps(
     backend: BACKEND_ALIAS,
     n_reps: int,
 ):
+
+    if backend != "statevector" and ("IQM" in backend.name or "EQE" in backend.name):
+        job = measure_manual_circuit(backend, circuit, hamiltonian, n_shots)
+        res = job.result()
+        return estimation_from_samples(res, hamiltonian)
     job = circuit_estimation_job(
         [circuit for _ in range(n_reps)], [hamiltonian], None, backend, n_shots
     )

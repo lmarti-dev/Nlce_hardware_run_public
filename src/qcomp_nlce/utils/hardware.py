@@ -123,6 +123,7 @@ BACKEND_ALIAS = (
 PROVIDER_ALIAS = Literal[
     "IBM",
     "AQT",
+    "EQE",
     "IQM",
     "QEXA",
     "IBM_GENERIC",

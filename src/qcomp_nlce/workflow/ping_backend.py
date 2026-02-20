@@ -7,4 +7,4 @@ def pending_jobs(provider_name: PROVIDER_ALIAS):
 
 
 if __name__ == "__main__":
-    pending_jobs("AQT")
+    pending_jobs("EQE")

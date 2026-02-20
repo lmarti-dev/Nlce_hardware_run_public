@@ -65,7 +65,7 @@ def circuit_estimation_job(
 
 
 def trace_out_estimation(
-    counts: dict, ind: list[int], has_parity: Literal[0, 1, False]
+    counts: dict, ind: list[int], has_parity: Literal[0, 1, -1]
 ) -> tuple[float, float]:
     total = 0
     val = 0
