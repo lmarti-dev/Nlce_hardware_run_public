@@ -755,6 +755,7 @@ def estimation_from_samples(
     res: PrimitiveResult, hamiltonian: SparsePauliOp, z_sym: bool = False
 ) -> tuple[complex, complex]:
 
+    # error mitigation is wrong on even chains. Why??
     if z_sym:
         has_parity = 1
     else:
@@ -778,12 +779,12 @@ def estimation_from_samples(
         h = hamiltonian.h
 
     for jj in range(hamiltonian.num_qubits):
-        val, std = trace_out_estimation(z_counts, [jj], has_parity)
+        val, std = trace_out_estimation(z_counts, [jj], 1)
         z_vals.append(val)
         z_stds.append(std)
 
     for jj in range(hamiltonian.num_qubits - 1):
-        val, std = trace_out_estimation(x_counts, [jj, jj + 1], has_parity)
+        val, std = trace_out_estimation(x_counts, [jj, jj + 1], -1)
         x_vals.append(val)
         x_stds.append(std)
 

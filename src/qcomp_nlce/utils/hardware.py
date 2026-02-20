@@ -229,6 +229,9 @@ def get_appropriate_fake_backend(
             "offline_simulator_no_noise"
         )
     elif which == "IQM" or which == "QEXA" or which == "EQE":
+        if which == "EQE":
+            # That's the architecture
+            return IQMFakeAphrodite()
         n_qubits += 2
         # counting ancillas and resonators!
         if n_qubits <= 5:
