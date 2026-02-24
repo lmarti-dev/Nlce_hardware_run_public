@@ -71,15 +71,16 @@ def workflow_nq_qexa(dry_run):
     )
 
 
-def workflow_nq_iqm_manual(dry_run):
+def workflow_nq_eqe(dry_run):
+
     J = 1
     which_backends = [
         # "real_backend",
         "fake_backend",
-        "statevector",
+        # "statevector",
     ]
-    provider_name: PROVIDER_ALIAS = "IQM_PERFECT"
-    n_shots = int(1e6)
+    provider_name: PROVIDER_ALIAS = "EQE"
+    n_shots = int(1e5)
     which_hadamard_test = "stefan_samples"
     n_qubits_max = 5
     workflow_nq(
@@ -91,6 +92,7 @@ def workflow_nq_iqm_manual(dry_run):
         which_backends,
         ["vqe"],
         J,
+        n_reps=1,
     )
 
 
@@ -341,10 +343,14 @@ def workflow_nq(
     fig = plot_all_backends_dispersions_montecarlo(out_dict)
 
     edm.save_figure(fig, fig_shape="double-y")
-    # show_diffs(out_dict, "fake_backend")
-    # plt.show()
+    for _b in which_backends:
+        show_diffs(out_dict, _b)
+
+    plt.show()
+
+    ...
 
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt_ladder(True)
+    workflow_nq_eqe(True)

@@ -93,7 +93,14 @@ def exact_dispersion_1qp_1d(j: float, k: np.ndarray):
     return 2 * np.sqrt(1 + j**2 - 2 * j * np.cos(k))
 
 
-def heff_n_expectation_values_1d(n_qubits: int, hl: bool = False) -> int:
+def heff_total_shots_paper():
+    tfim_1d = heff_n_expectation_values_1d(5, 1) * 2000
+    tfim_1d_hl = heff_n_expectation_values_1d(5, 1) * 2000
+    tfim_1d_lad = heff_n_expectation_values_ladder(6, 1) * 2000
+    print(tfim_1d + tfim_1d_hl + tfim_1d_lad)
+
+
+def heff_n_expectation_values_1d(n_qubits: int, ff: int = 2) -> int:
 
     total = 0
 
@@ -104,30 +111,22 @@ def heff_n_expectation_values_1d(n_qubits: int, hl: bool = False) -> int:
         # 1 per diagonal, 4 per nondiagonal element
         # for a 1d ising model, one needs 3 circuits to measure the Hamiltonian:
         # 1 for sum Z, 1 for XX.
-        # so 2 total
-        # if Hl, there's one more for the X field.
-        if hl:
-            ff = 3
-        else:
-            ff = 2
+        # so ff=2 total
+        # if Hl, there's one more for the X field. so ff=3
         expectations = ff * (q + 4 * sum(range(1, q)))
         gs = 1
         total += sum([overlap, expectations, gs])
     return total
 
 
-def heff_n_expectation_values_ladder(n_qubits: int, hl: bool = False) -> int:
+def heff_n_expectation_values_ladder(n_qubits: int, ff: int = 2) -> int:
     total = 0
-    if hl:
-        ff = 3
-    else:
-        ff = 2
     for q in (n_qubits - 2, n_qubits):
         total += 2 * q**2 + ff * (q + 4 * sum(range(1, q))) + 1
     return total
 
 
-def heff_n_expectation_values_2d(n_qubits: int, hl: bool = False) -> int:
+def heff_n_expectation_values_2d(n_qubits: int, ff: int = 2) -> int:
     total = 0
 
     # in the 2d case, for the hamiltonian, we have
@@ -135,10 +134,6 @@ def heff_n_expectation_values_2d(n_qubits: int, hl: bool = False) -> int:
     # so 5 total
 
     # 1D chains: only two largest
-    if hl:
-        ff = 3
-    else:
-        ff = 2
     for m in (n_qubits - 1, n_qubits):
         q = m
         total += 2 * q**2 + ff * (q + 4 * sum(range(1, q))) + 1
@@ -151,11 +146,6 @@ def heff_n_expectation_values_2d(n_qubits: int, hl: bool = False) -> int:
                 total += 2 * q**2 + ff * (q + 4 * sum(range(1, q))) + 1
 
     return total
-
-
-# def heff_n_expectation_values_1d(n_qubits: int) -> int:
-#     ...
-#     return total
 
 
 if __name__ == "__main__":

@@ -123,6 +123,7 @@ BACKEND_ALIAS = (
 PROVIDER_ALIAS = Literal[
     "IBM",
     "AQT",
+    "EQE",
     "IQM",
     "QEXA",
     "IBM_GENERIC",
@@ -158,6 +159,15 @@ def get_qexa_backend(n_qubits: int) -> MQPBackend:
     return backend
 
 
+def get_eqe_backend(n_qubits: int) -> MQPBackend:
+    if n_qubits > 53:
+        raise ValueError(f"Maximum number of qubits is 53, requested: {n_qubits}")
+    token = get_token("LRZ")
+    provider = MQPProvider(token)
+    backend = provider.get_backend("EQE1")
+    return backend
+
+
 def get_iqm_backend(n_qubits: int) -> "IQMBackend":
     if n_qubits < 20:
         device_name = "garnet"
@@ -187,7 +197,8 @@ def get_backend(n_qubits: int, which: PROVIDER_ALIAS) -> Union[IBMBackend, MQPBa
         return get_iqm_backend(n_qubits)
     elif which == "QEXA":
         return get_qexa_backend(n_qubits)
-
+    elif which == "EQE":
+        return get_eqe_backend(n_qubits)
     else:
         raise ValueError(f"Requested invalid backend: {which}")
 
@@ -217,7 +228,10 @@ def get_appropriate_fake_backend(
         return AQTProvider("ANY_TOKEN_WORKS_FOR_OFFLINE_SIM").get_backend(
             "offline_simulator_no_noise"
         )
-    elif which == "IQM" or which == "QEXA":
+    elif which == "IQM" or which == "QEXA" or which == "EQE":
+        if which == "EQE":
+            # That's the architecture
+            return IQMFakeAphrodite()
         n_qubits += 2
         # counting ancillas and resonators!
         if n_qubits <= 5:
@@ -268,6 +282,12 @@ def mean_std_tuples_from_res(
             for m, s in zip(k.data.evs, k.data.stds):
                 out.append((m, s))
     return out
+
+
+def pending_jobs(n_qubits: int, provider_name: PROVIDER_ALIAS) -> int:
+    backend = get_backend(n_qubits, provider_name)
+    print(f"There are: {backend.num_pending_jobs} pending jobs on {provider_name}")
+    return backend.num_pending_jobs
 
 
 def compute_mean_circ_stats(circs: list | QuantumCircuit, verbose: bool = False):
@@ -527,6 +547,13 @@ def backend_sample(
             payload,
             shots=int(n_shots),
         )
+    elif "name" in backend.__dict__ and (backend.name == "EQE1"):
+        # eqe1 is compiled server-side I believe
+        if isinstance(circuit, list):
+            payload = circuit
+        else:
+            payload = [circuit]
+        job = backend.run(payload, shots=n_shots, no_modify=False)
     elif isinstance(backend, AQTResource) or backend.name == "AQT20":
         payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
         job = sampler.run(payload, parameter_values=None, shots=n_shots)
@@ -619,26 +646,19 @@ def manual_hamiltonian_circuits(
 ) -> list[QuantumCircuit]:
     if HAM_NAME_VAR not in hamiltonian.__dict__:
         raise ValueError("Expected the hamiltonian to have name")
-    if hamiltonian.__dict__[HAM_NAME_VAR] == "TFIM":
+    if "j_0hl" in hamiltonian.__dict__[HAM_NAME_VAR]:
         n_qubits = hamiltonian.num_qubits
         # ZZZ
         z_circ = circuit.copy()
         z_circ.measure_all()
 
         # XX XX XX
-        # even
 
-        x_circ_even = circuit.copy()
-        even_paulis = get_tfim_xx(n_qubits, "even")
-        for pauli in even_paulis:
-            x_circ_even = measure_pauli_circuit(x_circ_even, pauli, False)
+        x_circ = circuit.copy()
+        x_circ.h(range(circuit.num_qubits))
+        x_circ.measure_all()
 
-        x_circ_odd = circuit.copy()
-        odd_paulis = get_tfim_xx(n_qubits, "odd")
-        for pauli in odd_paulis:
-            x_circ_odd = measure_pauli_circuit(x_circ_odd, pauli, False)
-
-        return [z_circ, x_circ_even, x_circ_odd]
+        return [z_circ, x_circ]
 
     else:
         raise ValueError(

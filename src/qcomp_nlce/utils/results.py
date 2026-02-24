@@ -134,15 +134,19 @@ def pretty_print(a):
 
 
 def show_diffs(d, which_backend: BACKEND_TYPES):
-    for which in ("eld", "exd"):
-        for algorithm in d["results"].keys():
-            print(f"{which} -- {algorithm}")
-            vals_be = d["results"][algorithm]["dict_l"][which][which_backend]["values"]
-            vals_true = d["results"][algorithm]["dict_l"][which]["system"]["values"]
+    algos = [f for f in d["results"].keys() if f != "ed"]
 
-            print(f"-- {which_backend} --")
-            pretty_print(vals_be)
-            print(f"TRUE")
-            pretty_print(vals_true)
-            print("DIFF")
-            pretty_print_diff(vals_be, vals_true)
+    print(f"# {which_backend}")
+    for which in ("eld", "exd"):
+        for algorithm in algos:
+            for dd in ("dict_s", "dict_l"):
+                info = f"({which_backend}, {which}, {algorithm}, {dd})"
+                print(f"## VALS {info}")
+                vals_be = d["results"][algorithm][dd][which][which_backend]["values"]
+                vals_true = d["results"][algorithm][dd][which]["system"]["values"]
+
+                pretty_print(vals_be)
+                print(f"## TRUE {info}")
+                pretty_print(vals_true)
+                print(f"## DIFF {info}")
+                pretty_print_diff(vals_be, vals_true)

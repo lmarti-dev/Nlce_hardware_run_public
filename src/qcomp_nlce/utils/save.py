@@ -68,7 +68,9 @@ def save_optimized_vqe(
             np.save(fd, hamiltonian.to_list(True))
 
 
-def load_optimized_vqe(dirname: str):
+def load_optimized_vqe(
+    dirname: str,
+) -> tuple[SparsePauliOp, QuantumCircuit, np.ndarray, float]:
     with open(Path(dirname, "circuit.qpy"), "rb") as fd:
         circuit = qpy.load(fd)[0]
     with open(Path(dirname, "weights.npy"), "rb") as fd:
