@@ -187,3 +187,5 @@ venv_aqt/
 
 zne_dispersion.py
 evaluate_energy.py
+generate*
+zne_experiment.py
