@@ -138,7 +138,31 @@ BACKEND_LABELS = {
     "real_backend": "QPU",
     "statevector": "SV",
     "ed": "ED",
+    "analytic": "Analytic",
 }
+
+BACKEND_COLORS = {
+    "fake_backend": "#228848",
+    "real_backend": "#E87722",
+    "statevector": "#971B2F",
+    "ed": "#5FC5EC",
+    "analytic": "#5F7CA3",
+}
+
+[
+    "#228848",
+    "#E87722",
+    "#0061A0",
+    "#971B2F",
+    "#5F7CA3",
+    "#AAC3D1",
+    "#FFD271",
+    "#5FC5EC",
+    "#89CD79",
+    "#DC697C",
+    "#41748D",
+    "#041E42",
+]
 
 
 def get_aqt_backend(n_qubits: int) -> MQPBackend:
@@ -549,11 +573,28 @@ def backend_sample(
         )
     elif "name" in backend.__dict__ and (backend.name == "EQE1"):
         # eqe1 is compiled server-side I believe
+        # but the server compilation is brittle
+        # so it's better to compile here and tell the server
+        # not to touch anything!
+        server_side = False
         if isinstance(circuit, list):
             payload = circuit
         else:
             payload = [circuit]
-        job = backend.run(payload, shots=n_shots, no_modify=False)
+        if server_side:
+            no_modify = False
+            isa_payload = payload
+        else:
+            initial_layout = list(range(payload[0].num_qubits))
+            isa_payload = transpile(
+                payload,
+                backend=backend,
+                initial_layout=initial_layout,
+                optimization_level=3,
+            )
+            no_modify = True
+        job = backend.run(isa_payload, shots=n_shots, no_modify=no_modify)
+
     elif isinstance(backend, AQTResource) or backend.name == "AQT20":
         payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
         job = sampler.run(payload, parameter_values=None, shots=n_shots)

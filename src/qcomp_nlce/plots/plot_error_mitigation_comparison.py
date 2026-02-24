@@ -1,8 +1,14 @@
 from fauplotstyle import style
 import matplotlib.pyplot as plt
-from qcomp_nlce.utils import exact_dispersion_1qp_1d, BACKEND_LABELS
+from qcomp_nlce.utils import (
+    exact_dispersion_1qp_1d,
+    BACKEND_LABELS,
+    BACKEND_COLORS,
+    DATA_DIR,
+)
 from data_manager import ExperimentDataManager
 import numpy as np
+from pathlib import Path
 
 
 def ldif(l1: list, l2: list) -> np.ndarray:
@@ -11,8 +17,10 @@ def ldif(l1: list, l2: list) -> np.ndarray:
 
 style()
 
-with_mit = r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_23\vqe_workflow_vqe_80j_0hl_hadam_stefan_samples_EQE_1000000shots"
-without_mit = r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_23\vqe_workflow_vqe_80j_0hl_hadam_stefan_samples_EQE_1000000shots_00001"
+with_mit = r"2026_02_23\vqe_workflow_vqe_80j_0hl_hadam_stefan_samples_EQE_1000000shots"
+without_mit = (
+    r"2026_02_23\vqe_workflow_vqe_80j_0hl_hadam_stefan_samples_EQE_1000000shots_00001"
+)
 
 dry_run = False
 m_edm = ExperimentDataManager(f"plot_error_mit_comp", project="nlce", dry_run=dry_run)
@@ -23,7 +31,7 @@ for crun in (("tfim_80j_0hl_current", (without_mit, with_mit)),):
 
     dicts = []
     for r in fpaths:
-        edm = ExperimentDataManager.load(r)
+        edm = ExperimentDataManager.load(Path(DATA_DIR, r))
         d = edm.load_last_saved_data_file
         dicts.append(d)
 
@@ -71,7 +79,8 @@ for crun in (("tfim_80j_0hl_current", (without_mit, with_mit)),):
         ldif(fb_with, sv_with) / spread,
         fberr_with,
         capsize=2,
-        fmt="o-",
+        fmt="d-",
+        color=BACKEND_COLORS["fake_backend"],
         label=f"{fb_label}, w/ EM",
     )
     ax.errorbar(
@@ -79,7 +88,8 @@ for crun in (("tfim_80j_0hl_current", (without_mit, with_mit)),):
         ldif(fb_without, sv_without) / spread,
         fberr_without,
         capsize=2,
-        fmt="o-",
+        fmt="x--",
+        color=BACKEND_COLORS["fake_backend"],
         label=f"{fb_label}, w/o EM",
     )
     # ax.plot(ks, ed, "+-", label="ED")

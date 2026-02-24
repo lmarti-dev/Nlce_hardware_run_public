@@ -3,17 +3,18 @@ from qcomp_nlce.utils.stats import mc_disp_from_res_dict
 import matplotlib.pyplot as plt
 from fauplotstyle import style
 import numpy as np
-
+from pathlib import Path
+from qcomp_nlce.utils.save import DATA_DIR
 
 style()
 dry_run = False
 m_edm = ExperimentDataManager(
     "plot_montecarlo_convergence", project="nlce", dry_run=dry_run
 )
-fpath = r"C:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_02\vqe_workflow_TFIM_hadam_stefan_AQT_200shots_00001"
+fpath = r"2026_02_02\vqe_workflow_TFIM_hadam_stefan_AQT_200shots_00001"
 
 
-edm = ExperimentDataManager.load(fpath)
+edm = ExperimentDataManager.load(Path(DATA_DIR, fpath))
 d = edm.load_last_saved_data_file
 ks = d["inputs"]["ks"]
 

@@ -4,29 +4,30 @@ from qcomp_nlce.utils.workflow_utils import (
 )
 import matplotlib.pyplot as plt
 from fauplotstyle import style
-
+from qcomp_nlce.utils import DATA_DIR
+from pathlib import Path
 
 style()
 
-fpath_tfim_100j_0hl = r"C:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_02\vqe_workflow_TFIM_hadam_stefan_AQT_200shots_00001"
-fpath_tfim_80j_10hl = r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_06\vqe_workflow_TFIM_hl_10_hadam_stefan_AQT_200shots"
-fpath_tfim_80j_0hl = r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_12\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00001"
-fpath_tfim_80j_50hl = r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\vqe_workflow_TFIM_hl_50_hadam_stefan_AQT_2000shots"
-fpath_tfim_50j_10hl = r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\vqe_workflow_vqe_50j_10hl_hadam_stefan_AQT_2000shots"
+fpath_tfim_100j_0hl = r"2026_02_02\vqe_workflow_TFIM_hadam_stefan_AQT_200shots_00001"
+fpath_tfim_80j_10hl = r"2026_02_06\vqe_workflow_TFIM_hl_10_hadam_stefan_AQT_200shots"
+fpath_tfim_80j_0hl = (
+    r"2026_02_24\vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_00001"
+)
+fpath_tfim_50j_10hl = r"2026_02_24\vqe_workflow_vqe_50j_10hl_hadam_stefan_AQT_200shots"
 
 
 dry_run = False
 m_edm = ExperimentDataManager("plot_tfim_qpu_result", project="nlce", dry_run=dry_run)
 
 for items in (
-    # (fpath_tfim_100j_0hl, "TFIM_100j_0hl"),
-    # (fpath_tfim_80j_10hl, "TFIM_80j_10hl"),
-    # (fpath_tfim_80j_0hl, "TFIM_80j_0hl"),
-    # (fpath_tfim_80j_50hl, "TFIM_80j_50hl"),
+    (fpath_tfim_100j_0hl, "TFIM_100j_0hl"),
+    (fpath_tfim_80j_10hl, "TFIM_80j_10hl"),
+    (fpath_tfim_80j_0hl, "TFIM_80j_0hl"),
     (fpath_tfim_50j_10hl, "TFIM_50j_10hl"),
 ):
     fpath, fig_name = items
-    edm = ExperimentDataManager.load(fpath)
+    edm = ExperimentDataManager.load(Path(DATA_DIR, fpath))
     d = edm.load_last_saved_data_file
     if "model_dir" in d["inputs"]:
         which_model = d["inputs"]["model_dir"]

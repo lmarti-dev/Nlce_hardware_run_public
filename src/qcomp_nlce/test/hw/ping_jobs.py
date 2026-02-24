@@ -39,4 +39,9 @@ def print_jobs(job_ids: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    print_jobs(["268514", "268512"])
+    jids = [str(job) for job in range(268274, 268282)]
+    for j in jids:
+        try:
+            print_jobs([j])
+        except Exception as e:
+            print(e)

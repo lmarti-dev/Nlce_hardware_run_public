@@ -1,60 +1,66 @@
 from fauplotstyle import style
 import matplotlib.pyplot as plt
-from qcomp_nlce.utils import exact_dispersion_1qp_1d, BACKEND_LABELS
+from qcomp_nlce.utils import (
+    exact_dispersion_1qp_1d,
+    BACKEND_LABELS,
+    BACKEND_COLORS,
+    DATA_DIR,
+)
 from data_manager import ExperimentDataManager
+from pathlib import Path
 
 style()
 
 runs_current = (
-    r"C:\Users\Moi4\Desktop\current\FAU\phd\data\2026_01_29\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00001",
-    r"C:\Users\Moi4\Desktop\current\FAU\phd\data\2026_01_29\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots",
+    r"2026_01_29\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00001",
+    r"2026_01_29\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots",
 )
 
 
 runs_10improvement = (
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_01_30\vqe_workflow_TFIM_hadam_stefan_AQT_BETTER_10_2000shots",
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_01_30\vqe_workflow_TFIM_hadam_stefan_AQT_BETTER_10_2000shots_00001",
+    r"2026_01_30\vqe_workflow_TFIM_hadam_stefan_AQT_BETTER_10_2000shots",
+    r"2026_01_30\vqe_workflow_TFIM_hadam_stefan_AQT_BETTER_10_2000shots_00001",
 )
 
 runs_100improvement = (
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_01_30\vqe_workflow_TFIM_hadam_stefan_AQT_BETTER_100_2000shots",
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_01_30\vqe_workflow_TFIM_hadam_stefan_AQT_BETTER_100_2000shots_00001",
+    r"2026_01_30\vqe_workflow_TFIM_hadam_stefan_AQT_BETTER_100_2000shots",
+    r"2026_01_30\vqe_workflow_TFIM_hadam_stefan_AQT_BETTER_100_2000shots_00001",
 )
 
 
 runs_80j_0hl = (
-    r"C:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_12\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00001",
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_12\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00002",
+    r"2026_02_12\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00001",
+    r"2026_02_12\vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00002",
 )
 
 runs_80j_10hl = (
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_80j_10hl_hadam_stefan_AQT_2000shots_00001",
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_80j_10hl_hadam_stefan_AQT_2000shots_00002",
+    r"2026_02_13\sweep_workflow_vqe_80j_10hl_hadam_stefan_AQT_2000shots_00001",
+    r"2026_02_13\sweep_workflow_vqe_80j_10hl_hadam_stefan_AQT_2000shots_00002",
 )
 
 runs_80j_50hl = (
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_80j_50hl_hadam_stefan_AQT_2000shots",
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_80j_50hl_hadam_stefan_AQT_2000shots_00001",
+    r"2026_02_13\sweep_workflow_vqe_80j_50hl_hadam_stefan_AQT_2000shots",
+    r"2026_02_13\sweep_workflow_vqe_80j_50hl_hadam_stefan_AQT_2000shots_00001",
 )
 
 runs_80j_100hl = (
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_80j_100hl_hadam_stefan_AQT_2000shots",
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_80j_100hl_hadam_stefan_AQT_2000shots",
+    r"2026_02_13\sweep_workflow_vqe_80j_100hl_hadam_stefan_AQT_2000shots",
+    r"2026_02_13\sweep_workflow_vqe_80j_100hl_hadam_stefan_AQT_2000shots",
 )
 
 runs_100j_10hl = (
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_100j_10hl_hadam_stefan_AQT_2000shots",
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_100j_10hl_hadam_stefan_AQT_2000shots_00001",
+    r"2026_02_13\sweep_workflow_vqe_100j_10hl_hadam_stefan_AQT_2000shots",
+    r"2026_02_13\sweep_workflow_vqe_100j_10hl_hadam_stefan_AQT_2000shots_00001",
 )
 
 runs_100j_50hl = (
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_100j_50hl_hadam_stefan_AQT_2000shots",
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_100j_50hl_hadam_stefan_AQT_2000shots_00001",
+    r"2026_02_13\sweep_workflow_vqe_100j_50hl_hadam_stefan_AQT_2000shots",
+    r"2026_02_13\sweep_workflow_vqe_100j_50hl_hadam_stefan_AQT_2000shots_00001",
 )
 
 runs_100j_100hl = (
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_100j_100hl_hadam_stefan_AQT_2000shots",
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_13\sweep_workflow_vqe_100j_100hl_hadam_stefan_AQT_2000shots_00001",
+    r"2026_02_13\sweep_workflow_vqe_100j_100hl_hadam_stefan_AQT_2000shots",
+    r"2026_02_13\sweep_workflow_vqe_100j_100hl_hadam_stefan_AQT_2000shots_00001",
 )
 
 
@@ -80,7 +86,7 @@ for crun in (
 
     dicts = []
     for r in fpaths:
-        edm = ExperimentDataManager.load(r)
+        edm = ExperimentDataManager.load(Path(DATA_DIR, r))
         d = edm.load_last_saved_data_file
         dicts.append(d)
 
@@ -104,13 +110,45 @@ for crun in (
     sv_label = BACKEND_LABELS["statevector"]
     fb_label = BACKEND_LABELS["fake_backend"]
 
-    ax.errorbar(ks, sv10, sverr10, capsize=2, fmt="x-", label=f"{sv_label}, 10 steps")
-    ax.errorbar(ks, sv20, sverr20, capsize=2, fmt="x-", label=f"{sv_label}, 20 steps")
-    ax.errorbar(ks, fb10, fberr10, capsize=2, fmt="o-", label=f"{fb_label}, 10 steps")
-    ax.errorbar(ks, fb20, fberr20, capsize=2, fmt="o-", label=f"{fb_label}, 20 steps")
-    ax.plot(ks, ed, "+-", label="ED")
+    ax.errorbar(
+        ks,
+        sv10,
+        sverr10,
+        capsize=2,
+        fmt="x-",
+        color=BACKEND_COLORS["statevector"],
+        label=f"{sv_label}, 10 steps",
+    )
+    ax.errorbar(
+        ks,
+        sv20,
+        sverr20,
+        capsize=2,
+        fmt="o-",
+        color=BACKEND_COLORS["statevector"],
+        label=f"{sv_label}, 20 steps",
+    )
+    ax.errorbar(
+        ks,
+        fb10,
+        fberr10,
+        capsize=2,
+        fmt="x-",
+        color=BACKEND_COLORS["fake_backend"],
+        label=f"{fb_label}, 10 steps",
+    )
+    ax.errorbar(
+        ks,
+        fb20,
+        fberr20,
+        capsize=2,
+        fmt="o-",
+        color=BACKEND_COLORS["fake_backend"],
+        label=f"{fb_label}, 20 steps",
+    )
+    ax.plot(ks, ed, label="ED", color=BACKEND_COLORS["ed"])
     if "_0hl" in name:
-        ax.plot(ks, ana, "d-", label="Analytic")
+        ax.plot(ks, ana, label="Analytic", color=BACKEND_COLORS["analytic"])
 
     ax.set_ylabel(r"$\omega(k)$")
     ax.set_xlabel("$k$")
@@ -123,4 +161,4 @@ for crun in (
     m_edm.save_figure(
         fig, filename=f"sweep_aqt_{name}", fig_shape="nice-y", add_timestamp=False
     )
-    plt.show()
+    # plt.show()

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from typing import Literal
-from qcomp_nlce.utils import BACKEND_TYPES
+from qcomp_nlce.utils import BACKEND_TYPES, DATA_DIR
 from data_manager import ExperimentDataManager
 from fauplotstyle import style
 
@@ -51,9 +51,9 @@ if __name__ == "__main__":
     edm = ExperimentDataManager(
         f"plot_meshes_{which_backend}", project="nlce", dry_run=dry_run
     )
-    aqt_fpath = r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_02_02\vqe_workflow_TFIM_hadam_stefan_AQT_200shots_00001\run_00000\data\macadamias_00000.json"
+    aqt_fpath = r"2026_02_02\vqe_workflow_TFIM_hadam_stefan_AQT_200shots_00001\run_00000\data\macadamias_00000.json"
 
-    jobj = load_json(aqt_fpath)
+    jobj = load_json(Path(DATA_DIR, aqt_fpath))
     if "model_dir" in jobj["inputs"]:
         which_model = jobj["inputs"]["model_dir"]
     else:

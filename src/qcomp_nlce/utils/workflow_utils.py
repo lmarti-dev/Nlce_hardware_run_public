@@ -17,7 +17,10 @@ from qcomp_nlce.utils import (
     sweep_time_from_steps,
     BACKEND_TYPES,
     baptize_circuit,
+    BACKEND_COLORS,
     HAM_NAME_VAR,
+    get_ground_energy,
+    pfeuty_energy,
 )
 from qcomp_nlce.utils.dispersion import (
     dispersion_1d_thermodynamic,
@@ -393,7 +396,12 @@ def plot_all_backends_dispersions_montecarlo(
         if circ == "ed":
             disp = res[circ]["disp"]
             for be in disp:
-                ax.plot(ks, disp[be], label=BACKEND_LABELS[circ])
+                ax.plot(
+                    ks,
+                    disp[be],
+                    label=BACKEND_LABELS[circ],
+                    color=BACKEND_COLORS["ed"],
+                )
         else:
             disp = res[circ]["disp"]
             for be in res[circ]["mc_disp"]:
@@ -414,6 +422,7 @@ def plot_all_backends_dispersions_montecarlo(
                     fmt=fmt,
                     linewidth=linewidth,
                     label=BACKEND_LABELS[be],
+                    color=BACKEND_COLORS[be],
                     capsize=capsize,
                     markersize=markersize,
                 )
@@ -423,10 +432,133 @@ def plot_all_backends_dispersions_montecarlo(
         else:
             which_model = _d["inputs"]["which_model"]
     if "_0hl" in which_model and "ladder" not in which_model:
-        ax.plot(ks, exact_dispersion_1qp_1d(j, ks), label="Analytic")
+        ax.plot(
+            ks,
+            exact_dispersion_1qp_1d(j, ks),
+            label="Analytic",
+            color=BACKEND_COLORS["analytic"],
+        )
 
     ax.set_ylabel(r"$\omega(k)$")
     ax.set_xlabel("$k$")
+    ax.legend(
+        ncol=2,
+        fontsize="x-small",
+        columnspacing=1,
+    )
+    return fig
+
+
+def tfim_chain_ed_nlce(q1: int, q2: int, ratio: float) -> float:
+
+    ham1 = TFIM(n_qubits=q1, h=1, J=ratio)
+    e1 = get_ground_energy(ham1)
+
+    ham2 = TFIM(n_qubits=q2, h=1, J=ratio)
+    e2 = get_ground_energy(ham2)
+
+    return e2 - e1
+
+
+def plot_bitstring_props(d):
+    fig, ax = plt.subplots()
+    range_j = d["inputs"]["j_range"]
+    for be in d["results"]:
+        for nq in d["inputs"]["qubit_sizes"]:
+            if be != "system":
+                if be == "real_backend":
+                    if nq == 7:
+                        fmt = "x-"
+                    else:
+                        fmt = "d-"
+                    linewidth = 1.5
+                    markersize = 5
+                else:
+                    if nq == 7:
+                        fmt = "o--"
+                    else:
+                        fmt = "s--"
+                    linewidth = 0.75
+                    markersize = 4
+                color = BACKEND_COLORS[be]
+                try:
+                    vals = [
+                        100 * d["results"][be][j][nq]["bitstring_prop"] for j in range_j
+                    ]
+                except Exception:
+                    vals = [
+                        100 * d["results"][be][str(j)][str(nq)]["bitstring_prop"]
+                        for j in range_j
+                    ]
+                ax.plot(
+                    range_j,
+                    vals,
+                    fmt,
+                    color=color,
+                    label=f"{BACKEND_LABELS[be]}, {nq} qubits",
+                    linewidth=linewidth,
+                    markersize=markersize,
+                )
+    ax.set_ylabel(r"Percentage of states")
+    ax.set_xlabel("$J/h$")
+    ax.legend(
+        ncol=2,
+        fontsize="x-small",
+        columnspacing=1,
+    )
+    return fig
+
+
+def plot_0qp_gs_nlce(d: dict):
+    range_j = d["inputs"]["j_range"]
+    (qmin, qmax) = sorted(d["inputs"]["qubit_sizes"])
+
+    true_energies = np.array([pfeuty_energy(j) for j in range_j])
+    ed = np.array([tfim_chain_ed_nlce(qmin, qmax, r) for r in range_j])
+
+    fig, ax = plt.subplots()
+
+    for be in d["results"]:
+        if be != "system":
+            if be == "real_backend":
+                fmt = "x-"
+                linewidth = 1.5
+                markersize = 5
+            else:
+                fmt = "o--"
+                linewidth = 0.75
+                markersize = 4
+            color = BACKEND_COLORS[be]
+            try:
+                vals = [
+                    d["results"][be][j][qmax]["energy"]
+                    - d["results"][be][j][qmin]["energy"]
+                    for j in range_j
+                ]
+            except Exception:
+                vals = [
+                    d["results"][be][str(j)][str(qmax)]["energy"]
+                    - d["results"][be][str(j)][str(qmin)]["energy"]
+                    for j in range_j
+                ]
+            ax.plot(
+                range_j,
+                vals,
+                fmt,
+                color=color,
+                label=BACKEND_LABELS[be],
+                linewidth=linewidth,
+                markersize=markersize,
+            )
+    ax.plot(range_j, ed, label=BACKEND_LABELS["ed"], color=BACKEND_COLORS["ed"])
+    ax.plot(
+        range_j,
+        true_energies,
+        label=BACKEND_LABELS["analytic"],
+        color=BACKEND_COLORS["analytic"],
+    )
+    ax.set_ylabel("Ground state energy")
+    ax.set_xlabel("$J/h$")
     ax.legend(
         ncol=2,
         fontsize="x-small",

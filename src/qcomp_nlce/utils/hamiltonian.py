@@ -159,13 +159,15 @@ def TFIM(
         return TFIM_ladder(
             n_rungs=n_qubits, h=h, J=J, periodic=periodic, split_parts=split_parts
         )
-
-    hamiltonian_J = sum(
-        [
-            -J * SparsePauliOp(s * "I" + "XX" + (n_qubits - 2 - s) * "I")
-            for s in range(n_qubits - 1)
-        ]
-    )
+    if J != 0:
+        hamiltonian_J = sum(
+            [
+                -J * SparsePauliOp(s * "I" + "XX" + (n_qubits - 2 - s) * "I")
+                for s in range(n_qubits - 1)
+            ]
+        )
+    else:
+        hamiltonian_J = 0
     if periodic:
         hamiltonian_J += SparsePauliOp("X" + "I" * (n_qubits - 2) + "X")
     hamiltonian_h = sum(

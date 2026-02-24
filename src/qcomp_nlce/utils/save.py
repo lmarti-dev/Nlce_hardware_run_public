@@ -190,3 +190,6 @@ def baptize_circuit(
 ) -> str:
 
     return f"{prefix}_{method}_{n_qubits}_{provider_name}_{n_shots}shots_{which_hadamard_test}_test"
+
+
+DATA_DIR = Path(Path(__file__).parent, "../data")

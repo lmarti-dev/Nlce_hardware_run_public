@@ -50,6 +50,7 @@ def circmat_observables(
     observables: np.ndarray,
     parameters: np.ndarray,
 ):
+    # assume that initial state is zero so Uket(0) = U(:,0)
     col = circuit_to_matrix(apply_parameters(circuit, parameters, False))[:, 0]
     vv = observables @ col
     return col.conj().dot(vv)
@@ -126,7 +127,7 @@ def optimize_circuit(
     # kwargs = {"method": "COBYLA", "bounds": circuit.num_parameters * [(0, np.pi)]}
     # kwargs = {"method": "CG", "options": {"maxiter": 500}}
     kwargs = {"method": "COBYLA", "options": {"f_target": 1e-5}}
-    kwargs = {"method": "BFGS", "options": {"workers": pool.map}}
+    # kwargs = {"method": "BFGS", "options": {"workers": pool.map}}
 
     minimize(fun=cost, x0=initial_params, callback=callback, **kwargs)
     return energy_values, xks
