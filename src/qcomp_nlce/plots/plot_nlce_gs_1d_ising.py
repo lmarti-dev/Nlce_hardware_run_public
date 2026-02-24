@@ -84,14 +84,12 @@ for backend in ("real_backend", "fake_backend", "statevector"):
         relerr(data_vqe),
         label="VQE",
         marker="x",
-        linestyle="dashed",
     )
     ax.plot(
         ratios_sweep,
         relerr(data_sweep),
         label="Sweep",
         marker="o",
-        linestyle="dashed",
     )
 
     ed = np.array([ED_nlce(9, 10, r) for r in ratios_vqe])
@@ -100,18 +98,15 @@ for backend in ("real_backend", "fake_backend", "statevector"):
         relerr(ed),
         label="ED",
         marker="d",
-        linestyle="dashed",
     )
 
     ax.legend()
 
-    ax.set_ylabel("$\Delta E / E_0$")
-    ax.set_xlabel("J/h")
+    ax.set_ylabel(r"$\Delta E / E_0$")
+    ax.set_xlabel(r"$J/h$")
 
     ax.set_yscale("log")
 
-    ax.set_title(backend)
-
-    edm.save_figure(fig)
+    edm.save_figure(fig, f"backend_1d_TFIM_{backend}", add_timestamp=False)
 
     # plt.show()

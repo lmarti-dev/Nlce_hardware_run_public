@@ -13,6 +13,7 @@ from qcomp_nlce.utils.circuit import (
 from qcomp_nlce.utils.hardware import circuits_to_estimator_payload
 from qcomp_nlce.utils.hamiltonian import from_bitstring
 from typing import Literal
+import multiprocessing
 
 
 def sv_estimate_observables_jobs(
@@ -75,13 +76,14 @@ def optimize_circuit(
     hamiltonian: SparsePauliOp,
     cost: Callable[[np.ndarray], float] = None,
     initial_params=None,
+    target: float = 0,
 ) -> list:
     energy_values = []
     xks = []
 
     def callback(xk: np.ndarray, *args):
-        e = cost(xk=xk)
-        print(e, end="\r")
+        e = np.real(cost(xk=xk))
+        print(f"val: {e:.6e}", end="\r")
         energy_values.append(e)
         xks.append(xk)
 
@@ -99,7 +101,7 @@ def optimize_circuit(
 
         def cost(xk: np.ndarray):
             xk = np.real(xk)
-            return circmat_observables(circuit, mat, xk)
+            return circmat_observables(circuit, mat, xk) - target
 
     def jac(x: np.ndarray) -> np.ndarray:
         out = np.zeros_like(x)
@@ -120,9 +122,11 @@ def optimize_circuit(
     if initial_params is None:
         initial_params = np.zeros((len(circuit.parameters)))
 
+    pool = multiprocessing.Pool(32)
     # kwargs = {"method": "COBYLA", "bounds": circuit.num_parameters * [(0, np.pi)]}
     # kwargs = {"method": "CG", "options": {"maxiter": 500}}
-    kwargs = {"method": "CG"}
+    kwargs = {"method": "COBYLA", "options": {"f_target": 1e-5}}
+    kwargs = {"method": "BFGS", "options": {"workers": pool.map}}
 
     minimize(fun=cost, x0=initial_params, callback=callback, **kwargs)
     return energy_values, xks

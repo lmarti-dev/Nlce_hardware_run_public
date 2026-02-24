@@ -332,7 +332,7 @@ def build_stefan_circuit_estimator(
 
 def build_stefan_circuits_sample(
     circuit: QuantumCircuit, parameters: np.ndarray, x: str, y: str
-) -> QuantumCircuit:
+) -> list[QuantumCircuit]:
     hadam_circuits = []
     n_qubits = circuit.num_qubits + 1
 
@@ -503,6 +503,7 @@ def get_hadam_estimator(
 ) -> tuple[complex, complex]:
     # qiskit developers competing with python developers to see who can make the most breaking changes with a version chanege
     # anyway, here's wonderwall
+
     if n_reps == 1:
         try:
             return (
@@ -752,14 +753,8 @@ def measure_matrix_elements(
 
 
 def estimation_from_samples(
-    res: PrimitiveResult, hamiltonian: SparsePauliOp, z_sym: bool = False
+    res: PrimitiveResult, hamiltonian: SparsePauliOp
 ) -> tuple[complex, complex]:
-
-    # error mitigation is wrong on even chains. Why??
-    if z_sym:
-        has_parity = 1
-    else:
-        has_parity = -1
 
     counts = res.get_counts()
 
@@ -779,6 +774,7 @@ def estimation_from_samples(
         h = hamiltonian.h
 
     for jj in range(hamiltonian.num_qubits):
+        # set last arg to 1 to enable mitigation.
         val, std = trace_out_estimation(z_counts, [jj], 1)
         z_vals.append(val)
         z_stds.append(std)

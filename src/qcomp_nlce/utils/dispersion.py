@@ -110,7 +110,8 @@ def exact_dispersion_1qp_1d(j: float, k: np.ndarray):
 def heff_total_shots_paper():
     tfim_1d = heff_n_expectation_values_1d(5, 1) * 2000
     tfim_1d_hl = heff_n_expectation_values_1d(5, 1) * 2000
-    print(tfim_1d + tfim_1d_hl)
+    tfim_1d_lad = heff_n_expectation_values_ladder(6, 1) * 2000
+    print(tfim_1d + tfim_1d_hl + tfim_1d_lad)
 
 
 def heff_n_expectation_values_1d(n_qubits: int, ff: int = 2) -> int:

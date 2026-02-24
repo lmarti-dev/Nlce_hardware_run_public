@@ -37,6 +37,7 @@ def train_and_save(
         circuit,
         hamiltonian,
         initial_params=0.1 * np.ones((len(circuit.parameters),)),
+        target=ground_energy,
     )
     print(
         f"final energy error is {np.abs(ground_energy-energy_values[-1])/np.abs(ground_energy)}"
@@ -54,10 +55,10 @@ def train_and_save(
 
 if __name__ == "__main__":
     dry_run = False
-    J_range = (1.0,)
+    J_range = np.linspace(0.1, 1, 10)
     hl = 0.0
-    ladder = True
-    for n_qubits in (2, 3):
+    ladder = False
+    for n_qubits in (9, 10):
         for J in J_range:
             dirname = f"gs_vqe_{int(J*100)}j_{int(hl*100)}hl" + "_ladder" * int(ladder)
             train_and_save(n_qubits, J, hl, dirname, dry_run, ladder)
