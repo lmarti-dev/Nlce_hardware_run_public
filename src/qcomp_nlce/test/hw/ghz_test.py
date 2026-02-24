@@ -26,8 +26,8 @@ def hardware_run(fake: bool):
     n_qubits = 8
     circ = ghz_circ(n_qubits)
 
-    provider_name = "EQE"
-    n_shots = int(1e6)
+    provider_name = "AQT"
+    n_shots = int(200)
     edm = ExperimentDataManager(
         f"ghz_test_{provider_name}_{n_shots}", project="nlce", dry_run=False
     )

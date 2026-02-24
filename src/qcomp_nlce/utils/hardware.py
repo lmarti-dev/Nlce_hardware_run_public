@@ -284,6 +284,12 @@ def mean_std_tuples_from_res(
     return out
 
 
+def pending_jobs(n_qubits: int, provider_name: PROVIDER_ALIAS) -> int:
+    backend = get_backend(n_qubits, provider_name)
+    print(f"There are: {backend.num_pending_jobs} pending jobs on {provider_name}")
+    return backend.num_pending_jobs
+
+
 def compute_mean_circ_stats(circs: list | QuantumCircuit, verbose: bool = False):
 
     if isinstance(circs, QuantumCircuit):
