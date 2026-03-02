@@ -29,8 +29,14 @@ from qcomp_nlce.utils.save import (
     add_tmp_entry_and_save,
     load_tmp_item,
     tmp_get_item,
-    tmp_filename,
+    tmp_dirname,
     TempListType,
+    tmp_check_run_list,
+    tmp_create_run_file,
+    tmp_delete_run_file,
+    tmp_load_run_list,
+    tmp_save_run_file,
+    init_run_split,
 )
 
 from qcomp_nlce.utils.unscented_transform import (
@@ -42,6 +48,7 @@ from qcomp_nlce.utils.unscented_transform import (
 from qcomp_nlce.utils.hardware import (
     is_hardware_run,
     BACKEND_ALIAS,
+    BACKEND_TYPES,
     manual_hamiltonian_circuits,
     circuits_to_sampler_payload,
 )
@@ -50,7 +57,7 @@ from qcomp_nlce.utils.stats import sum_std, mean_std
 
 from qiskit.primitives import EstimatorResult, PrimitiveResult
 
-from typing import Union, Tuple, Literal, Dict
+from typing import Union, Tuple, Literal, Dict, Any
 
 
 OFFDIAG_SYMS = ["+", "-", "+i", "-i"]
@@ -365,9 +372,11 @@ def stefan_hadamard_test(
     n_shots: int,
     x: str,
     y: str,
+    which_backend: BACKEND_TYPES,
     backend: BACKEND_ALIAS = "statevector",
     counting_method: Literal["estimator", "samples"] = "estimator",
     n_reps: int = 10,
+    reps_per_job: int = 2,
 ):
 
     # this is Stefan Wolf's test, a bit modified though
@@ -378,27 +387,48 @@ def stefan_hadamard_test(
     # print(f"Uncomputed overlap is {oUo:.5e}")
 
     if counting_method == "estimator":
-        stef_circuit = build_stefan_circuit_estimator(circuit, parameters, x, y)
-        proj = projector_ham(circuit.num_qubits, bitstring="0" * len(x))
-        hams = [
-            proj ^ SparsePauliOp("X"),
-            proj ^ SparsePauliOp("Y"),
-        ]
-        jobs = circuit_estimation_job(
-            backend=backend,
-            observables=hams,
-            circuit=[
-                stef_circuit,
+        on_hardware = is_hardware_run(which_backend)
+        _dirname = tmp_dirname(circuit, which_backend)
+
+        n_runs = int(n_reps // reps_per_job)
+
+        run_list = init_run_split(_dirname, on_hardware)
+
+        remaining_runs = n_runs - len(run_list)
+
+        for run_ind in range(remaining_runs):
+            print(f"Run number {run_ind+1}/{remaining_runs}", end="\r")
+
+            stef_circuit = build_stefan_circuit_estimator(circuit, parameters, x, y)
+            proj = projector_ham(circuit.num_qubits, bitstring="0" * len(x))
+            hams = [
+                proj ^ SparsePauliOp("X"),
+                proj ^ SparsePauliOp("Y"),
             ]
-            * n_reps,
-            parameters=None,
-            n_shots=n_shots,
+            jobs = circuit_estimation_job(
+                backend=backend,
+                observables=hams,
+                circuit=[
+                    stef_circuit,
+                ]
+                * reps_per_job,
+                parameters=None,
+                n_shots=n_shots,
+            )
+            # HARDWARE may fail HERE
+            res = jobs.result()
+            vals, stds = get_hadam_estimator_list(res, reps_per_job)
+            run_list.append([vals, stds])
+            if on_hardware:
+                tmp_save_run_file(_dirname, run_list)
+        ol, std = np.mean([v[0] for v in run_list]), mean_std(
+            np.array([v[1] for v in run_list]).flatten()
         )
-
-        ol, std = get_hadam_estimator(jobs.result(), n_reps)
-        return ol, std
-
     elif counting_method == "samples":
+        if n_reps > 1:
+            raise NotImplementedError(
+                "n_reps>1 not implemented for sampling Hadamard test"
+            )
         n_qubits = circuit.num_qubits + 1
         stef_circuits = build_stefan_circuits_sample(circuit, parameters, x, y)
         jobs = circuit_sampling_job(stef_circuits, parameters, backend, n_shots)
@@ -409,7 +439,9 @@ def stefan_hadamard_test(
             get_counts_from_res(res, n_qubits, 1), n_shots, keys=keys
         )
 
-        return re + 1j * im, rstd + 1j * imstd
+        ol, std = re + 1j * im, rstd + 1j * imstd
+
+    return ol, std
 
 
 # computes the real part of overlap between psi and circuit(psi)
@@ -534,6 +566,46 @@ def get_hadam_estimator(
         return np.mean(vals_reps), mean_std(np.array(stds_reps))
 
 
+def get_hadam_estimator_list(
+    res: EstimatorResult, n_reps: int = 1
+) -> tuple[list[complex], list[complex]]:
+    # qiskit developers competing with python developers to see who can make the most breaking changes with a version chanege
+    # anyway, here's wonderwall
+
+    if n_reps == 1:
+        try:
+            return (
+                [res[0].data.evs[0] + 1j * res[0].data.evs[1]],
+                [res[0].data.stds[0] + 1j * res[0].data.stds[1]],
+            )
+
+        except Exception:
+            return (
+                [res.values[0] + 1j * res.values[1]],
+                [
+                    np.sqrt(res.metadata[0]["variance"])
+                    + 1j * +np.sqrt(res.metadata[1]["variance"])
+                ],
+            )
+    else:
+        vals_reps = []
+        stds_reps = []
+        for n in range(n_reps):
+            jj = 2 * n
+            if isinstance(res, EstimatorResult):
+                val = res.values[jj] + 1j * res.values[jj + 1]
+                std = np.sqrt(res.metadata[jj]["variance"]) + 1j * +np.sqrt(
+                    res.metadata[jj + 1]["variance"]
+                )
+            else:
+                val = res[n].data.evs[0] + 1j * res[n].data.evs[1]
+                std = res[n].data.stds[0] + 1j * res[n].data.stds[1]
+
+            vals_reps.append(val)
+            stds_reps.append(std)
+        return vals_reps, stds_reps
+
+
 HADAMARD_TESTS = Literal["stefan", "projecto-estimo", "off-diag", "full", "estimator"]
 
 
@@ -542,6 +614,7 @@ def measure_matrix_element(
     x: str,
     y: str,
     parameters: np.ndarray,
+    which_backend: BACKEND_TYPES,
     backend: BACKEND_ALIAS,
     n_shots: int,
     which_hadamard_test: HADAMARD_TESTS = "estimator",
@@ -552,21 +625,7 @@ def measure_matrix_element(
 
     # This computes <x|U|y>
 
-    if which_hadamard_test == "projecto-estimo":
-
-        ol, std = iterative_hadamard_test_projecto_estimo(
-            circuit,
-            parameters,
-            n_shots,
-            x,
-            y,
-            backend,
-            custom_idx=custom_idx,
-            handcraft=handcraft,
-        )
-        return ol, std
-
-    elif which_hadamard_test == "stefan" or which_hadamard_test == "stefan_samples":
+    if which_hadamard_test == "stefan" or which_hadamard_test == "stefan_samples":
         if which_hadamard_test == "stefan_samples":
             counting_method = "samples"
         else:
@@ -577,27 +636,16 @@ def measure_matrix_element(
             n_shots,
             x,
             y,
+            which_backend,
             backend,
             counting_method=counting_method,
             n_reps=n_reps,
         )
         return ol, std
 
-    elif which_hadamard_test == "off-diag":
-
-        jUk, kUj, std = iterative_hadamard_test_off_diag(
-            circuit,
-            parameters,
-            n_shots,
-            x,
-            y,
-            backend,
-            custom_idx=custom_idx,
-            handcraft=handcraft,
-        )
-        return jUk, kUj, std
-
     elif which_hadamard_test == "full":
+        if n_reps > 1:
+            raise NotImplementedError("n_reps>1 not implemented for full hadamard test")
         circ_out = circuit_with_init(circuit, x, y)
         re_circ = hadamard_test_circuit(
             circ_out, parameters, real_part=True, handcraft=handcraft
@@ -618,6 +666,10 @@ def measure_matrix_element(
         std = stds[0] + 1j * stds[1]
         return ol, std
     elif which_hadamard_test == "estimator":
+        if n_reps > 1:
+            raise NotImplementedError(
+                "n_reps>1 not implemented for estimator hadamard test"
+            )
         circ_out = circuit_with_init(circuit, x, y)
         if custom_idx is None:
             custom_idx = custom_idx_groups_of_n(len([c for c in circ_out]), 1)
@@ -678,7 +730,7 @@ def measure_matrix_elements(
     on_hardware = is_hardware_run(which_backend)
 
     if on_hardware:
-        filename = f"{tmp_filename(circuit,which_backend)}/measure_matrix_elements.json"
+        filename = f"{tmp_dirname(circuit,which_backend)}/measure_matrix_elements.json"
         try:
 
             computed_values = load_tmp_item(filename)
@@ -686,64 +738,34 @@ def measure_matrix_elements(
             print(f"Starting from scratch (hadamard {which_hadamard_test} test)")
             computed_values = []
 
-    if which_hadamard_test != "off-diag":
-        for ind_x, x in enumerate(comp_states):
-            for ind_y, y in enumerate(comp_states):
-                if on_hardware and tmp_entry_exists(computed_values, ind_x, ind_y):
-                    pass
-                    print(f"Already computed {ind_x}, {ind_y}")
-                else:
-                    jUk, std = measure_matrix_element(
-                        circuit,
-                        x,
-                        y,
-                        parameters,
-                        backend,
-                        n_shots,
-                        which_hadamard_test,
-                        custom_idx=custom_idx,
-                        handcraft=handcraft,
-                        n_reps=n_reps,
+    for ind_x, x in enumerate(comp_states):
+        for ind_y, y in enumerate(comp_states):
+            if on_hardware and tmp_entry_exists(computed_values, ind_x, ind_y):
+                pass
+                print(f"Already computed {ind_x}, {ind_y}")
+            else:
+                jUk, std = measure_matrix_element(
+                    circuit,
+                    x,
+                    y,
+                    parameters,
+                    which_backend,
+                    backend,
+                    n_shots,
+                    which_hadamard_test,
+                    custom_idx=custom_idx,
+                    handcraft=handcraft,
+                    n_reps=n_reps,
+                )
+                vals[ind_x, ind_y] = jUk
+                stds[ind_x, ind_y] = std
+                if on_hardware:
+                    computed_values = add_tmp_entry_and_save(
+                        filename, computed_values, jUk, std, ind_x, ind_y
                     )
-                    vals[ind_x, ind_y] = jUk
-                    stds[ind_x, ind_y] = std
-                    if on_hardware:
-                        computed_values = add_tmp_entry_and_save(
-                            filename, computed_values, jUk, std, ind_x, ind_y
-                        )
-                    print(f"{ind_x} - {ind_y}: {jUk:.4f} ({std:.4f})")
-    elif which_hadamard_test == "off-diag":
-        for ind_x, x in enumerate(comp_states):
-            for ind_y, y in enumerate(comp_states[ind_x:]):
-                ind_y = ind_x + ind_y
-                if on_hardware and tmp_entry_exists(computed_values, ind_x, ind_y):
-                    pass
-                    print(f"Already computed {ind_x}, {ind_y}")
-                else:
-                    jUk, kUj, std = measure_matrix_element(
-                        circuit,
-                        x,
-                        y,
-                        parameters,
-                        backend,
-                        n_shots,
-                        which_hadamard_test,
-                        custom_idx=custom_idx,
-                        handcraft=handcraft,
-                        n_reps=n_reps,
-                    )
-                    vals[ind_x, ind_y] = jUk
-                    vals[ind_y, ind_x] = kUj
-                    stds[ind_x, ind_y] = std
-                    stds[ind_y, ind_x] = std
-                    if on_hardware:
-                        computed_values = add_tmp_entry_and_save(
-                            filename, computed_values, jUk, std, ind_x, ind_y
-                        )
-                        computed_values = add_tmp_entry_and_save(
-                            filename, computed_values, kUj, std, ind_y, ind_x
-                        )
-                    print(f"{ind_x} - {ind_y}: {jUk:.3f}, {kUj:.3f} ({std:.4f})")
+                    tmp_delete_run_file(tmp_dirname(circuit, which_backend))
+                print(f"{ind_x} - {ind_y}: {jUk:.4f} ({std:.4f})")
+
     if on_hardware:
         vals, stds = rebuild_eld_matrices_from_tmp(computed_values, len(comp_states))
     # somehow indices are all messy
@@ -756,7 +778,7 @@ def estimation_from_samples(
     res: PrimitiveResult, hamiltonian: SparsePauliOp
 ) -> tuple[complex, complex]:
 
-    counts = res.get_counts()
+    counts = get_counts_from_res(res, hamiltonian.num_qubits)
 
     z_counts = counts[0]
     x_counts = counts[1]
@@ -796,7 +818,7 @@ def measure_manual_circuit(
     hamiltonian: SparsePauliOp,
     n_shots: int,
 ):
-    [z_circ, x_circ] = manual_hamiltonian_circuits(circuit, hamiltonian)
+    [z_circ, x_circ, y_circ] = manual_hamiltonian_circuits(circuit, hamiltonian)
 
     job = circuit_sampling_job([z_circ, x_circ], None, backend, n_shots)
     return job
@@ -845,174 +867,86 @@ def estimate_ham_with_reps(
     n_shots: int,
     backend: BACKEND_ALIAS,
     n_reps: int,
+    which_backend: BACKEND_TYPES,
+    reps_per_job: int = 5,
 ):
 
     if backend != "statevector" and ("IQM" in backend.name or "EQE" in backend.name):
         job = measure_manual_circuit(backend, circuit, hamiltonian, n_shots)
         res = job.result()
         return estimation_from_samples(res, hamiltonian)
-    job = circuit_estimation_job(
-        [circuit for _ in range(n_reps)], [hamiltonian], None, backend, n_shots
+
+    n_runs = int(n_reps // reps_per_job)
+
+    on_hardware = is_hardware_run(which_backend)
+    _dirname = tmp_dirname(circuit, which_backend)
+
+    run_list = init_run_split(_dirname, on_hardware)
+
+    remaining_runs = n_runs - len(run_list)
+
+    for run_ind in range(remaining_runs):
+
+        print(f"Run number {run_ind+1}/{remaining_runs}", end="\r")
+
+        job = circuit_estimation_job(
+            [circuit for _ in range(reps_per_job)],
+            [hamiltonian],
+            None,
+            backend,
+            n_shots,
+        )
+
+        # HARDWARE may fail HERE
+        res = job.result()
+        ...
+
+        vals, stds = res_to_lists(res)
+        run_list.append([vals, stds])
+        if on_hardware:
+            tmp_save_run_file(_dirname, run_list)
+
+    return np.mean([v[0] for v in run_list]), mean_std(
+        np.array([v[1] for v in run_list]).flatten()
     )
 
-    res = job.result()
+
+def res_to_lists(res: Union[EstimatorResult, Any]) -> tuple[list, list]:
+
+    try:
+        n_reps = len(res.values)
+        vals = res.values
+        stds = [np.sqrt(res.metadata[k]["variance"]) for k in range(n_reps)]
+    except Exception:
+        n_reps = len(res)
+        vals = [res[k].data.evs for k in range(n_reps)]
+        stds = [res[k].data.stds for k in range(n_reps)]
+
+    return vals, stds
+
+
+def average_res_over_reps(res: Union[EstimatorResult, Any]):
+
+    if isinstance(res, EstimatorResult):
+        n_reps = len(res.values)
+    else:
+        n_reps = len(res)
+
     if n_reps == 1:
         if isinstance(res, EstimatorResult):
-            return res.values[0], np.sqrt(res.metadata[0]["variance"])
+            val, std = res.values[0], np.sqrt(res.metadata[0]["variance"])
         else:
-            return res[0].data.evs, res[0].data.stds
+            val, std = res[0].data.evs, res[0].data.stds
     else:
         if isinstance(res, EstimatorResult):
-            return np.mean([res.values[k] for k in range(n_reps)]), mean_std(
+            val, std = np.mean([res.values[k] for k in range(n_reps)]), mean_std(
                 np.array([np.sqrt(res.metadata[k]["variance"]) for k in range(n_reps)])
             )
         else:
-            return np.mean([res[k].data.evs for k in range(n_reps)]), mean_std(
+            val, std = np.mean([res[k].data.evs for k in range(n_reps)]), mean_std(
                 np.array([res[k].data.stds for k in range(n_reps)])
             )
-
-
-def measure_hamiltonian_element(
-    hamiltonian: SparsePauliOp,
-    circuit: QuantumCircuit,
-    x: str,
-    y: str,
-    parameters: np.ndarray,
-    backend: BACKEND_ALIAS,
-    n_shots: int,
-    n_reps: int = 10,
-) -> tuple[complex, complex]:
-
-    if x == y:
-        if "statevector" != backend and (
-            "IQM" in backend.name or "EQE" in backend.name
-        ):
-            return measure_hamiltonian_element_manual(
-                hamiltonian, circuit, x, y, parameters, backend, n_shots
-            )
-        circ_out = QuantumCircuit(circuit.num_qubits)
-        x_inds = index_bits(x, circuit.num_qubits, right_to_left=True)
-        for x_ind in x_inds:
-            circ_out.x(x_ind)
-        circ_out.compose(circuit, inplace=True)
-        return estimate_ham_with_reps(hamiltonian, circ_out, n_shots, backend, n_reps)
-
-    # this doesn't happen in v2
-    else:
-        d = ["+", "-", "+i", "-i"]
-        circs = []
-        for _ in range(n_reps):
-            for k in d:
-                circ_p = prep_circ_superpos(x, y, k)
-                circ_p.compose(circuit, inplace=True)
-                circs.append(circ_p)
-
-        job = circuit_estimation_job(circs, [hamiltonian], parameters, backend, n_shots)
-
-        res = job.result()
-        if n_reps == 1:
-            if isinstance(res, EstimatorResult):
-                val = (res.values[0] - res.values[1]) / 2 + 1j * (
-                    res.values[2] - res.values[3]
-                ) / 2
-                stds = [np.sqrt(res.metadata[k]["variance"]) for k in range(4)]
-                std = sum_std(stds[0:2]) + 1j * sum_std(stds[2:4])
-                return val, std
-
-            else:
-                val = (res[0].data.evs - res[1].data.evs) / 2 + 1j * (
-                    res[2].data.evs - res[3].data.evs
-                ) / 2
-                stds = [res[k].data.stds for k in range(4)]
-                std = sum_std(stds[0:2]) + 1j * sum_std(stds[2:4])
-                return val, std
-        else:
-            vals_reps = []
-            stds_reps = []
-            for n in range(n_reps):
-                jj = 4 * n
-                if isinstance(res, EstimatorResult):
-
-                    val = (res.values[jj] - res.values[jj + 1]) / 2 + 1j * (
-                        res.values[jj + 2] - res.values[jj + 3]
-                    ) / 2
-                    stds = [np.sqrt(res.metadata[jj + k]["variance"]) for k in range(4)]
-                    std = sum_std(stds[:2]) + 1j * sum_std(stds[2:4])
-
-                else:
-                    val = (res[jj].data.evs - res[jj + 1].data.evs) / 2 + 1j * (
-                        res[jj + 2].data.evs - res[jj + 3].data.evs
-                    ) / 2
-                    stds = [res[jj + k].data.stds for k in range(4)]
-                    std = sum_std(stds[0:2]) + 1j * sum_std(stds[2:4])
-                vals_reps.append(val)
-                stds_reps.append(std)
-
-            return np.mean(vals_reps), mean_std(np.array(stds_reps))
-
-
-def measure_hamiltonian_elements(
-    hamiltonian: SparsePauliOp,
-    circuit: QuantumCircuit,
-    states: list[str],
-    parameters: np.ndarray,
-    backend: BACKEND_ALIAS,
-    which_backend: str,
-    n_shots: int,
-    n_reps: int = 1,
-):
-
-    vals = np.zeros((len(states), len(states)), dtype=complex)
-    stds = np.zeros((len(states), len(states)), dtype=complex)
-
-    on_hardware = is_hardware_run(which_backend)
-
-    if on_hardware:
-        filename = (
-            f"{tmp_filename(circuit,which_backend)}/measure_hamiltonian_elements.json"
-        )
-        try:
-            computed_values = load_tmp_item(filename)
-        except FileNotFoundError:
-            print("Starting from scratch (expectations)")
-            computed_values = []
-
-    for ind_x, x in enumerate(states):
-        for ind_y, y in enumerate(states[ind_x:]):
-            ind_y = ind_x + ind_y
-            if on_hardware and tmp_entry_exists(computed_values, ind_x, ind_y):
-                pass
-                print(f"Already computed {ind_x}, {ind_y}")
-            else:
-                if backend != "statevector" and (
-                    "IQM" in backend.name or "EQE" in backend.name
-                ):
-                    val, std = measure_hamiltonian_element_manual(
-                        hamiltonian, circuit, x, y, parameters, backend, n_shots, n_reps
-                    )
-                else:
-                    val, std = measure_hamiltonian_element(
-                        hamiltonian, circuit, x, y, parameters, backend, n_shots, n_reps
-                    )
-                vals[ind_x, ind_y] = val.conj()
-                vals[ind_y, ind_x] = val
-                stds[ind_x, ind_y] = std
-                stds[ind_y, ind_x] = std
-
-                print(f"{ind_x} - {ind_y} - {complex(val):.4f} ({complex(std):.4f})")
-                if on_hardware:
-                    computed_values = add_tmp_entry_and_save(
-                        filename, computed_values, val.conj(), std, ind_x, ind_y
-                    )
-                    computed_values = add_tmp_entry_and_save(
-                        filename, computed_values, val, std, ind_y, ind_x
-                    )
-    # this is correct!
-    if on_hardware:
-        vals, stds = rebuild_exd_matrices_from_tmp(computed_values, len(states))
-    vals = reorder_matrix_elems(vals)[::-1, ::-1]
-    stds = reorder_matrix_elems(stds)[::-1, ::-1]
-    return vals, stds
+    return val, std
 
 
 def measure_hamiltonian_elements_v2(
@@ -1033,7 +967,7 @@ def measure_hamiltonian_elements_v2(
 
     if on_hardware:
         filename = (
-            f"{tmp_filename(circuit,which_backend)}/measure_hamiltonian_elements.json"
+            f"{tmp_dirname(circuit,which_backend)}/measure_hamiltonian_elements.json"
         )
         try:
             computed_values = load_tmp_item(filename)
@@ -1052,13 +986,26 @@ def measure_hamiltonian_elements_v2(
                     pass
 
                 else:
-                    val, std = measure_hamiltonian_element(
-                        hamiltonian, circuit, x, y, parameters, backend, n_shots, n_reps
+                    circ_out = QuantumCircuit(circuit.num_qubits)
+                    x_inds = index_bits(x, circuit.num_qubits, right_to_left=True)
+                    for x_ind in x_inds:
+                        circ_out.x(x_ind)
+                    circ_out.compose(circuit, inplace=True)
+                    circ_out.metadata["tmpname"] = circuit.metadata["tmpname"]
+                    val, std = estimate_ham_with_reps(
+                        hamiltonian,
+                        circ_out,
+                        n_shots,
+                        backend,
+                        which_backend=which_backend,
+                        n_reps=n_reps,
                     )
+
                     if on_hardware:
                         computed_values = add_tmp_entry_and_save(
                             filename, computed_values, val, std, ind_x, ind_y
                         )
+                        tmp_delete_run_file(tmp_dirname(circuit, which_backend))
                     print(
                         f"{ind_x} - {ind_y} - {complex(val):.4f} ({complex(std):.4f})"
                     )
@@ -1076,8 +1023,14 @@ def measure_hamiltonian_elements_v2(
                     else:
                         circ_p = prep_circ_superpos(x, y, k)
                         circ_p.compose(circuit, inplace=True)
+                        circ_p.metadata["tmpname"] = circuit.metadata["tmpname"]
                         t_val, t_std = estimate_ham_with_reps(
-                            hamiltonian, circ_p, n_shots, backend, n_reps
+                            hamiltonian,
+                            circ_p,
+                            n_shots,
+                            backend,
+                            which_backend=which_backend,
+                            n_reps=n_reps,
                         )
                         vd[k] = (t_val, t_std)
 
@@ -1093,6 +1046,7 @@ def measure_hamiltonian_elements_v2(
                                 sind_y,
                                 sind_x,
                             )
+                            tmp_delete_run_file(tmp_dirname(circuit, which_backend))
                         print(
                             f"{sind_x} - {sind_y} - {complex(val):.4f} ({complex(std):.4f})"
                         )

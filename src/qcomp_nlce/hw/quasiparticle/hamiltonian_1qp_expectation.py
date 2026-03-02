@@ -9,7 +9,6 @@ from qcomp_nlce.utils import (
     get_appropriate_fake_backend,
     get_backend,
     hamming_weight_states,
-    measure_hamiltonian_elements,
     measure_hamiltonian_elements_v2,
     BACKEND_ALIAS,
     get_backend_name,
@@ -88,31 +87,16 @@ def measure_1qp_expectations_v2(
             backend = get_backend(circuit.num_qubits, provider_name)
         bn = backend.name
 
-    # Session mode for faster execution
-
-    if which_backend == "real_backend":
-        with Session(backend) as s:
-            comp_vals, stds = measure_hamiltonian_elements_v2(
-                hamiltonian,
-                circuit,
-                comp_states,
-                None,
-                backend,
-                which_backend,
-                n_shots,
-                n_reps=n_reps,
-            )
-    else:
-        comp_vals, stds = measure_hamiltonian_elements_v2(
-            hamiltonian,
-            circuit,
-            comp_states,
-            None,
-            backend,
-            which_backend,
-            n_shots,
-            n_reps=n_reps,
-        )
+    comp_vals, stds = measure_hamiltonian_elements_v2(
+        hamiltonian,
+        circuit,
+        comp_states,
+        None,
+        backend,
+        which_backend,
+        n_shots,
+        n_reps=n_reps,
+    )
     print(f"{which_backend} ({bn})")
     td = compare_with_true(true_comp_vals, comp_vals, bn)
 
@@ -138,7 +122,7 @@ def measure_1qp_expectation_v3(
     print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
     bn = get_backend_name(backend)
     comp_states = hamming_weight_states(n_qubits, 1)
-    comp_vals, stds = measure_hamiltonian_elements(
+    comp_vals, stds = measure_hamiltonian_elements_v2(
         hamiltonian,
         circuit,
         comp_states,

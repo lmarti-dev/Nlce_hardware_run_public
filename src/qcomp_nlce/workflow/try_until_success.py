@@ -21,17 +21,17 @@ def keep_trying(func: callable, provider_name: str):
     while not success:
         try:
             n_jobs = pending_jobs(10, provider_name)
-            if n_jobs != 0:
+            if n_jobs > 1:
                 raise Exception("Wait for jobs to finish!")
             func(True)
             success = True
         except Exception as e:
-            print(f"Encoutered exception: {e}")
-            count_to_awakening(600)
+            print(f"Encoutered exception: ({type(e).__name__}) {e}")
+            count_to_awakening(30)
 
     func(False)
     print("🚀🪐🌕🌑☄️🛸")
 
 
 if __name__ == "__main__":
-    keep_trying(workflow_nq_aqt_ladder, "AQT")
+    keep_trying(workflow_nq_aqt, "AQT")

@@ -32,7 +32,7 @@ from qcomp_nlce.utils.hamiltonian import (
 from qcomp_nlce.utils.save import (
     load_tmp_item,
     save_tmp_item,
-    tmp_filename,
+    tmp_dirname,
     load_optimized_vqe,
     load_sweep,
 )
@@ -147,7 +147,7 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
         item = None
         if on_hardware:
             filename = (
-                f"{tmp_filename(circuit,which_backend)}/measure_ground_energy.json"
+                f"{tmp_dirname(circuit,which_backend)}/measure_ground_energy.json"
             )
             try:
                 item = load_tmp_item(filename)

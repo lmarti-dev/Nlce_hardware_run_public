@@ -14,7 +14,15 @@ def prod_std(stds: np.ndarray, vals: np.ndarray) -> float:
 
 def sum_std(stds: np.ndarray, axis: int = 0) -> float:
     stds = np.array(stds)
-    sm = np.sqrt(np.sum(stds**2, axis=axis))
+    # I am keeping tabs on stds on real and imag by storing them in real and imag parts of std
+    # this doesn't mean there is an imag std
+    # but it has to exist somewhere, because imag and real vals are computed independently.
+    if np.any(np.imag(stds)) != 0:
+        sm = np.sqrt(np.sum(np.real(stds) ** 2, axis=axis)) + 1j * np.sqrt(
+            np.sum(np.imag(stds) ** 2, axis=axis)
+        )
+    else:
+        sm = np.sqrt(np.sum(stds**2, axis=axis))
     if sm.shape == (1,):
         return sm[0]
     return sm

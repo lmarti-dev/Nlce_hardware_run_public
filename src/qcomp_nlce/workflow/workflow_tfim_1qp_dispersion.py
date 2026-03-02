@@ -98,11 +98,11 @@ def workflow_nq_eqe(dry_run):
 
 def workflow_nq_aqt(dry_run):
 
-    J = 0.5
+    J = 0.8
     which_backends = [
-        # "real_backend",
-        "fake_backend",
-        "statevector",
+        "real_backend",
+        # "fake_backend",
+        # "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
@@ -116,22 +116,10 @@ def workflow_nq_aqt(dry_run):
         n_shots,
         which_backends,
         ["vqe"],
-        J,
+        J=J,
         n_reps=10,
         n_steps=10,
-        hl=0.1,
-    )
-    workflow_nq(
-        dry_run,
-        n_qubits_max,
-        which_hadamard_test,
-        provider_name,
-        n_shots,
-        which_backends,
-        ["sweep"],
-        J,
-        n_reps=1,
-        n_steps=20,
+        hl=0.0,
     )
 
 
@@ -140,8 +128,8 @@ def workflow_nq_aqt_ladder(dry_run):
     J = 0.20
     which_backends = [
         "real_backend",
-        # "fake_backend",
-        # "statevector",
+        "fake_backend",
+        "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
@@ -354,4 +342,4 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt(False)
+    workflow_nq_aqt_ladder(False)

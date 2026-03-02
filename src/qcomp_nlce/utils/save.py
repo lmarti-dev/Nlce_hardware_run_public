@@ -129,7 +129,7 @@ def tmp_entry_exists(l: TempListType, ind_x: int, ind_y: int):
     return False
 
 
-def tmp_filename(circuit: QuantumCircuit, which_backend: str):
+def tmp_dirname(circuit: QuantumCircuit, which_backend: str):
     if "tmpname" not in circuit.metadata.keys():
         raise ValueError(f"You did not give a tmpname to the circuit: {circuit.name}")
 
@@ -190,6 +190,60 @@ def baptize_circuit(
 ) -> str:
 
     return f"{prefix}_{method}_{n_qubits}_{provider_name}_{n_shots}shots_{which_hadamard_test}_test"
+
+
+RUN_FILENAME = "runlist.json"
+
+
+def init_run_split(_dirname: Path, on_hardware: bool) -> list:
+    if on_hardware:
+        if tmp_check_run_list(_dirname):
+            run_list = tmp_load_run_list(_dirname)
+            print(f"Loading file at {_dirname}, {len(run_list)} already done")
+        else:
+            tmp_create_run_file(_dirname)
+            print(f"Starting runs at {_dirname} from scratch")
+            run_list = []
+    else:
+        run_list = []
+    return run_list
+
+
+def dirname_to_tmp(_dirname: Path) -> Path:
+    return Path(Path(__file__).parent, "../tmp", _dirname)
+
+
+def tmp_delete_run_file(_dirname: Path):
+    os.remove(Path(dirname_to_tmp(_dirname), RUN_FILENAME))
+
+
+def tmp_check_run_list(_dirname: Path):
+    return Path(dirname_to_tmp(_dirname), RUN_FILENAME).is_file()
+
+
+def tmp_create_run_file(_dirname: Path):
+    fpath = Path(dirname_to_tmp(_dirname), RUN_FILENAME)
+    if tmp_check_run_list(_dirname):
+        raise ValueError(f"Run file at {_dirname} already exists!")
+    else:
+        if not fpath.parent.exists():
+            os.makedirs(fpath.parent)
+        with open(fpath, "w+", encoding="utf8") as f:
+            f.write("[]")
+        assert fpath.is_file()
+
+
+def tmp_save_run_file(_dirname: Path, run_list: list[list, list]):
+    with open(Path(dirname_to_tmp(_dirname), RUN_FILENAME), "w+", encoding="utf8") as f:
+        f.write(
+            json.dumps(run_list, cls=ExtendedJSONEncoder, ensure_ascii=False, indent=2)
+        )
+
+
+def tmp_load_run_list(_dirname: Path):
+    with open(Path(dirname_to_tmp(_dirname), RUN_FILENAME), "r", encoding="utf8") as f:
+        jobj = json.loads(f.read(), cls=ExtendedJSONDecoder)
+    return jobj
 
 
 DATA_DIR = Path(Path(__file__).parent, "../data")

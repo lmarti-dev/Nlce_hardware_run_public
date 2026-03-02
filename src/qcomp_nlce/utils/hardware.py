@@ -68,7 +68,7 @@ except ModuleNotFoundError:
 
 
 try:
-    raise Exception
+    raise ValueError
     from mqp.qiskit_provider import MQPProvider, MQPBackend
 
 except Exception:
@@ -345,7 +345,9 @@ def compute_mean_circ_stats(circs: list | QuantumCircuit, verbose: bool = False)
     return mean_depth, mean_n_gates, mean_nlg
 
 
-def is_hardware_run(which_backend: str):
+def is_hardware_run(which_backend: str, debug: bool = False):
+    if debug and which_backend == "fake_backend":
+        return True
     return which_backend == "real_backend"
 
 
@@ -687,24 +689,24 @@ def manual_hamiltonian_circuits(
 ) -> list[QuantumCircuit]:
     if HAM_NAME_VAR not in hamiltonian.__dict__:
         raise ValueError("Expected the hamiltonian to have name")
-    if "j_0hl" in hamiltonian.__dict__[HAM_NAME_VAR]:
-        n_qubits = hamiltonian.num_qubits
-        # ZZZ
-        z_circ = circuit.copy()
-        z_circ.measure_all()
 
-        # XX XX XX
+    n_qubits = hamiltonian.num_qubits
+    # ZZZ
+    z_circ = circuit.copy()
+    z_circ.measure_all()
 
-        x_circ = circuit.copy()
-        x_circ.h(range(circuit.num_qubits))
-        x_circ.measure_all()
+    y_circ = circuit.copy()
+    y_circ.h(range(circuit.num_qubits))
+    y_circ.s(range(circuit.num_qubits))
+    y_circ.measure_all()
 
-        return [z_circ, x_circ]
+    # XX XX XX
 
-    else:
-        raise ValueError(
-            f"Expected a valid name, got: {hamiltonian.__dict__[HAM_NAME_VAR]}"
-        )
+    x_circ = circuit.copy()
+    x_circ.h(range(circuit.num_qubits))
+    x_circ.measure_all()
+
+    return [z_circ, x_circ, y_circ]
 
 
 def get_token(which: Literal["IBM", "LRZ"]):
