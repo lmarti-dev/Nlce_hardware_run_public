@@ -33,4 +33,4 @@ def keep_trying(func: callable, provider_name: str):
 
 
 if __name__ == "__main__":
-    keep_trying(workflow_nq_aqt, "AQT")
+    keep_trying(workflow_nq_aqt_ladder, "AQT")

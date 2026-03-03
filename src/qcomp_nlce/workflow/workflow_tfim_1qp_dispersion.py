@@ -128,13 +128,13 @@ def workflow_nq_aqt_ladder(dry_run):
     J = 0.20
     which_backends = [
         "real_backend",
-        "fake_backend",
-        "statevector",
+        # "fake_backend",
+        # "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
     which_hadamard_test = "stefan"
-    n_qubits_max = 3
+    n_qubits_max = 4
     workflow_nq(
         dry_run,
         n_qubits_max,
