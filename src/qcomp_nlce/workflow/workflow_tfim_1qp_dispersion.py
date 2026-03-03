@@ -101,8 +101,8 @@ def workflow_nq_aqt(dry_run):
     J = 0.8
     which_backends = [
         "real_backend",
-        # "fake_backend",
-        # "statevector",
+        "fake_backend",
+        "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
@@ -342,4 +342,4 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt_ladder(False)
+    workflow_nq_aqt(False)

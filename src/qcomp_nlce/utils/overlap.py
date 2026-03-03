@@ -376,7 +376,7 @@ def stefan_hadamard_test(
     backend: BACKEND_ALIAS = "statevector",
     counting_method: Literal["estimator", "samples"] = "estimator",
     n_reps: int = 10,
-    reps_per_job: int = 2,
+    reps_per_job: int = 5,
 ):
 
     # this is Stefan Wolf's test, a bit modified though

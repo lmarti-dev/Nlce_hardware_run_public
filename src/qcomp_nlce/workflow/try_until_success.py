@@ -29,7 +29,6 @@ def keep_trying(func: callable, provider_name: str):
             print(f"Encoutered exception: ({type(e).__name__}) {e}")
             count_to_awakening(30)
 
-    func(False)
     print("🚀🪐🌕🌑☄️🛸")
 
 
