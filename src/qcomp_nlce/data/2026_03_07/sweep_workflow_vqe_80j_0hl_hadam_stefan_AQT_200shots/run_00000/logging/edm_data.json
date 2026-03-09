@@ -1,0 +1,16 @@
+{
+    "init": {
+        "experiment_name": "sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots",
+        "file_default_name": "fruit",
+        "redirect_print_output": true,
+        "zero_padding_len": 5,
+        "experiment_date": "2026_03_07",
+        "use_runs": true,
+        "use_calendar": true,
+        "project": "no specific",
+        "notes": null
+    },
+    "run_number": 0,
+    "current_run_dir": "run_00000",
+    "__timestamp": "2026_03_07_16_43_40"
+}

@@ -24,10 +24,11 @@ def get_matrix(
     size: Literal["dict_l", "dict_s"],
     which_matrix: Literal["exs", "eld"],
     which_backend: BACKEND_TYPES,
+    which_algorithm: Literal["vqe", "sweep"],
 ):
     return (
-        jobj["results"]["vqe"][size][which_matrix][which_backend]["values"],
-        jobj["results"]["vqe"][size][which_matrix][which_backend]["stds"],
+        jobj["results"][which_algorithm][size][which_matrix][which_backend]["values"],
+        jobj["results"][which_algorithm][size][which_matrix][which_backend]["stds"],
     )
 
 
@@ -35,29 +36,30 @@ def get_gs(
     jobj: dict,
     size: Literal["dict_l", "dict_s"],
     which_backend: BACKEND_TYPES,
+    which_algorithm: Literal["vqe", "sweep"],
 ):
     return (
-        jobj["results"]["vqe"][size]["gsd"][which_backend]["energy"],
-        jobj["results"]["vqe"][size]["gsd"][which_backend]["std"],
+        jobj["results"][which_algorithm][size]["gsd"][which_backend]["energy"],
+        jobj["results"][which_algorithm][size]["gsd"][which_backend]["std"],
     )
 
 
-if __name__ == "__main__":
+def plot_matrix_breakdown(item: list[str, str, str], dry_run: bool = True):
 
-    style()
-    dry_run = False
-    which_backend = "real_backend"
-
-    edm = ExperimentDataManager(
-        f"plot_meshes_{which_backend}", project="nlce", dry_run=dry_run
-    )
-    aqt_fpath = r"2026_02_02\vqe_workflow_TFIM_hadam_stefan_AQT_200shots_00001\run_00000\data\macadamias_00000.json"
-
-    jobj = load_json(Path(DATA_DIR, aqt_fpath))
+    fpath = item[0]
+    which_algorithm = item[1]
+    which_backend = item[2]
+    jobj = load_json(Path(DATA_DIR, fpath))
     if "model_dir" in jobj["inputs"]:
         which_model = jobj["inputs"]["model_dir"]
     else:
         which_model = jobj["inputs"]["which_model"]
+
+    edm = ExperimentDataManager(
+        f"plot_meshes_{which_backend}_{which_model}_{which_algorithm}",
+        project="nlce",
+        dry_run=dry_run,
+    )
 
     textcolors = ["k", "w"]
 
@@ -74,11 +76,10 @@ if __name__ == "__main__":
         "exd": rf"$\langle j | U^\dagger H U | k \rangle$",
     }
 
-    edm.var_dump(**jobj["inputs"], aqt_fpath=aqt_fpath)
-
     for ind_x, size in enumerate(("dict_l", "dict_s")):
         for ind_y, which in enumerate(("eld", "exd")):
-            mat, stds = get_matrix(jobj, size, which, which_backend)
+
+            mat, stds = get_matrix(jobj, size, which, which_backend, which_algorithm)
             stds /= np.sqrt(n_shots)
             nq = len(mat)
             astds = np.abs(stds)
@@ -112,10 +113,28 @@ if __name__ == "__main__":
         ax.set_yticks(range(nq), range(1, 1 + nq))
     # fig.tight_layout()
     # fig.subplots_adjust(hspace=0.01, wspace=0.5)
+    edm.var_dump(**jobj["inputs"], fpath=fpath)
     edm.save_figure(
         fig,
-        f"{which_backend}_{which_model}_meshes_std",
+        f"{which_algorithm}_{which_backend}_{which_model}_meshes_std",
         fig_shape="double-size",
         add_timestamp=False,
     )
+
+
+if __name__ == "__main__":
+
+    style()
+    dry_run = False
+    which_backend = "real_backend"
+
+    TFIM_80j_vqe_fpath = r"2026_02_02\vqe_workflow_TFIM_hadam_stefan_AQT_200shots_00001\run_00000\data\macadamias_00000.json"
+    TFIM_80j_sweep_fpath = r"2026_02_12/vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00002/run_00000/data/macadamias_00000.json"
+
+    for item in (
+        (TFIM_80j_sweep_fpath, "sweep", "fake_backend"),
+        # (TFIM_80j_vqe_fpath, "vqe", "real_backend"),
+    ):
+        plot_matrix_breakdown(item)
+
     plt.show()

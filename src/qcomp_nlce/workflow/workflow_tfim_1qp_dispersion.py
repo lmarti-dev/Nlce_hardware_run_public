@@ -123,13 +123,69 @@ def workflow_nq_aqt(dry_run):
     )
 
 
+def workflow_nq_aqt_sweeps(dry_run):
+
+    J = 0.8
+    which_backends = [
+        "real_backend",
+        "fake_backend",
+        "statevector",
+    ]
+    provider_name: PROVIDER_ALIAS = "AQT"
+    n_shots = int(200)
+    which_hadamard_test = "stefan"
+    n_qubits_max = 5
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["sweep"],
+        J=J,
+        n_reps=10,
+        n_steps=10,
+        hl=0.0,
+    )
+
+
+def workflow_nq_aqt_sweeptest(dry_run):
+
+    J = 0.8
+    which_backends = [
+        # "real_backend",
+        "fake_backend",
+        "statevector",
+    ]
+
+    n_shots = int(200)
+    which_hadamard_test = "stefan"
+    n_qubits_max = 5
+    for n_steps in (10, 20):
+        for provider_name in ("AQT", "AQT_BETTER_10", "AQT_BETTER_100"):
+            workflow_nq(
+                dry_run,
+                n_qubits_max,
+                which_hadamard_test,
+                provider_name,
+                n_shots,
+                which_backends,
+                ["sweep"],
+                J=J,
+                n_reps=10,
+                n_steps=n_steps,
+                hl=0.0,
+            )
+
+
 def workflow_nq_aqt_ladder(dry_run):
 
     J = 0.20
     which_backends = [
         "real_backend",
-        # "fake_backend",
-        # "statevector",
+        "fake_backend",
+        "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
@@ -335,11 +391,11 @@ def workflow_nq(
     for _b in which_backends:
         show_diffs(out_dict, _b)
 
-    plt.show()
+    # plt.show()
 
     ...
 
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt(False)
+    workflow_nq_aqt_sweeptest(False)

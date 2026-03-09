@@ -2,6 +2,7 @@ from qcomp_nlce.workflow.workflow_tfim_1qp_dispersion import (
     workflow_nq_aqt,
     workflow_nq_qexa,
     workflow_nq_aqt_ladder,
+    workflow_nq_aqt_sweeps,
 )
 from qcomp_nlce.utils.hardware import pending_jobs
 

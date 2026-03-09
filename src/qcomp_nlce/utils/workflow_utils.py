@@ -229,7 +229,7 @@ def sweep_heff(
     )
     name_part = baptize_circuit(
         f"dim1d_{which_model}",
-        "sweep",
+        f"sweep_{n_steps}step",
         n_qubits,
         provider_name,
         n_shots,

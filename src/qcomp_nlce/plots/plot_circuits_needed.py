@@ -1,6 +1,7 @@
 from qcomp_nlce.utils import (
     heff_n_expectation_values_1d,
     heff_n_expectation_values_2d,
+    heff_n_expectation_values_ladder,
     heff_total_shots_paper,
 )
 
