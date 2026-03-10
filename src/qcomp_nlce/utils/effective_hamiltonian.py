@@ -76,7 +76,7 @@ def calculate_Ed(hamiltonian: np.ndarray):
     return float(np.real(eigvals[0]))
 
 
-def H_effective_ed(hamiltonian: SparsePauliOp):
+def H_effective_ed(hamiltonian: SparsePauliOp) -> np.ndarray:
 
     N = hamiltonian.num_qubits
     # make Hamiltonian a full dense matrix

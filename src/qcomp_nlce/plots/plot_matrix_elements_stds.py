@@ -1,6 +1,7 @@
 from data_manager import ExtendedJSONDecoder
 
 import io
+import re
 import json
 
 from pathlib import Path
@@ -30,6 +31,15 @@ def get_matrix(
         jobj["results"][which_algorithm][size][which_matrix][which_backend]["values"],
         jobj["results"][which_algorithm][size][which_matrix][which_backend]["stds"],
     )
+
+
+def get_true_values(
+    jobj: dict,
+    size: Literal["dict_l", "dict_s"],
+    which_matrix: Literal["exs", "eld"],
+    which_algorithm: Literal["vqe", "sweep"],
+):
+    return jobj["results"][which_algorithm][size][which_matrix]["system"]["values"]
 
 
 def get_gs(
@@ -122,6 +132,100 @@ def plot_matrix_breakdown(item: list[str, str, str], dry_run: bool = True):
     )
 
 
+def parnum(val: float, std: float) -> str:
+    if std == 0:
+        return f"{val:.3f}"
+    nz = re.match("0+", str(std).replace(".", "")).span()[-1] - 1
+    s2 = str(std)[nz + 2 : nz + 4]
+    s1 = f"{val:.{nz}f}({s2})"
+    return s1
+
+
+def plot_matrix_breakdown_v2(item: list[str, str, str], dry_run: bool = True):
+
+    fpath = item[0]
+    which_algorithm = item[1]
+    which_backend = item[2]
+    jobj = load_json(Path(DATA_DIR, fpath))
+    if "model_dir" in jobj["inputs"]:
+        which_model = jobj["inputs"]["model_dir"]
+    else:
+        which_model = jobj["inputs"]["which_model"]
+
+    edm = ExperimentDataManager(
+        f"plot_meshes_{which_backend}_{which_model}_{which_algorithm}_V2",
+        project="nlce",
+        dry_run=dry_run,
+    )
+
+    textcolors = ["k", "w"]
+
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(8, 6), constrained_layout=True)
+    pn = jobj["inputs"]["provider_name"]
+    nq = jobj["inputs"]["n_qubits"]
+    n_shots = jobj["inputs"]["n_shots"]
+    n_reps = jobj["inputs"]["n_reps"]
+    n_shots *= n_reps
+
+    SIZES_D = {"dict_l": f"{nq} qubits", "dict_s": f"{nq-1} qubits"}
+    WHICH_D = {
+        "eld": rf"$\langle j | U | k \rangle$",
+        "exd": rf"$\langle j | U^\dagger H U | k \rangle$",
+    }
+
+    for ind_x, size in enumerate(("dict_l", "dict_s")):
+        for ind_y, which_mat in enumerate(("eld", "exd")):
+
+            mat, stds = get_matrix(
+                jobj, size, which_mat, which_backend, which_algorithm
+            )
+            true_mat = get_true_values(jobj, size, which_mat, which_algorithm)
+            stds /= np.sqrt(n_shots)
+            nq = len(mat)
+            astds = np.abs(true_mat - mat)
+            ax: plt.Axes = axes[ind_x, ind_y]
+            im = ax.imshow(np.abs(astds))
+            threshold = im.norm(np.max(astds)) / 2
+
+            for i in range(mat.shape[0]):
+                for j in range(mat.shape[1]):
+                    ttype = "val"
+                    if ttype == "val":
+                        sign = "" if mat[i, j].imag >= 0 else "-"
+                        u1 = parnum(mat[i, j].real, stds[i, j].real)
+                        u2 = parnum(np.abs(mat[i, j].imag), stds[i, j].imag)
+
+                        s = f"{u1}\n{sign}{u2}"
+                    elif ttype == "std":
+                        rstd = np.abs(stds[i, j].real)
+                        istd = np.abs(stds[i, j].imag)
+                        s = f"{float(rstd):.2f}\n{float(istd):.2f}"
+                    text = ax.text(
+                        j,
+                        i,
+                        s,
+                        ha="center",
+                        va="center",
+                        color=textcolors[int(im.norm(astds[i, j]) < threshold)],
+                        fontsize=7,
+                    )
+            cbar = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+            ax.set_title(rf"{SIZES_D[size]} - {WHICH_D[which_mat]}")
+            ax.grid(False)
+
+        ax.set_xticks(range(nq), range(1, 1 + nq))
+        ax.set_yticks(range(nq), range(1, 1 + nq))
+    # fig.tight_layout()
+    # fig.subplots_adjust(hspace=0.01, wspace=0.5)
+    edm.var_dump(**jobj["inputs"], fpath=fpath)
+    edm.save_figure(
+        fig,
+        f"{which_algorithm}_{which_backend}_{which_model}_meshes_std_V2",
+        fig_shape="double-size",
+        add_timestamp=False,
+    )
+
+
 if __name__ == "__main__":
 
     style()
@@ -129,12 +233,14 @@ if __name__ == "__main__":
     which_backend = "real_backend"
 
     TFIM_80j_vqe_fpath = r"2026_02_02\vqe_workflow_TFIM_hadam_stefan_AQT_200shots_00001\run_00000\data\macadamias_00000.json"
-    TFIM_80j_sweep_fpath = r"2026_02_12/vqe_workflow_TFIM_hadam_stefan_AQT_2000shots_00002/run_00000/data/macadamias_00000.json"
+    TFIM_80j_sweep_fpath = r"2026_03_07/sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots/run_00000/data/fruit_00000.json"
+    TFIM_80j_10hl_vqe_fpath = r"2026_02_06/vqe_workflow_TFIM_hl_10_hadam_stefan_AQT_200shots/run_00000/data/cherry_00000.json"
 
     for item in (
-        (TFIM_80j_sweep_fpath, "sweep", "fake_backend"),
-        # (TFIM_80j_vqe_fpath, "vqe", "real_backend"),
+        (TFIM_80j_sweep_fpath, "sweep", "real_backend"),
+        (TFIM_80j_10hl_vqe_fpath, "vqe", "real_backend"),
+        (TFIM_80j_vqe_fpath, "vqe", "real_backend"),
     ):
-        plot_matrix_breakdown(item)
+        plot_matrix_breakdown_v2(item, dry_run)
 
-    plt.show()
+    # plt.show()

@@ -23,13 +23,13 @@ def ghz_circ(n_qubits: int):
 
 
 def hardware_run(fake: bool):
-    n_qubits = 8
+    n_qubits = 14
     circ = ghz_circ(n_qubits)
 
     provider_name = "AQT"
     n_shots = int(200)
     edm = ExperimentDataManager(
-        f"ghz_test_{provider_name}_{n_shots}", project="nlce", dry_run=False
+        f"ghz_test_{provider_name}_{n_shots}", project="sampling", dry_run=False
     )
 
     if fake:

@@ -166,7 +166,7 @@ BACKEND_COLORS = {
 
 
 def get_aqt_backend(n_qubits: int) -> MQPBackend:
-    if n_qubits > 12:
+    if n_qubits > 14:
         raise ValueError(f"Maximum number of qubits is 12, requested: {n_qubits}")
     token = get_token("LRZ")
     provider = MQPProvider(token)
