@@ -35,6 +35,8 @@ from qcomp_nlce.utils.save import (
     tmp_dirname,
     load_optimized_vqe,
     load_sweep,
+    init_run_split,
+    tmp_save_run_file,
 )
 
 from data_manager import ExperimentDataManager
@@ -126,6 +128,8 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
     n_shots: int = 1e3,
     provider_name: str = "AQT",
     solve: bool = False,
+    n_reps: int = 1,
+    reps_per_job: int = 5,
 ) -> dict:
 
     if solve:
@@ -163,6 +167,8 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
                 which_backend,
                 n_shots,
                 provider_name,
+                n_reps=n_reps,
+                reps_per_job=reps_per_job,
             )
             if on_hardware:
                 save_tmp_item(item, filename)
@@ -177,7 +183,11 @@ def measure_ground_state_energy_subspace_sampling_v2(
     which_backend: str,
     n_shots: int = 1e3,
     provider_name: str = "AQT",
+    n_reps: int = 1,
+    reps_per_job: int = 5,
 ) -> dict:
+
+    reps_per_job = min(n_reps, reps_per_job)
 
     def relerr(e):
         return np.abs(e - ground_energy) / np.abs(ground_energy)
@@ -185,10 +195,15 @@ def measure_ground_state_energy_subspace_sampling_v2(
     circuit_to_sample = add_meas_layer(circuit)
     # assume that the std is sample dependent ish.
     # TODO: derive a better expression!!
-    std = 1 / np.sqrt(n_shots)
+    # TODO: this seems to be non-trivial
+    # how does the uncertainty of subspace diagonalization work?
+    std = 1 / np.sqrt(n_shots * n_reps)
     if which_backend == "statevector_shots" or which_backend == "statevector":
         sv_energy = sv_estimate_observables(
-            circuit=circuit, observables=[hamiltonian], param_sweep=[], n_shots=n_shots
+            circuit=circuit,
+            observables=[hamiltonian],
+            param_sweep=[],
+            n_shots=(n_shots * n_reps),
         ).data.evs[0]
         print(f"Statevector {relerr(sv_energy):.5e}")
 
@@ -196,7 +211,7 @@ def measure_ground_state_energy_subspace_sampling_v2(
 
         sv = StatevectorSampler()
 
-        job = sv.run([circuit_to_sample], shots=n_shots)
+        job = sv.run([circuit_to_sample], shots=n_shots * n_reps)
 
         counts = job.result()[0].join_data().get_counts()
 
@@ -210,16 +225,36 @@ def measure_ground_state_energy_subspace_sampling_v2(
         elif which_backend == "real_backend":
             backend = get_backend(circuit.num_qubits, provider_name)
 
-        job = backend_sample(
-            backend=backend,
-            circuit=circuit_to_sample,
-            parameters=[],
-            n_shots=n_shots,
-        )
-        counts = get_counts_from_res(job.result(), hamiltonian.num_qubits, 0)
+        on_hardware = is_hardware_run(which_backend)
+        _dirname = tmp_dirname(circuit, which_backend)
 
-        bn = backend.name
+        n_runs = int(n_reps // reps_per_job)
 
+        run_list = init_run_split(_dirname, on_hardware)
+
+        remaining_runs = n_runs - len(run_list)
+        for run_ind in range(remaining_runs):
+            print(f"Run number {run_ind+1}/{remaining_runs}", end="\r")
+            job = backend_sample(
+                backend=backend,
+                circuit=circuit_to_sample,
+                parameters=[],
+                n_shots=n_shots,
+            )
+            counts = get_counts_from_res(job.result(), hamiltonian.num_qubits, 0)
+            run_list.append(counts)
+            bn = backend.name
+            if on_hardware:
+                tmp_save_run_file(_dirname, run_list)
+
+        counts_out = {}
+        for c in run_list:
+            for k in c:
+                if k in counts_out.keys():
+                    counts_out[k] += c[k]
+                else:
+                    counts_out[k] = c[k]
+        counts = counts_out
     unique_bitstring = get_unique_bitstrings(counts)
     bitstring_prop = len(unique_bitstring) / (2**circuit.num_qubits)
     comp_energy = subspace_diagonalize(
@@ -242,144 +277,6 @@ def measure_ground_state_energy_subspace_sampling_v2(
             "counts": counts,
         }
     }
-
-
-def measure_ground_state_energy_subspace_sampling_v3(
-    hamiltonian: SparsePauliOp,
-    ground_energy: float,
-    circuit: QuantumCircuit,
-    backend: BACKEND_ALIAS,
-    which_backend: str,
-    n_shots: int = 1e3,
-) -> dict:
-
-    def relerr(e):
-        return np.abs(e - ground_energy) / np.abs(ground_energy)
-
-    # assume that the std is sample dependent ish.
-    # TODO: derive a better expression!!
-    std = 1 / np.sqrt(n_shots)
-
-    bn = get_backend_name(backend)
-    job = backend_sample(backend, circuit, None, n_shots)
-    counts = get_counts_from_res(job.result())
-    unique_bitstring = get_unique_bitstrings(counts)
-    bitstring_prop = len(unique_bitstring) / (2**circuit.num_qubits)
-    comp_energy = subspace_diagonalize(
-        unique_bitstrings=unique_bitstring, ham=hamiltonian
-    )
-
-    print(
-        f"{which_backend} ({bn}) {relerr(comp_energy):.5e} sub. mat.: {len(unique_bitstring)} × {len(unique_bitstring)}: {bitstring_prop*100:.3f}%"
-    )
-
-    return {
-        which_backend: {
-            "name": bn,
-            "error": relerr(comp_energy),
-            "energy": comp_energy,
-            "unique_bitstrings": unique_bitstring,
-            "bitstring_prop": bitstring_prop,
-            "n_shots": n_shots,
-            "std": std,
-            "counts": counts,
-        }
-    }
-
-
-def measure_ground_state_energy_subspace_sampling(
-    hamiltonian: SparsePauliOp,
-    ground_energy: float,
-    circuit: QuantumCircuit,
-    n_shots: int = 1e3,
-    run_on_hardware: bool = False,
-    backend_name: str = "AQT",
-) -> dict:
-    fake_backend = get_appropriate_fake_backend(circuit.num_qubits, backend_name)
-    ratio = get_tfim_ratio(hamiltonian)
-
-    print(f"n_qubits: {hamiltonian.num_qubits}, j/h {ratio}")
-
-    circuit_to_sample = add_meas_layer(circuit)
-
-    def relerr(e):
-        return np.abs(e - ground_energy) / np.abs(ground_energy)
-
-    fake_job = backend_sample(
-        backend=fake_backend,
-        circuit=circuit_to_sample,
-        parameters=[],
-        n_shots=n_shots,
-    )
-    fake_counts = get_counts_from_job(fake_job)
-    fake_unique_bitstring = get_unique_bitstrings(fake_counts)
-    fake_backend_bitstring_prop = len(fake_unique_bitstring) / (2**circuit.num_qubits)
-    fake_backend_energy = subspace_diagonalize(
-        unique_bitstrings=fake_unique_bitstring, ham=hamiltonian
-    )
-
-    statevector_energy = sv_estimate_observables(
-        circuit=circuit, observables=[hamiltonian], param_sweep=[], n_shots=n_shots
-    ).data.evs[0]
-
-    if run_on_hardware:
-        real_backend = get_backend(circuit.num_qubits, backend_name)
-        real_job = backend_sample(
-            backend=real_backend,
-            circuit=circuit_to_sample,
-            parameters=[],
-            n_shots=n_shots,
-        )
-        real_counts = get_counts_from_job(real_job)
-        real_unique_bitstring = get_unique_bitstrings(real_counts)
-        real_bitstring_prop = len(real_unique_bitstring) / (2**circuit.num_qubits)
-        real_backend_energy = subspace_diagonalize(
-            unique_bitstrings=real_unique_bitstring, ham=hamiltonian
-        )
-
-        print(
-            f"RealBackend ({real_backend.name}) {relerr(real_backend_energy):.5e} sub. mat.: {len(real_unique_bitstring)} × {len(real_unique_bitstring)}: {real_bitstring_prop*100:.3f}%"
-        )
-
-    print(f"Statevector {relerr(statevector_energy):.5e}")
-
-    print(
-        f"FakeBackend ({fake_backend.name}) {relerr(fake_backend_energy):.5e} sub. mat.: {len(fake_unique_bitstring)} × {len(fake_unique_bitstring)}: {fake_backend_bitstring_prop*100:.3f}%"
-    )
-
-    var_dict = {
-        "fake_backend": {
-            "name": fake_backend.name,
-            "error": relerr(fake_backend_energy),
-            "energy": fake_backend_energy,
-            "unique_bitstrings": fake_unique_bitstring,
-            "bitstring_prop": fake_backend_bitstring_prop,
-            "n_shots": n_shots,
-            "job": encode_sampler_result(fake_job),
-        },
-        "statevector": {
-            "error": relerr(statevector_energy),
-            "energy": statevector_energy,
-        },
-        "system": {
-            "ground_energy": ground_energy,
-            "n_qubits": circuit.num_qubits,
-            "hamiltonian": hamiltonian,
-            "ratio": ratio,
-        },
-    }
-    if run_on_hardware:
-        var_dict["real_backend"] = {
-            "name": real_backend.name,
-            "error": relerr(real_backend_energy),
-            "energy": real_backend_energy,
-            "unique_bitstrings": real_unique_bitstring,
-            "bitstring_prop": real_bitstring_prop,
-            "n_shots": n_shots,
-            "job": encode_sampler_result(real_job),
-        }
-
-    return var_dict
 
 
 def save_ground_state_energy_run(
@@ -393,7 +290,7 @@ def save_ground_state_energy_run(
 
     hamiltonian, ground_energy, circuit = load_which(dirname, which)
 
-    var_dict = measure_ground_state_energy_subspace_sampling(
+    var_dict = measure_ground_state_energy_subspace_sampling_v2(
         hamiltonian,
         ground_energy,
         circuit,

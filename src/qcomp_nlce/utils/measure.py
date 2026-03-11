@@ -134,6 +134,8 @@ def sample_counts_circuit(
 
 
 def convert_count_keys(counts: dict, n_qubits: int):
+    # there's an annoying case when ints are used but there's only 0 and 1 as result
+    # we should specify n_qubits AND n_measured_qubits. But then that case can still happen
     has_bin_keys = all([set(str(k)).issubset(set(("0", "1"))) for k in counts])
     counts_out = {}
     if not has_bin_keys:

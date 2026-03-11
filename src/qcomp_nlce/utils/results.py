@@ -150,3 +150,40 @@ def show_diffs(d, which_backend: BACKEND_TYPES):
                 pretty_print(vals_true)
                 print(f"## DIFF {info}")
                 pretty_print_diff(vals_be, vals_true)
+
+
+def undepolarize_out_dict(out_d: dict, depol_rate: float) -> dict:
+
+    ks = out_d["inputs"]["ks"]
+
+    for si in ("dict_l", "dict_s"):
+
+        for mnd in ("eld", "exd"):
+            for backend in out_d["results"]["vqe"][si][mnd]:
+                if backend != "system":
+                    out_d["results"]["vqe"][si][mnd][backend]["values"] = out_d[
+                        "results"
+                    ]["vqe"][si][mnd][backend]["values"] / (1 - depol_rate)
+
+            for backend in out_d["results"]["vqe"][si]["gsd"]:
+                if backend != "system":
+                    out_d["results"]["vqe"][si]["gsd"][backend]["energy"] = out_d[
+                        "results"
+                    ]["vqe"][si]["gsd"][backend]["energy"] / (1 - depol_rate)
+
+    for si in ("dict_l", "dict_s"):
+        for backend in out_d["results"]["vqe"][si]["eld"]:
+            if backend != "system":
+                eld = out_d["results"]["vqe"][si]["eld"]
+                gsd = out_d["results"]["vqe"][si]["gsd"]
+                exd = out_d["results"]["vqe"][si]["exd"]
+                heff = heff_backend_type(eld, gsd, exd, backend)
+                out_d["results"]["vqe"][si]["heff"][backend] = heff
+        disp = dispersion_all_backends(
+            out_d["results"]["vqe"]["dict_l"], out_d["results"]["vqe"]["dict_s"], ks
+        )
+    out_d["results"]["vqe"]["disp"] = disp
+    n_mc_samples = int(1e4)
+    mc_disp = mc_disp_from_res_dict(ks, out_d, "vqe", n_mc_samples, to_eotm=True)
+    out_d["results"]["vqe"]["mc_disp"] = mc_disp
+    return out_d

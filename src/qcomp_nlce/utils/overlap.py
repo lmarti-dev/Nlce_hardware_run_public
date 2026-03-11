@@ -379,6 +379,7 @@ def stefan_hadamard_test(
     reps_per_job: int = 5,
 ):
 
+    reps_per_job = min(n_reps, reps_per_job)
     # this is Stefan Wolf's test, a bit modified though
     # because <0|u|0> in our case cancels perfectly, so
     # we ignore it from the start!
@@ -871,6 +872,7 @@ def estimate_ham_with_reps(
     reps_per_job: int = 5,
 ):
 
+    reps_per_job = min(n_reps, reps_per_job)
     if backend != "statevector" and ("IQM" in backend.name or "EQE" in backend.name):
         job = measure_manual_circuit(backend, circuit, hamiltonian, n_shots)
         res = job.result()

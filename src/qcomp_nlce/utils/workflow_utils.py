@@ -296,13 +296,17 @@ def get_heff_values(
     )
 
     print("-- Computing ground state energy --")
+    # divided by ten to match QPU results
+    # I don't want to recompute
+    # And also if we go too high, we have full space diag, which is pretty lame
     ground_state_dict = loop_measure_ground_state_energy_subspace_sampling_v2(
         hamiltonian=hamiltonian,
         circuit=gs_circuit,
         which_backends=which_backends,
-        n_shots=n_shots,
+        n_shots=int(n_shots / 10),
         provider_name=provider_name,
         solve=solve,
+        n_reps=n_reps,
     )
 
     print("-- Computing <j|U* H U|k> --")

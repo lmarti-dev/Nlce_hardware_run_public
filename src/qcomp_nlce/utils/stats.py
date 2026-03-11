@@ -29,6 +29,8 @@ def sum_std(stds: np.ndarray, axis: int = 0) -> float:
 
 
 def mean_std(stds: np.ndarray, axis: int = 0) -> float:
+    if len(stds) == 0:
+        return 0
     return sum_std(stds, axis=axis) / len(stds)
 
 
@@ -117,7 +119,9 @@ def get_heff_mc_sampler(
     return sampler
 
 
-def res_dict_sampler(_d: dict, circ: ALGORITHMS_ALIAS, to_eotm: bool) -> dict[callable]:
+def res_dict_sampler(
+    _d: dict, circ: ALGORITHMS_ALIAS, to_eotm: bool, gsd_sup_fac: int = 1
+) -> dict[callable]:
 
     # to_eotm: unfortunately,
     # not all backends compute stds the same way
@@ -149,14 +153,16 @@ def res_dict_sampler(_d: dict, circ: ALGORITHMS_ALIAS, to_eotm: bool) -> dict[ca
             expectations_l = res["dict_l"]["exd"][be]["values"]
             expectations_std_l = res["dict_l"]["exd"][be]["stds"] * fac
             gs_expectation_l = res["dict_l"]["gsd"][be]["energy"]
-            gs_expectation_std_l = res["dict_l"]["gsd"][be]["std"]
+            # alread EOTM form
+            gs_expectation_std_l = res["dict_l"]["gsd"][be]["std"] * gsd_sup_fac
 
             overlap_s = res["dict_s"]["eld"][be]["values"]
             overlap_std_s = res["dict_s"]["eld"][be]["stds"] * fac
             expectations_s = res["dict_s"]["exd"][be]["values"]
             expectations_std_s = res["dict_s"]["exd"][be]["stds"] * fac
             gs_expectation_s = res["dict_s"]["gsd"][be]["energy"]
-            gs_expectation_std_s = res["dict_s"]["gsd"][be]["std"]
+            # alread EOTM form
+            gs_expectation_std_s = res["dict_s"]["gsd"][be]["std"] * gsd_sup_fac
 
             sampler = get_heff_mc_sampler(
                 expectations_l,
@@ -183,15 +189,16 @@ def mc_disp_from_res_dict(
     n_samples: int = 10000,
     sampler_opts: dict = {},
     to_eotm: bool = False,
+    gsd_sup_fac: float = 1,
 ) -> dict:
 
     disps = {}
-    samplers = res_dict_sampler(_d, circ, to_eotm)
+    samplers = res_dict_sampler(_d, circ, to_eotm, gsd_sup_fac)
     for be in samplers:
         sampler = samplers[be]
         sampled = np.zeros((len(ks), n_samples))
         for n in range(n_samples):
-            print(f"{n:0>6n}/{n_samples}", end="\r")
+            print(f"{1+n:0>6n}/{n_samples}", end="\r")
             sampled[:, n] = sampler(ks, **sampler_opts)
 
         mc_mean = np.mean(sampled, axis=1)

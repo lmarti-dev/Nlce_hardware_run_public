@@ -1,8 +1,6 @@
 from qcomp_nlce.utils import (
     heff_n_expectation_values_1d,
     heff_n_expectation_values_2d,
-    heff_n_expectation_values_ladder,
-    heff_total_shots_paper,
 )
 
 import matplotlib.pyplot as plt
@@ -10,7 +8,7 @@ from fauplotstyle import style
 from data_manager import ExperimentDataManager
 
 
-dry_run = True
+dry_run = False
 
 edm = ExperimentDataManager(
     "expectation_values_scaling", project="nlce", dry_run=dry_run
@@ -31,9 +29,9 @@ for n in x:
 fig, ax = plt.subplots()
 
 
-ax.plot(x, y, label="1D")
+ax.plot(x, y, label="Chain")
 # ax.plot(x, l, label="Ladder")
-ax.plot(x, z, label="2D")
+ax.plot(x, z, label="Square lattice")
 
 ax.set_xlabel("Number of qubits")
 ax.set_ylabel("Number of circuits")

@@ -96,31 +96,32 @@ def workflow_nq_eqe(dry_run):
     )
 
 
-def workflow_nq_aqt(dry_run):
+def workflow_nq_aqt(dry_run, J):
 
-    J = 1.0
+    # J = 1.0
     which_backends = [
         "real_backend",
-        "fake_backend",
-        "statevector",
+        # "fake_backend",
+        # "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
     which_hadamard_test = "stefan"
     n_qubits_max = 5
-    workflow_nq(
-        dry_run,
-        n_qubits_max,
-        which_hadamard_test,
-        provider_name,
-        n_shots,
-        which_backends,
-        ["vqe"],
-        J=J,
-        n_reps=10,
-        n_steps=10,
-        hl=0.0,
-    )
+    for n_reps in (2, 10, 40):
+        workflow_nq(
+            dry_run,
+            n_qubits_max,
+            which_hadamard_test,
+            provider_name,
+            n_shots,
+            which_backends,
+            ["vqe"],
+            J=J,
+            n_reps=n_reps,
+            n_steps=10,
+            hl=0.0,
+        )
 
 
 def workflow_nq_aqt_sweep(dry_run):
@@ -145,7 +146,7 @@ def workflow_nq_aqt_sweep(dry_run):
         ["sweep"],
         J=J,
         n_reps=10,
-        n_steps=5,
+        n_steps=10,
         hl=0.0,
     )
 
@@ -184,8 +185,8 @@ def workflow_nq_aqt_ladder(dry_run):
     J = 0.20
     which_backends = [
         "real_backend",
-        "fake_backend",
-        "statevector",
+        # "fake_backend",
+        # "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
@@ -299,7 +300,7 @@ def workflow_nq(
     )
 
     edm = ExperimentDataManager(
-        f"{'_'.join(which_algorithms)}_workflow_{model_dir}_hadam_{which_hadamard_test}_{provider_name}_{n_shots}shots",
+        f"{'_'.join(which_algorithms)}_workflow_{model_dir}_hadam_{which_hadamard_test}_{provider_name}_{n_shots}shots_x_{n_reps}reps",
         dry_run=dry_run,
     )
 
@@ -388,11 +389,11 @@ def workflow_nq(
     for _b in which_backends:
         show_diffs(out_dict, _b)
 
-    plt.show()
+    # plt.show()
 
     ...
 
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt(True)
+    workflow_nq_aqt(False)
