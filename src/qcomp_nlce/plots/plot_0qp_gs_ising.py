@@ -10,7 +10,7 @@ from pathlib import Path
 
 style()
 
-fpath_tfim_80j_0hl = r"2026_02_24\nlce_gs_1d_tfim_0qp_10000shots"
+fpath_tfim_80j_0hl = r"vqe_0qp_tfim_7q_8q"
 
 dry_run = False
 m_edm = ExperimentDataManager(

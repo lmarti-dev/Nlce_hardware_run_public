@@ -11,7 +11,7 @@ dry_run = False
 m_edm = ExperimentDataManager(
     "plot_montecarlo_convergence", project="nlce", dry_run=dry_run
 )
-fpath = r"2026_02_02\vqe_workflow_TFIM_hadam_stefan_AQT_200shots_00001"
+fpath = r"vqe_tfim_100j_0hl_5q"
 
 
 edm = ExperimentDataManager.load(Path(DATA_DIR, fpath))

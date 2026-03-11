@@ -425,6 +425,8 @@ def stefan_hadamard_test(
         ol, std = np.mean([v[0] for v in run_list]), mean_std(
             np.array([v[1] for v in run_list]).flatten()
         )
+        if on_hardware:
+            tmp_delete_run_file(tmp_dirname(circuit, which_backend))
     elif counting_method == "samples":
         if n_reps > 1:
             raise NotImplementedError(

@@ -303,7 +303,7 @@ def get_heff_values(
         hamiltonian=hamiltonian,
         circuit=gs_circuit,
         which_backends=which_backends,
-        n_shots=int(n_shots / 10),
+        n_shots=n_shots,
         provider_name=provider_name,
         solve=solve,
         n_reps=n_reps,
@@ -431,10 +431,12 @@ def plot_all_backends_dispersions_montecarlo(
                     markersize=markersize,
                 )
     if which_model is None:
-        if "which_model" not in _d["inputs"].keys():
-            which_model = "TFIM_0hl"
-        else:
+        if "which_model" in _d["inputs"].keys():
             which_model = _d["inputs"]["which_model"]
+        elif "model_dir" in _d["inputs"]:
+            which_model = _d["inputs"]["model_dir"]
+        else:
+            which_model = "TFIM_0hl"
     if "_0hl" in which_model and "ladder" not in which_model:
         ax.plot(
             ks,

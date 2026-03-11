@@ -96,14 +96,37 @@ def workflow_nq_eqe(dry_run):
     )
 
 
-def workflow_nq_aqt(dry_run, J):
+def workflow_nq_aqt_j100(dry_run, which_backends: BACKEND_TYPES):
+    return workflow_nq_aqt(dry_run, 1.0, which_backends)
 
-    # J = 1.0
-    which_backends = [
-        "real_backend",
-        # "fake_backend",
-        # "statevector",
-    ]
+
+def workflow_nq_aqt_j80(dry_run, which_backends: BACKEND_TYPES):
+    return workflow_nq_aqt(dry_run, 0.8, which_backends)
+
+
+def workflow_nq_aqt(dry_run, J, which_backends: BACKEND_TYPES):
+
+    provider_name: PROVIDER_ALIAS = "AQT"
+    n_shots = int(200)
+    which_hadamard_test = "stefan"
+    n_qubits_max = 5
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["vqe"],
+        J=J,
+        n_reps=10,
+        n_steps=10,
+        hl=0.0,
+    )
+
+
+def workflow_nq_aqt_sampling(dry_run, J, which_backends: BACKEND_TYPES):
+
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
     which_hadamard_test = "stefan"
@@ -124,14 +147,9 @@ def workflow_nq_aqt(dry_run, J):
         )
 
 
-def workflow_nq_aqt_sweep(dry_run):
+def workflow_nq_aqt_sweep(dry_run, which_backends: BACKEND_TYPES):
 
     J = 0.8
-    which_backends = [
-        "real_backend",
-        "fake_backend",
-        "statevector",
-    ]
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
     which_hadamard_test = "stefan"
@@ -180,14 +198,10 @@ def workflow_nq_aqt_sweepsims(dry_run):
             )
 
 
-def workflow_nq_aqt_ladder(dry_run):
+def workflow_nq_aqt_ladder(dry_run, which_backends):
 
     J = 0.20
-    which_backends = [
-        "real_backend",
-        # "fake_backend",
-        # "statevector",
-    ]
+
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
     which_hadamard_test = "stefan"
@@ -207,14 +221,9 @@ def workflow_nq_aqt_ladder(dry_run):
     )
 
 
-def workflow_nq_aqt_hl(dry_run):
+def workflow_nq_aqt_hl(dry_run, which_backends: BACKEND_TYPES):
 
-    J = 0.8
-    which_backends = [
-        "real_backend",
-        # "fake_backend",
-        # "statevector",
-    ]
+    J = 0.5
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(2000)
     which_hadamard_test = "stefan"
@@ -233,7 +242,7 @@ def workflow_nq_aqt_hl(dry_run):
     #     n_reps=n_reps,
     #     hl=0.1,
     # )
-    hl = 0.5
+    hl = 0.1
 
     workflow_nq(
         dry_run,
@@ -396,4 +405,4 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt(False)
+    workflow_nq_aqt_sampling(False, 0.8, ["fake_backend", "statevector"])

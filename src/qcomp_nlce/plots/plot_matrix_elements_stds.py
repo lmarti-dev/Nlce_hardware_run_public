@@ -141,7 +141,7 @@ def parnum(val: float, std: float) -> str:
     return s1
 
 
-def plot_matrix_breakdown_v2(item: list[str, str, str], dry_run: bool = True):
+def plot_matrix_breakdown_error(item: list[str, str, str], dry_run: bool = True):
 
     fpath = item[0]
     which_algorithm = item[1]
@@ -232,15 +232,16 @@ if __name__ == "__main__":
     dry_run = False
     which_backend = "real_backend"
 
-    TFIM_80j_vqe_fpath = r"2026_02_02\vqe_workflow_TFIM_hadam_stefan_AQT_200shots_00001\run_00000\data\macadamias_00000.json"
-    TFIM_80j_sweep_fpath = r"2026_03_07/sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots/run_00000/data/fruit_00000.json"
-    TFIM_80j_10hl_vqe_fpath = r"2026_02_06/vqe_workflow_TFIM_hl_10_hadam_stefan_AQT_200shots/run_00000/data/cherry_00000.json"
+    TFIM_80j_sweep_fpath = r"sweep_tfim_80j_0hl_5q/run_00000/data/apricots_00000.json"
+    TFIM_80j_vqe_fpath = r"vqe_tfim_80j_0hl_5q/run_00000/data/pistachios_00000.json"
+    TFIM_100j_vqe_fpath = r"vqe_tfim_100j_0hl_5q/run_00000/data/date_00000.json"
 
     for item in (
         (TFIM_80j_sweep_fpath, "sweep", "real_backend"),
-        (TFIM_80j_10hl_vqe_fpath, "vqe", "real_backend"),
         (TFIM_80j_vqe_fpath, "vqe", "real_backend"),
+        (TFIM_100j_vqe_fpath, "vqe", "real_backend"),
     ):
-        plot_matrix_breakdown_v2(item, dry_run)
+        plot_matrix_breakdown_error(item, dry_run)
+        plot_matrix_breakdown(item, dry_run)
 
     # plt.show()

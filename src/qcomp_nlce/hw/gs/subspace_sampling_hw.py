@@ -37,6 +37,7 @@ from qcomp_nlce.utils.save import (
     load_sweep,
     init_run_split,
     tmp_save_run_file,
+    tmp_delete_run_file,
 )
 
 from data_manager import ExperimentDataManager
@@ -128,7 +129,7 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
     n_shots: int = 1e3,
     provider_name: str = "AQT",
     solve: bool = False,
-    n_reps: int = 1,
+    n_reps: int = 10,
     reps_per_job: int = 5,
 ) -> dict:
 
@@ -205,7 +206,9 @@ def measure_ground_state_energy_subspace_sampling_v2(
             param_sweep=[],
             n_shots=(n_shots * n_reps),
         ).data.evs[0]
-        print(f"Statevector {relerr(sv_energy):.5e}")
+        print(
+            f"Statevector (ground state estimator {n_shots} shots) {relerr(sv_energy):.5e}"
+        )
 
         bn = which_backend
 
@@ -224,6 +227,7 @@ def measure_ground_state_energy_subspace_sampling_v2(
 
         elif which_backend == "real_backend":
             backend = get_backend(circuit.num_qubits, provider_name)
+        bn = backend.name
 
         on_hardware = is_hardware_run(which_backend)
         _dirname = tmp_dirname(circuit, which_backend)
@@ -237,16 +241,15 @@ def measure_ground_state_energy_subspace_sampling_v2(
             print(f"Run number {run_ind+1}/{remaining_runs}", end="\r")
             job = backend_sample(
                 backend=backend,
-                circuit=circuit_to_sample,
+                circuit=[circuit_to_sample] * reps_per_job,
                 parameters=[],
                 n_shots=n_shots,
             )
             counts = get_counts_from_res(job.result(), hamiltonian.num_qubits, 0)
             run_list.append(counts)
-            bn = backend.name
+
             if on_hardware:
                 tmp_save_run_file(_dirname, run_list)
-
         counts_out = {}
         for c in run_list:
             for k in c:
@@ -255,6 +258,8 @@ def measure_ground_state_energy_subspace_sampling_v2(
                 else:
                     counts_out[k] = c[k]
         counts = counts_out
+        if on_hardware:
+            tmp_delete_run_file(_dirname)
     unique_bitstring = get_unique_bitstrings(counts)
     bitstring_prop = len(unique_bitstring) / (2**circuit.num_qubits)
     comp_energy = subspace_diagonalize(
@@ -275,6 +280,7 @@ def measure_ground_state_energy_subspace_sampling_v2(
             "n_shots": n_shots,
             "std": std,
             "counts": counts,
+            "n_reps": n_reps,
         }
     }
 
