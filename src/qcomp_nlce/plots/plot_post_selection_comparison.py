@@ -17,10 +17,8 @@ def ldif(l1: list, l2: list) -> np.ndarray:
 
 style()
 
-with_mit = r"2026_02_23\vqe_workflow_vqe_80j_0hl_hadam_stefan_samples_EQE_1000000shots"
-without_mit = (
-    r"2026_02_23\vqe_workflow_vqe_80j_0hl_hadam_stefan_samples_EQE_1000000shots_00001"
-)
+with_mit = r""
+without_mit = r""
 
 dry_run = False
 m_edm = ExperimentDataManager(f"plot_error_mit_comp", project="nlce", dry_run=dry_run)

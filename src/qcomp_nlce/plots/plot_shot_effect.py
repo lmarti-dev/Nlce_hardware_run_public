@@ -12,9 +12,9 @@ from pathlib import Path
 style()
 
 fpaths = (
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_11\vqe_workflow_vqe_100j_0hl_hadam_stefan_AQT_200shots_x_2reps",
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_11\vqe_workflow_vqe_100j_0hl_hadam_stefan_AQT_200shots_x_10reps",
-    r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_11\vqe_workflow_vqe_100j_0hl_hadam_stefan_AQT_200shots_x_40reps",
+    r"sampling_comparison/2reps",
+    r"sampling_comparison/10reps",
+    r"sampling_comparison/40reps",
 )
 
 

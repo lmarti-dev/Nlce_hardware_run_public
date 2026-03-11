@@ -129,11 +129,14 @@ def tmp_entry_exists(l: TempListType, ind_x: int, ind_y: int):
     return False
 
 
-def tmp_dirname(circuit: QuantumCircuit, which_backend: str):
+def tmp_dirname(circuit: QuantumCircuit, which_backend: str, postfix: str = "RUN2"):
     if "tmpname" not in circuit.metadata.keys():
         raise ValueError(f"You did not give a tmpname to the circuit: {circuit.name}")
 
-    return f"{circuit.metadata['tmpname']}_{which_backend}"
+    s = f"{circuit.metadata['tmpname']}_{which_backend}"
+    if postfix:
+        return s + "_" + postfix
+    return s
 
 
 def load_result_matrices(fpath: Path = None):

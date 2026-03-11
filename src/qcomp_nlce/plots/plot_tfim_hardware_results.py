@@ -11,8 +11,8 @@ style()
 
 fpath_tfim_100j_0hl = r"vqe_tfim_100j_0hl_5q"
 fpath_tfim_80j_0hl_sweep = r"sweep_tfim_80j_0hl_5q"
-fpath_tfim_80j_0hl = r"vqe_tfim_100j_0hl_5q"
-fpath_tfim_80j_0hl_run2 = r"vqe_tfim_100j_0hl_5q_run2"
+fpath_tfim_80j_0hl = r"vqe_tfim_80j_0hl_5q"
+fpath_tfim_80j_0hl_run2 = r"vqe_tfim_80j_0hl_5q_run2"
 
 dry_run = False
 m_edm = ExperimentDataManager(
@@ -20,12 +20,10 @@ m_edm = ExperimentDataManager(
 )
 
 for items in (
-    # (fpath_tfim_100j_0hl, "TFIM_100j_0hl"),
-    # (fpath_tfim_80j_10hl, "TFIM_80j_10hl"),
-    (fpath_tfim_80j_0hl, "TFIM_80j_0hl", "vqe"),
+    # (fpath_tfim_80j_0hl, "TFIM_80j_0hl", "vqe"),
     (fpath_tfim_80j_0hl_run2, "TFIM_80j_0hl", "vqe"),
-    (fpath_tfim_80j_0hl_sweep, "TFIM_80j_0hl", "sweep"),
-    (fpath_tfim_100j_0hl, "TFIM_100j_0hl", "vqe"),
+    # (fpath_tfim_80j_0hl_sweep, "TFIM_80j_0hl", "sweep"),
+    # (fpath_tfim_100j_0hl, "TFIM_100j_0hl", "vqe"),
 ):
     fpath, fig_name, alg = items
     edm = ExperimentDataManager.load(Path(DATA_DIR, fpath))
@@ -48,4 +46,4 @@ for items in (
         add_timestamp=False,
     )
 
-    plt.show()
+    # plt.show()
