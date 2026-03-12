@@ -31,7 +31,7 @@ def keep_trying(func: Callable[[bool, str], None], provider_name: str):
             print(f"Encoutered exception: ({type(e).__name__}) {e}")
             count_to_awakening(30)
 
-    # func(False, which_backends=["real_backend", "fake_backend", "statevector"])
+    func(False, which_backends=["real_backend", "fake_backend", "statevector"])
     print("🚀🪐🌕🌑☄️🛸")
 
 

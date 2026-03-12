@@ -129,12 +129,12 @@ def tmp_entry_exists(l: TempListType, ind_x: int, ind_y: int):
     return False
 
 
-def tmp_dirname(circuit: QuantumCircuit, which_backend: str, postfix: str = "RUN2"):
+def tmp_dirname(circuit: QuantumCircuit, which_backend: str, postfix: str = ""):
     if "tmpname" not in circuit.metadata.keys():
         raise ValueError(f"You did not give a tmpname to the circuit: {circuit.name}")
 
     s = f"{circuit.metadata['tmpname']}_{which_backend}"
-    if postfix:
+    if postfix != "":
         return s + "_" + postfix
     return s
 
@@ -217,7 +217,9 @@ def dirname_to_tmp(_dirname: Path) -> Path:
 
 
 def tmp_delete_run_file(_dirname: Path):
-    os.remove(Path(dirname_to_tmp(_dirname), RUN_FILENAME))
+    _fpath = Path(dirname_to_tmp(_dirname), RUN_FILENAME)
+    if _fpath.is_file():
+        os.remove(_fpath)
 
 
 def tmp_check_run_list(_dirname: Path):
