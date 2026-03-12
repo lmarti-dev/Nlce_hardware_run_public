@@ -386,5 +386,5 @@ def workflow_nq(
 if __name__ == "__main__":
     style()
     # workflow_nq_aqt_sampling(False, 0.8, ["fake_backend", "statevector"])
-    # workflow_nq_aqt_sweepsims(False, 0.8, ["fake_backend", "statevector"])
-    workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
+    workflow_nq_aqt_sweepsims(False, 0.8, ["fake_backend", "statevector"])
+    # workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])

@@ -12,19 +12,19 @@ from pathlib import Path
 style()
 
 runs_current = (
-    r"2026_03_09/sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots",
-    r"2026_03_09/sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_00001",
+    r"error_decrease/current/10steps",
+    r"error_decrease/current/20steps",
 )
 
 
 runs_10improvement = (
-    r"2026_03_09/sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_10_200shots",
-    r"2026_03_09/sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_10_200shots_00001",
+    r"error_decrease/better10x/10steps",
+    r"error_decrease/better10x/20steps",
 )
 
 runs_100improvement = (
-    r"2026_03_09/sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_100_200shots",
-    r"2026_03_09/sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_100_200shots_00001",
+    r"error_decrease/better100x/10steps",
+    r"error_decrease/better100x/20steps",
 )
 
 dry_run = False
