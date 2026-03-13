@@ -100,6 +100,10 @@ def workflow_nq_aqt_j100(dry_run, which_backends: BACKEND_TYPES):
     return workflow_nq_aqt(dry_run, 1.0, which_backends)
 
 
+def workflow_nq_aqt_j50(dry_run, which_backends: BACKEND_TYPES):
+    return workflow_nq_aqt(dry_run, 0.5, which_backends)
+
+
 def workflow_nq_aqt_j80(dry_run, which_backends: BACKEND_TYPES):
     return workflow_nq_aqt(dry_run, 0.8, which_backends)
 
