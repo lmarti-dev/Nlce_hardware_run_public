@@ -39,6 +39,6 @@ if __name__ == "__main__":
 
     keep_trying(workflow_nq_aqt_hl, "AQT")
     # keep_trying(workflow_nq_aqt_ladder, "AQT")
-    # keep_trying(workflow_nq_aqt_j100, "AQT")
+    keep_trying(workflow_nq_aqt_j100, "AQT")
     # keep_trying(workflow_nq_aqt_j80, "AQT")
-    # keep_trying(workflow_nq_aqt_sweep, "AQT")
+    keep_trying(workflow_nq_aqt_sweep, "AQT")
