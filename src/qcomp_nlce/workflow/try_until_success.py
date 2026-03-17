@@ -8,6 +8,7 @@ from qcomp_nlce.workflow.workflow_tfim_1qp_dispersion import (
 from qcomp_nlce.utils.hardware import pending_jobs
 from typing import Callable
 from time import sleep
+from fauplotstyle import style
 
 
 def count_to_awakening(secs: int):
@@ -31,6 +32,7 @@ def keep_trying(func: Callable[[bool, str], None], provider_name: str):
             print(f"Encoutered exception: ({type(e).__name__}) {e}")
             count_to_awakening(30)
 
+    style()
     func(False, which_backends=["real_backend", "fake_backend", "statevector"])
     print("🚀🪐🌕🌑☄️🛸")
 

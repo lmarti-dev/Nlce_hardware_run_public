@@ -1,0 +1,41 @@
+from data_manager import ExperimentDataManager
+from qcomp_nlce.utils.workflow_utils import (
+    plot_all_backends_dispersions_montecarlo,
+)
+import matplotlib.pyplot as plt
+from fauplotstyle import style
+from qcomp_nlce.utils import DATA_DIR
+from pathlib import Path
+
+style()
+
+fpath_tfim_100j_0hl = r"vqe_tfim_100j_0hl_5q"
+fpath_tfim_80j_0hl_sweep = r"sweep_tfim_80j_0hl_5q"
+fpath_tfim_80j_0hl = r"vqe_tfim_80j_0hl_5q"
+fpath_tfim_80j_0hl_run2 = r"vqe_tfim_80j_0hl_5q_run2"
+fpath_tfim_50j_10hl = r"vqe_tfim_50j_10hl_5q"
+
+dry_run = False
+m_edm = ExperimentDataManager(
+    "plot_tfim_vqe_qpu_result", project="nlce", dry_run=dry_run
+)
+
+for items in (
+    (fpath_tfim_80j_0hl, "TFIM_80j_0hl", "vqe"),
+    (fpath_tfim_80j_0hl_run2, "TFIM_80j_0hl", "vqe"),
+    (fpath_tfim_50j_10hl, "TFIM_50j_10hl", "vqe"),
+    (fpath_tfim_80j_0hl_sweep, "TFIM_80j_0hl", "sweep"),
+    (fpath_tfim_100j_0hl, "TFIM_100j_0hl", "vqe"),
+):
+    fpath, fig_name, alg = items
+    edm = ExperimentDataManager.load(Path(DATA_DIR, fpath))
+    edm.use_calendar = False
+    d = edm.load_last_saved_data_file
+    if "model_dir" in d["inputs"]:
+        which_model = d["inputs"]["model_dir"]
+    else:
+        which_model = d["inputs"]["which_model"]
+
+    print
+
+    # plt.show()
