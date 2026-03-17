@@ -1,11 +1,9 @@
 from data_manager import ExperimentDataManager
-from qcomp_nlce.utils.workflow_utils import (
-    plot_all_backends_dispersions_montecarlo,
-)
 import matplotlib.pyplot as plt
 from fauplotstyle import style
 from qcomp_nlce.utils import DATA_DIR
 from pathlib import Path
+import numpy as np
 
 style()
 
@@ -15,10 +13,6 @@ fpath_tfim_80j_0hl = r"vqe_tfim_80j_0hl_5q"
 fpath_tfim_80j_0hl_run2 = r"vqe_tfim_80j_0hl_5q_run2"
 fpath_tfim_50j_10hl = r"vqe_tfim_50j_10hl_5q"
 
-dry_run = False
-m_edm = ExperimentDataManager(
-    "plot_tfim_vqe_qpu_result", project="nlce", dry_run=dry_run
-)
 
 for items in (
     (fpath_tfim_80j_0hl, "TFIM_80j_0hl", "vqe"),
@@ -36,6 +30,16 @@ for items in (
     else:
         which_model = d["inputs"]["which_model"]
 
-    print
+    print(f"{fig_name}")
+    for be in ("fake_backend", "real_backend", "statevector"):
+        for size in ("dict_l", "dict_s"):
+            eld_std = np.abs(np.mean(d["results"][alg][size]["eld"][be]["stds"]))
+            exd_std = np.abs(np.mean(d["results"][alg][size]["exd"][be]["stds"]))
+            gsd_std = d["results"][alg][size]["gsd"][be]["std"]
 
+            print(
+                f"({size}, {be}) exd std {exd_std:.4e}, eld std {eld_std:.4e} gsd std {gsd_std:.4e}"
+            )
+        mc_std = np.abs(np.mean(d["results"][alg]["mc_disp"][be]["std"]))
+        print(f"mc std: {mc_std:.4e}")
     # plt.show()

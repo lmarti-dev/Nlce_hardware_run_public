@@ -414,8 +414,12 @@ def circuits_to_sampler_payload(
     parameters: np.ndarray,
     which: str = "v2",
 ):
+
     if isinstance(circuit, QuantumCircuit):
         circuit = [circuit]
+
+    if which == "v0":
+        return circuit
 
     options = {
         "optimization_level": 3,
@@ -598,7 +602,8 @@ def backend_sample(
         job = backend.run(isa_payload, shots=n_shots, no_modify=no_modify)
 
     elif isinstance(backend, AQTResource) or backend.name == "AQT20":
-        payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v1")
+        payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v0")
+        sampler.set_transpile_options(optimization_level=3)
         job = sampler.run(payload, parameter_values=None, shots=n_shots)
 
     elif isinstance(backend, (IQMBackend, IQMFakeBackend, MQPBackend)):
