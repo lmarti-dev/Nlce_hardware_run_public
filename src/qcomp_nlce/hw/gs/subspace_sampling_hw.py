@@ -148,12 +148,11 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
 
     for which_backend in which_backends:
         on_hardware = is_hardware_run(which_backend)
+        _dirname = tmp_dirname(circuit, which_backend)
 
         item = None
         if on_hardware:
-            filename = (
-                f"{tmp_dirname(circuit,which_backend)}/measure_ground_energy.json"
-            )
+            filename = f"{_dirname}/measure_ground_energy.json"
             try:
                 item = load_tmp_item(filename)
                 print(f"Already Computed {circuit.metadata['tmpname']}")

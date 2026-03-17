@@ -426,7 +426,7 @@ def stefan_hadamard_test(
             np.array([v[1] for v in run_list]).flatten()
         )
         if on_hardware:
-            tmp_delete_run_file(tmp_dirname(circuit, which_backend))
+            tmp_delete_run_file(_dirname)
     elif counting_method == "samples":
         if n_reps > 1:
             raise NotImplementedError(
@@ -731,9 +731,10 @@ def measure_matrix_elements(
     stds = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
 
     on_hardware = is_hardware_run(which_backend)
+    _dirname = tmp_dirname(circuit, which_backend)
 
     if on_hardware:
-        filename = f"{tmp_dirname(circuit,which_backend)}/measure_matrix_elements.json"
+        filename = f"{_dirname}/measure_matrix_elements.json"
         try:
 
             computed_values = load_tmp_item(filename)
@@ -766,7 +767,7 @@ def measure_matrix_elements(
                     computed_values = add_tmp_entry_and_save(
                         filename, computed_values, jUk, std, ind_x, ind_y
                     )
-                    tmp_delete_run_file(tmp_dirname(circuit, which_backend))
+                    tmp_delete_run_file(_dirname)
                 print(f"{ind_x} - {ind_y}: {jUk:.4f} ({std:.4f})")
 
     if on_hardware:
@@ -968,11 +969,10 @@ def measure_hamiltonian_elements_v2(
     stds = np.zeros((len(states), len(states)), dtype=complex)
 
     on_hardware = is_hardware_run(which_backend)
+    _dirname = tmp_dirname(circuit, which_backend)
 
     if on_hardware:
-        filename = (
-            f"{tmp_dirname(circuit,which_backend)}/measure_hamiltonian_elements.json"
-        )
+        filename = f"{_dirname}/measure_hamiltonian_elements.json"
         try:
             computed_values = load_tmp_item(filename)
         except FileNotFoundError:
@@ -1009,7 +1009,7 @@ def measure_hamiltonian_elements_v2(
                         computed_values = add_tmp_entry_and_save(
                             filename, computed_values, val, std, ind_x, ind_y
                         )
-                        tmp_delete_run_file(tmp_dirname(circuit, which_backend))
+                        tmp_delete_run_file(_dirname)
                     print(
                         f"{ind_x} - {ind_y} - {complex(val):.4f} ({complex(std):.4f})"
                     )
@@ -1050,7 +1050,7 @@ def measure_hamiltonian_elements_v2(
                                 sind_y,
                                 sind_x,
                             )
-                            tmp_delete_run_file(tmp_dirname(circuit, which_backend))
+                            tmp_delete_run_file(_dirname)
                         print(
                             f"{sind_x} - {sind_y} - {complex(val):.4f} ({complex(std):.4f})"
                         )
