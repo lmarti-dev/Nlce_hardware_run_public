@@ -39,55 +39,46 @@ def dispersion_1d_thermodynamic(
     return func_w
 
 
-def _ladder_coordinates(n_rungs: int) -> list[tuple[int, int]]:
-    """Return (x, y) coordinates for each qubit in a ladder.
-
-    Qubit ordering matches TFIM ladder Hamiltonian:
-        indices 0..n_rungs-1         -> chain 1: (rung, leg=0)
-        indices n_rungs..2*n_rungs-1 -> chain 2: (rung, leg=1)
-
-    Returns list of (x, y) tuples where x = rung index, y = leg index.
-    """
-    coords = []
-    for leg in range(2):
-        for rung in range(n_rungs):
-            coords.append((rung, leg))
-    return coords
-
-
-def cluster_dispersion_ladder(
-    n_rungs: int, H_effective: np.ndarray, kx: float, ky: float
-) -> float:
-    """Fourier transform H_eff for a ladder cluster at momentum (kx, ky).
-
-    Single-orientation cos transform: the ladder has a fixed geometry
-    (n_rungs along x, 2 legs along y), so no rotated-orientation sum.
-    """
+def _ladder_momentum_projectors(n_rungs: int, kx: float) -> tuple[np.ndarray, np.ndarray]:
+    
     n_sites = 2 * n_rungs
-    coords = _ladder_coordinates(n_rungs)
+    v_leg0 = np.zeros(n_sites, dtype=complex)
+    v_leg1 = np.zeros(n_sites, dtype=complex)
 
-    total = 0.0
-    for i in range(n_sites):
-        for j in range(n_sites):
-            hopx = coords[j][0] - coords[i][0]
-            hopy = coords[j][1] - coords[i][1]
-            total += H_effective[i, j] * np.cos(hopx * kx + hopy * ky)
+    for r in range(n_rungs):
+        phase = np.exp(1j * kx * r)
+        v_leg0[r] = phase              # leg 0: sites 0..n_rungs-1
+        v_leg1[n_rungs + r] = phase    # leg 1: sites n_rungs..2*n_rungs-1
 
-    return total
+    return v_leg0, v_leg1
+
+
+def project_ladder_to_k_space(
+    H_eff: np.ndarray, n_rungs: int, kx: float
+) -> np.ndarray:
+
+    v0, v1 = _ladder_momentum_projectors(n_rungs, kx)
+    H_k = np.zeros((2, 2), dtype=complex)
+    H_k[0, 0] = v0.conj() @ H_eff @ v0
+    H_k[0, 1] = v0.conj() @ H_eff @ v1
+    H_k[1, 0] = v1.conj() @ H_eff @ v0
+    H_k[1, 1] = v1.conj() @ H_eff @ v1
+    return H_k
 
 
 def dispersion_ladder_thermodynamic(
     kx: float, ky: float, H_eff_Nb: np.ndarray, H_eff_Ns: np.ndarray
-) -> float:
-    """NLCE dispersion for ladder: E(Nx2) - E((N-1)x2).
-
-    Returns the real-valued NLCE-subtracted dispersion at momentum (kx, ky).
-    """
+) -> np.ndarray:
+   
     Nb = H_eff_Nb.shape[0] // 2  # number of rungs in bigger cluster
     Ns = H_eff_Ns.shape[0] // 2  # number of rungs in smaller cluster
-    return cluster_dispersion_ladder(Nb, H_eff_Nb, kx, ky) - cluster_dispersion_ladder(
-        Ns, H_eff_Ns, kx, ky
-    )
+
+    H_k_big = project_ladder_to_k_space(H_eff_Nb, Nb, kx)
+    H_k_small = project_ladder_to_k_space(H_eff_Ns, Ns, kx)
+
+    H_k_inf = H_k_big - H_k_small
+    evals = np.sort(np.real(np.linalg.eigvals(H_k_inf)))
+    return evals
 
 
 def exact_dispersion_1qp_1d(j: float, k: np.ndarray):

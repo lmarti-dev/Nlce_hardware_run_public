@@ -1,24 +1,4 @@
-"""
-generate_dispersion_data_ladder.py
-===================================
-Compute H_eff matrices for TFIM **ladder** clusters using VQE circuits and save to disk.
-Generates ED, statevector, statevector-with-shots, and fake-backend results.
 
-NLCE for ladders: E(Nx2) - E((N-1)x2)
-Cluster pairs are specified as tuples of rung counts, e.g. (4, 3) means 4x2 vs 3x2.
-
-Data is saved per cluster under:
-    res_sim/dispersion_data_ladder/j{J}_hl{hl}/{N}x2/
-        H_eff_ED.npy
-        H_eff_SV.npy
-        H_eff_sv_shots_rep{i}.npy
-        H_eff_fake_backend_rep{i}.npy
-        gs_energy.npz
-        metadata.npz
-
-Usage:
-    python generate_dispersion_data_ladder.py
-"""
 
 import numpy as np
 from copy import deepcopy
@@ -221,24 +201,11 @@ def generate_dispersion_data_ladder(
     hl: float = 0.0,
     cluster_pairs: list[tuple[int, int]] = None,
     provider_name: str = "AQT",
-    n_shots: int = 200,
+    n_shots: int = 2000,
     which_hadamard_test: str = "stefan",
     n_repetitions: int = 10,
 ):
-    """
-    Compute and save H_eff for each ladder cluster size.
-
-    cluster_pairs are tuples of (n_rungs_big, n_rungs_small), e.g. (4, 3) means
-    NLCE: E(4x2) - E(3x2).
-
-    Saved data per cluster (in res_sim/dispersion_data_ladder/j{J}_hl{hl}/{n}x2/):
-        H_eff_ED.npy              — exact diagonalisation
-        H_eff_SV.npy              — VQE statevector (exact, no noise)
-        H_eff_sv_shots_rep{i}.npy — VQE statevector with shot noise
-        H_eff_fake_backend_rep{i}.npy — VQE fake noisy backend
-        gs_energy.npz             — ground state energies (E_ED, E_SV)
-        metadata.npz              — run parameters
-    """
+    
     if cluster_pairs is None:
         cluster_pairs = [(3, 2), (2, 2)]
 
@@ -304,20 +271,19 @@ def generate_dispersion_data_ladder(
             except Exception as e:
                 print(f"  {label} SV shots rep {rep} failed: {e}")
 
-        # # Fake backend (multiple reps) — disabled for now
-        # n_fb_done = 0
-        # for rep in range(n_repetitions):
-        #     try:
-        #         print(f"  {label} fake_backend rep {rep+1}/{n_repetitions}")
-        #         heff, mc = compute_heff_backend(
-        #             vqe, "fake_backend", provider_name, n_shots, which_hadamard_test, rep,
-        #         )
-        #         save_heff(cdir, f"H_eff_fake_backend_rep{rep}", heff)
-        #         save_mc_ingredients(cdir, f"mc_fake_backend_rep{rep}", mc)
-        #         n_fb_done += 1
-        #     except Exception as e:
-        #         print(f"  {label} fake_backend rep {rep} failed: {e}")
+        # Fake backend (multiple reps)
         n_fb_done = 0
+        for rep in range(n_repetitions):
+            try:
+                print(f"  {label} fake_backend rep {rep+1}/{n_repetitions}")
+                heff, mc = compute_heff_backend(
+                    vqe, "fake_backend", provider_name, n_shots, which_hadamard_test, rep,
+                )
+                save_heff(cdir, f"H_eff_fake_backend_rep{rep}", heff)
+                save_mc_ingredients(cdir, f"mc_fake_backend_rep{rep}", mc)
+                n_fb_done += 1
+            except Exception as e:
+                print(f"  {label} fake_backend rep {rep} failed: {e}")
 
         # Save metadata
         save_metadata(
@@ -339,4 +305,4 @@ def generate_dispersion_data_ladder(
 
 
 if __name__ == "__main__":
-    generate_dispersion_data_ladder(J=0.328, hl=0.0, cluster_pairs=[(3, 2), (2, 2)])
+    generate_dispersion_data_ladder(J=0.2, hl=0.0, cluster_pairs=[(3, 2), (2, 2)])

@@ -1,19 +1,4 @@
-"""
-plot_dispersion.py
-==================
-Load saved H_eff data from verify_dispersion.py and plot dispersion.
 
-Data layout (under res_sim/dispersion_data/j{J}_hl{hl}/N{n}/):
-    H_eff_ED.npy, H_eff_SV.npy
-    H_eff_sv_shots_rep{i}.npy, H_eff_fake_backend_rep{i}.npy
-    gs_energy.npz, metadata.npz
-
-Usage:
-    python plot_dispersion.py                        # NLCE dispersion (4,3)
-    python plot_dispersion.py --single-cluster 4     # single cluster N=4
-    python plot_dispersion.py --table                # comparison table
-    python plot_dispersion.py --cluster-pairs 5,4 4,3  # multiple pairs
-"""
 
 import numpy as np
 import matplotlib.pyplot as plt
