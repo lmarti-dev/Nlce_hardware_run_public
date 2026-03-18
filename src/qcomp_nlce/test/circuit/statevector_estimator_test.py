@@ -5,11 +5,11 @@ import numpy as np
 
 
 qc = QuantumCircuit(1)
-qc.x(0)
+qc.h(0)
 
 estimator = StatevectorEstimator()
 
-for spow in range(-1, 6):
+for spow in (0,) * 10:
     n_shots = 10**spow
     job = estimator.run(
         [

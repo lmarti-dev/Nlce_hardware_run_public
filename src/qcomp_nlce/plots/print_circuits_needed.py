@@ -32,6 +32,12 @@ def circuits_per_example():
     print(f"total: {sum(d.values()):.3f} circuits")
 
 
+def future_example():
+    n_circs = heff_n_expectation_values_2d(100, 2)
+    print(f"n circs: {n_circs:.4e}")
+
+
 if __name__ == "__main__":
     heff_total_shots_paper()
     circuits_per_example()
+    future_example()
