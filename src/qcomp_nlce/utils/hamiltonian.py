@@ -129,10 +129,10 @@ def get_tfim_xx(n_qubits: int, which: Literal["even", "odd"]) -> list[SparsePaul
 
 def get_tfim_ratio(ham: SparsePauliOp) -> float:
     c = ham.coeffs
-    u = np.unique_counts(c)
-    idx = np.argsort(u.counts)
-    j = u.values[idx[0]]
-    h = u.values[idx[-1]]
+    values, counts = np.unique(c, return_counts=True)
+    idx = np.argsort(counts)
+    j = values[idx[0]]
+    h = values[idx[-1]]
     return np.real(j / h).astype(float)
 
 

@@ -1,22 +1,4 @@
-"""
-plot_dispersion_ladder.py
-=========================
-Load saved H_eff data from generate_dispersion_data_ladder.py and plot
-ladder dispersion along the high-symmetry path in the Brillouin zone:
 
-    (pi,0) -> (pi,pi) -> (0,0) -> (pi,0) -> (pi/2,pi/2)
-
-NLCE is simply E(Nx2) - E((N-1)x2).
-
-Data layout (under res_sim/dispersion_data_ladder/j{J}_hl{hl}/{n}x2/):
-    H_eff_ED.npy, H_eff_SV.npy
-    H_eff_sv_shots_rep{i}.npy
-    gs_energy.npz, metadata.npz
-
-Usage:
-    python plot_dispersion_ladder.py
-    python plot_dispersion_ladder.py --J 0.2 --cluster-pairs 3,2
-"""
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -149,61 +131,110 @@ def plot_nlce_ladder(
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    # Color gradient for different N_max (like the reference plot)
-    ed_cmap = plt.cm.Blues
-    sv_cmap = plt.cm.Reds
-    n_pairs = len(cluster_pairs)
+    # Style constants matching reference figure
+    COLORS = {
+        "ed": "#1f1f1f",       # black — Exact NLCE
+        "sv": "#1f77b4",       # blue — Statevector
+        "sv_shots": "#ff7f0e", # orange — Statevector (shots)
+        "fb": "#2ca02c",       # green — Fake Backend
+    }
+    MARKERS = {
+        "ed": "s",             # square
+        "sv": "o",             # circle
+        "sv_shots": "^",       # triangle up
+        "fb": "v",             # triangle down
+    }
+    LW = 2.0
+    MS = 6
+    # Subsample points for markers so they don't overlap
+    n_k = len(dists)
+    marker_every = max(1, n_k // 10)
 
     for idx, (n_big, n_small) in enumerate(cluster_pairs):
         big, small = cache[n_big], cache[n_small]
         n_max = 2 * n_big  # total qubits in biggest cluster
-        frac = (idx + 1) / (n_pairs + 1)  # color fraction (darker = larger)
 
-        # ED
+        # ED — two bands
         if big["ed"] is not None and small["ed"] is not None:
-            disp = [dispersion_ladder_thermodynamic(kx, ky, big["ed"], small["ed"])
-                    for kx, ky in zip(kxs, kys)]
-            ax.plot(dists, disp, '-', color=ed_cmap(0.3 + 0.6 * frac),
-                    linewidth=1.5, label=f"NLCE+ED N_max={n_max}")
+            disp = np.array([dispersion_ladder_thermodynamic(kx, ky, big["ed"], small["ed"])
+                             for kx, ky in zip(kxs, kys)])  # shape (n_k, 2)
+            for band in range(disp.shape[1]):
+                label = f"Exact NLCE" if band == 0 else None
+                ax.plot(dists, disp[:, band], '-', color=COLORS["ed"],
+                        marker=MARKERS["ed"], markevery=marker_every, markersize=MS,
+                        linewidth=LW, label=label)
 
-        # Exact SV (VQE)
+        # Exact SV (VQE) — two bands
         if big["sv"] is not None and small["sv"] is not None:
-            disp = [dispersion_ladder_thermodynamic(kx, ky, big["sv"], small["sv"])
-                    for kx, ky in zip(kxs, kys)]
-            ax.plot(dists, disp, ':', color=sv_cmap(0.3 + 0.6 * frac),
-                    linewidth=1.5, label=f"NLCE+VQE N_max={n_max}")
+            disp = np.array([dispersion_ladder_thermodynamic(kx, ky, big["sv"], small["sv"])
+                             for kx, ky in zip(kxs, kys)])
+            for band in range(disp.shape[1]):
+                label = f"Statevector" if band == 0 else None
+                ax.plot(dists, disp[:, band], '-', color=COLORS["sv"],
+                        marker=MARKERS["sv"], markevery=marker_every, markersize=MS,
+                        linewidth=LW, label=label)
 
-        # SV shots (mean + errorbar)
+        # SV shots (mean + error bars) — two bands
         if big["sv_shots"] and small["sv_shots"]:
             n_reps = min(len(big["sv_shots"]), len(small["sv_shots"]))
             all_disp = np.array([
                 [dispersion_ladder_thermodynamic(kx, ky, big["sv_shots"][r], small["sv_shots"][r])
                  for kx, ky in zip(kxs, kys)]
                 for r in range(n_reps)
-            ])
+            ])  # shape (n_reps, n_k, 2)
+            mean = np.mean(all_disp, axis=0)  # (n_k, 2)
+            sem = (np.std(all_disp, axis=0, ddof=1) / np.sqrt(n_reps)
+                   if n_reps > 1 else np.zeros_like(mean))
+            marker_idx = np.arange(0, n_k, marker_every)
+            for band in range(mean.shape[1]):
+                label = f"Statevector (shots)" if band == 0 else None
+                ax.plot(dists, mean[:, band], '-', color=COLORS["sv_shots"],
+                        linewidth=LW, alpha=0.7)
+                ax.errorbar(dists[marker_idx], mean[marker_idx, band],
+                            yerr=sem[marker_idx, band],
+                            fmt=MARKERS["sv_shots"], color=COLORS["sv_shots"],
+                            markersize=MS, capsize=3, capthick=1.5,
+                            linewidth=0, elinewidth=1.5, label=label)
+
+        # Fake backend (mean + error bars) — two bands
+        if big["fb"] and small["fb"]:
+            n_reps = min(len(big["fb"]), len(small["fb"]))
+            all_disp = np.array([
+                [dispersion_ladder_thermodynamic(kx, ky, big["fb"][r], small["fb"][r])
+                 for kx, ky in zip(kxs, kys)]
+                for r in range(n_reps)
+            ])  # shape (n_reps, n_k, 2)
             mean = np.mean(all_disp, axis=0)
             sem = (np.std(all_disp, axis=0, ddof=1) / np.sqrt(n_reps)
                    if n_reps > 1 else np.zeros_like(mean))
-            ax.fill_between(dists, mean - sem, mean + sem,
-                            color=sv_cmap(0.3 + 0.6 * frac), alpha=0.15)
+            marker_idx = np.arange(0, n_k, marker_every)
+            for band in range(mean.shape[1]):
+                label = f"Fake Backend" if band == 0 else None
+                ax.plot(dists, mean[:, band], '-', color=COLORS["fb"],
+                        linewidth=LW, alpha=0.7)
+                ax.errorbar(dists[marker_idx], mean[marker_idx, band],
+                            yerr=sem[marker_idx, band],
+                            fmt=MARKERS["fb"], color=COLORS["fb"],
+                            markersize=MS, capsize=3, capthick=1.5,
+                            linewidth=0, elinewidth=1.5, label=label)
 
     # Vertical lines at high-symmetry points
     for tp in tick_pos:
         ax.axvline(tp, color='gray', linewidth=0.5, linestyle='-', alpha=0.5)
 
     ax.set_xticks(tick_pos)
-    ax.set_xticklabels(tick_labels)
+    ax.set_xticklabels(tick_labels, fontsize=12)
     ax.set_xlim(tick_pos[0], tick_pos[-1])
-    ax.set_xlabel(r"$(k_x, k_y)$")
-    ax.set_ylabel(r"$\omega(k_x, k_y)$")
-    ax.set_title(f"1QP Dispersion — TFIM Ladder (J={J})")
-    ax.legend(fontsize=8)
-    ax.grid(True, axis='y', alpha=0.3)
+    ax.set_xlabel(r"$(k_x, k_y)$", fontsize=13)
+    ax.set_ylabel(r"$\omega(k_x, k_y)$", fontsize=13)
+    ax.set_title(f"1QP Dispersion — TFIM Ladder (J={J})", fontsize=14)
+    ax.legend(fontsize=11, framealpha=0.9)
+    ax.tick_params(axis='both', labelsize=11)
     plt.tight_layout()
 
     if save:
         FIG_DIR.mkdir(exist_ok=True, parents=True)
-        fname = FIG_DIR / f"dispersion_ladder_nlce_j{int(J*100)}_hl{int(hl*100)}.png"
+        fname = FIG_DIR / f"dispersion_ladder_nlce_j{int(J*100)}.png"
         fig.savefig(fname, dpi=150)
         print(f"Figure saved to {fname}")
 
@@ -218,7 +249,7 @@ def _parse_pair(s: str) -> tuple[int, int]:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Plot saved ladder dispersion data")
-    parser.add_argument("--J", type=float, default=0.328)
+    parser.add_argument("--J", type=float, default=0.2)
     parser.add_argument("--hl", type=float, default=0.0)
     parser.add_argument("--cluster-pairs", nargs="+", type=str, default=None,
                         help="Cluster pairs as N_big,N_small (e.g. 3,2 4,3)")

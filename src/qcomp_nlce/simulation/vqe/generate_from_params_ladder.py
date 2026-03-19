@@ -1,6 +1,6 @@
 
 # ── USER INPUT ────────────────────────────────────────────────────────────────
-J = 0.328                # Ising coupling (overridden by file-parsed value)
+J = 0.2                # Ising coupling (overridden by file-parsed value)
 H = 1                    # transverse field strength
 HL = 0.0                 # longitudinal field strength
 HAS_LONGITUDINAL = False # whether the circuit has longitudinal field rotations
@@ -117,7 +117,7 @@ def build_hva_circuit_from_julia_params_ladder(
 def generate_gs(n_qubits_per_chain: int, n_layers: int, J: float, h: float, hl: float,
                 has_longitudinal_field: bool, params: np.ndarray):
     """Generate and save ground state VQE data for ladder geometry."""
-    hamiltonian = TFIM_ladder(n_qubits_per_chain, h, J, longitudinal_field=hl)
+    hamiltonian = TFIM_ladder(n_qubits_per_chain, h, J)
     total_qubits = hamiltonian.num_qubits
 
     circuit = build_hva_circuit_from_julia_params_ladder(
