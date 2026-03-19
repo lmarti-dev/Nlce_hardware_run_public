@@ -1,7 +1,7 @@
 from qiskit import QuantumCircuit, ClassicalRegister
 from qiskit.quantum_info import SparsePauliOp
 import numpy as np
-from qcomp_nlce.utils.measure import (
+from src.qcomp_nlce.utils.measure import (
     sample_counts_circuit,
     circuit_estimation_job,
     circuit_sampling_job,
@@ -9,14 +9,14 @@ from qcomp_nlce.utils.measure import (
     std_from_shots,
     trace_out_estimation,
 )
-from qcomp_nlce.utils.hamiltonian import (
+from src.qcomp_nlce.utils.hamiltonian import (
     index_bits,
     projector_ham,
     trace_dist,
     get_tfim_ratio,
     HAM_NAME_VAR,
 )
-from qcomp_nlce.utils.circuit import (
+from src.qcomp_nlce.utils.circuit import (
     to_controlled_gate,
     apply_parameters,
     circuit_instruction_to_circuit,
@@ -24,7 +24,7 @@ from qcomp_nlce.utils.circuit import (
     circuit_to_matrix,
 )
 
-from qcomp_nlce.utils.save import (
+from src.qcomp_nlce.utils.save import (
     tmp_entry_exists,
     add_tmp_entry_and_save,
     load_tmp_item,
@@ -39,13 +39,13 @@ from qcomp_nlce.utils.save import (
     init_run_split,
 )
 
-from qcomp_nlce.utils.unscented_transform import (
+from src.qcomp_nlce.utils.unscented_transform import (
     unscented_transform,
     complex_to_double_real,
     vectorize_complex_func,
 )
 
-from qcomp_nlce.utils.hardware import (
+from src.qcomp_nlce.utils.hardware import (
     is_hardware_run,
     BACKEND_ALIAS,
     BACKEND_TYPES,
@@ -53,7 +53,7 @@ from qcomp_nlce.utils.hardware import (
     circuits_to_sampler_payload,
 )
 
-from qcomp_nlce.utils.stats import sum_std, mean_std
+from src.qcomp_nlce.utils.stats import sum_std, mean_std
 
 from qiskit.primitives import EstimatorResult, PrimitiveResult
 

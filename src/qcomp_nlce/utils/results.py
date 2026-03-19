@@ -1,15 +1,15 @@
 import copy
-from qcomp_nlce.utils.workflow_utils import (
+from src.qcomp_nlce.utils.workflow_utils import (
     heff_backend_type,
     dispersion_all_backends,
 )
 
-from qcomp_nlce.utils.stats import (
+from src.qcomp_nlce.utils.stats import (
     mean_std,
     mc_disp_from_res_dict,
 )
-from qcomp_nlce.utils.dispersion import dispersion_1d_thermodynamic
-from qcomp_nlce.utils.hardware import BACKEND_TYPES
+from src.qcomp_nlce.utils.dispersion import dispersion_1d_thermodynamic
+from src.qcomp_nlce.utils.hardware import BACKEND_TYPES
 
 import matplotlib.pyplot as plt
 import numpy as np

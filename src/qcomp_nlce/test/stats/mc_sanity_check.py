@@ -1,6 +1,6 @@
 from fauplotstyle import style
 import matplotlib.pyplot as plt
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     mc_disp_from_res_dict,
     BACKEND_LABELS,
     BACKEND_COLORS,

@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from typing import Literal
-from qcomp_nlce.utils import BACKEND_TYPES, DATA_DIR
+from src.qcomp_nlce.utils import BACKEND_TYPES, DATA_DIR
 from data_manager import ExperimentDataManager
 from fauplotstyle import style
 

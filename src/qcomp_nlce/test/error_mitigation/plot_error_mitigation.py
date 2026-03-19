@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from typing import Literal
-from qcomp_nlce.utils import BACKEND_TYPES, reorder_matrix_elems
-from qcomp_nlce.utils.results import pretty_print_diff, pretty_print
+from src.qcomp_nlce.utils import BACKEND_TYPES, reorder_matrix_elems
+from src.qcomp_nlce.utils.results import pretty_print_diff, pretty_print
 from data_manager import ExperimentDataManager
 from fauplotstyle import style
 

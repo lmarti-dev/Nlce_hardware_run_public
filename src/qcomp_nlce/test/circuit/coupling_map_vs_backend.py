@@ -1,5 +1,5 @@
 from qiskit.transpiler import generate_preset_pass_manager
-from qcomp_nlce.utils import get_appropriate_fake_backend, compute_mean_circ_stats
+from src.qcomp_nlce.utils import get_appropriate_fake_backend, compute_mean_circ_stats
 from qiskit import QuantumCircuit
 from qiskit.circuit.random import random_clifford_circuit
 from qiskit_ibm_runtime import SamplerV2

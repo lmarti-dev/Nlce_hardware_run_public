@@ -5,13 +5,13 @@ from qiskit.quantum_info import SparsePauliOp, Statevector, partial_trace
 from scipy.optimize import minimize
 from itertools import combinations
 from collections.abc import Callable
-from qcomp_nlce.utils.circuit import (
+from src.qcomp_nlce.utils.circuit import (
     apply_parameters,
     circuit_to_matrix,
     parameters_exist,
 )
-from qcomp_nlce.utils.hardware import circuits_to_estimator_payload
-from qcomp_nlce.utils.hamiltonian import from_bitstring
+from src.qcomp_nlce.utils.hardware import circuits_to_estimator_payload
+from src.qcomp_nlce.utils.hamiltonian import from_bitstring
 from typing import Literal
 import multiprocessing
 

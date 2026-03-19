@@ -1,13 +1,13 @@
-from qcomp_nlce.hw.gs.subspace_sampling_hw import (
+from src.qcomp_nlce.hw.gs.subspace_sampling_hw import (
     loop_measure_ground_state_energy_subspace_sampling_v2,
 )
-from qcomp_nlce.hw.quasiparticle.hamiltonian_1qp_expectation import (
+from src.qcomp_nlce.hw.quasiparticle.hamiltonian_1qp_expectation import (
     loop_measure_1qp_expectations_v2,
 )
-from qcomp_nlce.hw.quasiparticle.unitary_1qp_sector import (
+from src.qcomp_nlce.hw.quasiparticle.unitary_1qp_sector import (
     loop_measure_1qp_elements_v2,
 )
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     TFIM,
     apply_parameters,
     get_min_gap,
@@ -22,17 +22,17 @@ from qcomp_nlce.utils import (
     get_ground_energy,
     pfeuty_energy,
 )
-from qcomp_nlce.utils.dispersion import (
+from src.qcomp_nlce.utils.dispersion import (
     dispersion_1d_thermodynamic,
     exact_dispersion_1qp_1d,
 )
 
-from qcomp_nlce.utils.hardware import BACKEND_LABELS
+from src.qcomp_nlce.utils.hardware import BACKEND_LABELS
 import io
 import json
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
-from qcomp_nlce.utils.effective_hamiltonian import H_effective, H_effective_ed
+from src.qcomp_nlce.utils.effective_hamiltonian import H_effective, H_effective_ed
 
 
 import matplotlib.pyplot as plt

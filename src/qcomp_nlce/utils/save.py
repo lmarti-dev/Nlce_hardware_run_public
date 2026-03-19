@@ -9,7 +9,7 @@ from data_manager import ExtendedJSONDecoder, ExtendedJSONEncoder
 import io
 
 
-from qcomp_nlce.utils.constants import ALGORITHMS_ALIAS
+from src.qcomp_nlce.utils.constants import ALGORITHMS_ALIAS
 
 
 def get_save_directory(dirname: str):

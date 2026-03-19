@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     get_hva_vqe,
     backend_sample,
     get_appropriate_fake_backend,

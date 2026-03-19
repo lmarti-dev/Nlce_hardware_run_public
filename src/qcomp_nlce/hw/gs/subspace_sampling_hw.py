@@ -1,6 +1,6 @@
 import numpy as np
 
-from qcomp_nlce.utils.hardware import (
+from src.qcomp_nlce.utils.hardware import (
     backend_sample,
     get_appropriate_fake_backend,
     get_backend,
@@ -11,25 +11,25 @@ from qcomp_nlce.utils.hardware import (
     get_backend_name,
     BACKEND_ALIAS,
 )
-from qcomp_nlce.utils.statevector import (
+from src.qcomp_nlce.utils.statevector import (
     sv_estimate_observables,
     sv_expectation_observables,
 )
-from qcomp_nlce.utils.measure import (
+from src.qcomp_nlce.utils.measure import (
     get_counts_from_job,
     get_counts_from_res,
     add_meas_layer,
     get_unique_bitstrings,
 )
-from qcomp_nlce.utils.circuit import (
+from src.qcomp_nlce.utils.circuit import (
     apply_parameters,
 )
-from qcomp_nlce.utils.hamiltonian import (
+from src.qcomp_nlce.utils.hamiltonian import (
     get_tfim_ratio,
     get_ground_energy,
     subspace_diagonalize,
 )
-from qcomp_nlce.utils.save import (
+from src.qcomp_nlce.utils.save import (
     load_tmp_item,
     save_tmp_item,
     tmp_dirname,

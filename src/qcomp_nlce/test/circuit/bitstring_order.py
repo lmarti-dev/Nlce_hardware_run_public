@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import statevector_sample_unique
+from src.qcomp_nlce.utils import statevector_sample_unique
 from qiskit import QuantumCircuit
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.quantum_info import SparsePauliOp

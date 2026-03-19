@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     TFIM,
     save_optimized_vqe,
     get_hva_vqe,

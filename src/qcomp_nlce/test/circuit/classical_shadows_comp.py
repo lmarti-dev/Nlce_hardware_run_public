@@ -1,15 +1,15 @@
 from qiskit.primitives import StatevectorEstimator
-from qcomp_nlce.utils.folders import res_sim_dir
+from src.qcomp_nlce.utils.folders import res_sim_dir
 from pathlib import Path
-from qcomp_nlce.utils.save import load_optimized_vqe
-from qcomp_nlce.utils.circuit import (
+from src.qcomp_nlce.utils.save import load_optimized_vqe
+from src.qcomp_nlce.utils.circuit import (
     apply_parameters,
 )
 
-from qcomp_nlce.hw.gs.subspace_sampling_hw import (
+from src.qcomp_nlce.hw.gs.subspace_sampling_hw import (
     measure_ground_state_energy_subspace_sampling_v2,
 )
-from qcomp_nlce.utils.hardware import (
+from src.qcomp_nlce.utils.hardware import (
     BACKEND_ALIAS,
     PROVIDER_ALIAS,
     BACKEND_TYPES,
@@ -18,8 +18,8 @@ from qcomp_nlce.utils.hardware import (
     backend_estimate,
 )
 from qiskit_ibm_transpiler import generate_ai_pass_manager
-from qcomp_nlce.utils.shadow_tomography import classical_shadow_expectation
-from qcomp_nlce.utils.hamiltonian import get_ground_energy
+from src.qcomp_nlce.utils.shadow_tomography import classical_shadow_expectation
+from src.qcomp_nlce.utils.hamiltonian import get_ground_energy
 
 from qiskit_ibm_runtime import SamplerV2
 import numpy as np

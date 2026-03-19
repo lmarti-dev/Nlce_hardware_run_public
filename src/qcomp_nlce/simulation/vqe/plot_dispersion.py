@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import argparse
 from pathlib import Path
 
-from qcomp_nlce.utils.dispersion import cluster_dispersion, dispersion_1d_thermodynamic
-from qcomp_nlce.utils.effective_hamiltonian import H_effective
-from qcomp_nlce.utils.stats import complex_normal
+from src.qcomp_nlce.utils.dispersion import cluster_dispersion, dispersion_1d_thermodynamic
+from src.qcomp_nlce.utils.effective_hamiltonian import H_effective
+from src.qcomp_nlce.utils.stats import complex_normal
 
 RES_SIM = Path(__file__).parent.parent.parent / "res_sim"
 DATA_DIR = RES_SIM / "dispersion_data"
@@ -190,7 +190,7 @@ def plot_nlce(
     COLOR_MC = 'tab:red'
 
     if np.isclose(hl, 0.0):
-        from qcomp_nlce.utils.dispersion import exact_dispersion_1qp_1d
+        from src.qcomp_nlce.utils.dispersion import exact_dispersion_1qp_1d
         ax.plot(ks_dense, exact_dispersion_1qp_1d(J, ks_dense), '-', color='gray',
                 linewidth=2.5, label="Exact analytic (hl=0)", zorder=0)
 
@@ -279,8 +279,8 @@ def plot_single_cluster(N: int, J: float, hl: float, save: bool = True, n_k_poin
     if entry["ed"] is not None:
         heff_ed = entry["ed"]
     else:
-        from qcomp_nlce.utils.effective_hamiltonian import H_effective_ed
-        from qcomp_nlce.utils.hamiltonian import TFIM
+        from src.qcomp_nlce.utils.effective_hamiltonian import H_effective_ed
+        from src.qcomp_nlce.utils.hamiltonian import TFIM
         ham = TFIM(N, h=1, J=J, periodic=False, longitudinal_field=hl)
         heff_ed = H_effective_ed(ham)
     disp_ed = [np.real(cluster_dispersion(N, heff_ed, k)) for k in ks]

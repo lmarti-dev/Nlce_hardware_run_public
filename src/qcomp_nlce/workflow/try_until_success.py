@@ -1,11 +1,11 @@
-from qcomp_nlce.workflow.workflow_tfim_1qp_dispersion import (
+from src.qcomp_nlce.workflow.workflow_tfim_1qp_dispersion import (
     workflow_nq_aqt_ladder,
     workflow_nq_aqt_sweep,
     workflow_nq_aqt_hl,
     workflow_nq_aqt_j100,
     workflow_nq_aqt_j80,
 )
-from qcomp_nlce.utils.hardware import pending_jobs
+from src.qcomp_nlce.utils.hardware import pending_jobs
 from typing import Callable
 from time import sleep
 from fauplotstyle import style

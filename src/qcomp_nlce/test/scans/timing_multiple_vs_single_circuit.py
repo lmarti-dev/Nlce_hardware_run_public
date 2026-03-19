@@ -1,5 +1,5 @@
 from qiskit import QuantumCircuit
-from qcomp_nlce.utils import sample_counts_circuit
+from src.qcomp_nlce.utils import sample_counts_circuit
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 import time

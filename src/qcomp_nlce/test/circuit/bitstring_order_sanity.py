@@ -1,4 +1,4 @@
-from qcomp_nlce.utils.measure import (
+from src.qcomp_nlce.utils.measure import (
     sample_counts_circuit,
     circuit_sampling_job,
     get_counts_from_job,

@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     heff_n_expectation_values_1d,
     heff_n_expectation_values_2d,
 )

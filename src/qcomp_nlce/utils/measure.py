@@ -1,7 +1,7 @@
 from qiskit.primitives import StatevectorSampler, PrimitiveJob, StatevectorEstimator
-from qcomp_nlce.utils.hardware import backend_sample, backend_estimate, BACKEND_ALIAS
-from qcomp_nlce.utils.hamiltonian import to_bitstring
-from qcomp_nlce.utils.statevector import (
+from src.qcomp_nlce.utils.hardware import backend_sample, backend_estimate, BACKEND_ALIAS
+from src.qcomp_nlce.utils.hamiltonian import to_bitstring
+from src.qcomp_nlce.utils.statevector import (
     sv_estimate_observables,
     sv_estimate_observables_jobs,
     sv_expectation_observables,

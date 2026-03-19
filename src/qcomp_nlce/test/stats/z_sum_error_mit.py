@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     load_optimized_vqe,
     prep_circ_superpos,
     apply_parameters,
@@ -18,7 +18,7 @@ from pathlib import Path
 from qiskit import QuantumCircuit, ClassicalRegister
 import numpy as np
 
-from qcomp_nlce.utils.results import pretty_print, pretty_print_diff
+from src.qcomp_nlce.utils.results import pretty_print, pretty_print_diff
 
 try:
     from qiskit_aqt_provider.primitives import AQTSampler

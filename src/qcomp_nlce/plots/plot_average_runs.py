@@ -1,15 +1,15 @@
 from data_manager import ExperimentDataManager
-from qcomp_nlce.utils.workflow_utils import (
+from src.qcomp_nlce.utils.workflow_utils import (
     plot_all_backends_dispersions_montecarlo,
 )
 
-from qcomp_nlce.utils.results import average_result_matrices, show_diffs
+from src.qcomp_nlce.utils.results import average_result_matrices, show_diffs
 
 import matplotlib.pyplot as plt
 
 from data_manager import ExperimentDataManager
 from pathlib import Path
-from qcomp_nlce.utils import DATA_DIR
+from src.qcomp_nlce.utils import DATA_DIR
 
 
 def load_diffs(fpath: Path):

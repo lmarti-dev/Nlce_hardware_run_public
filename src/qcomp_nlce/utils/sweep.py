@@ -5,7 +5,7 @@ from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.synthesis import SuzukiTrotter, LieTrotter
 import numpy as np
 from scipy.linalg import expm
-from qcomp_nlce.utils.hamiltonian import get_max_energy
+from src.qcomp_nlce.utils.hamiltonian import get_max_energy
 
 
 def get_sweep_function(kind: str):

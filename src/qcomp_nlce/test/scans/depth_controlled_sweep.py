@@ -1,7 +1,7 @@
 from qiskit import QuantumCircuit
 
 
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     get_tfim_sweep_circuit,
     TFIM,
     get_min_gap,

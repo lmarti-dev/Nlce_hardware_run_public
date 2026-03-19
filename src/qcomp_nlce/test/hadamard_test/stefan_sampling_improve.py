@@ -1,5 +1,5 @@
-from qcomp_nlce.hw.quasiparticle.unitary_1qp_sector import loop_measure_1qp_elements_v2
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.hw.quasiparticle.unitary_1qp_sector import loop_measure_1qp_elements_v2
+from src.qcomp_nlce.utils import (
     load_optimized_vqe,
     res_sim_dir,
     circuit_to_matrix,
@@ -8,7 +8,7 @@ from qcomp_nlce.utils import (
     hamming_weight_states,
 )
 
-from qcomp_nlce.utils.results import pretty_print_diff
+from src.qcomp_nlce.utils.results import pretty_print_diff
 from pathlib import Path
 import numpy as np
 from qiskit import QuantumCircuit

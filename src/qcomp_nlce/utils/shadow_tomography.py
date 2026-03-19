@@ -4,16 +4,16 @@ from povm_toolbox.post_processor import POVMPostProcessor
 from qiskit.circuit import QuantumCircuit
 from qiskit.primitives import StatevectorSampler
 from qiskit.quantum_info import SparsePauliOp
-from qcomp_nlce.utils.folders import res_sim_dir
+from src.qcomp_nlce.utils.folders import res_sim_dir
 from pathlib import Path
-from qcomp_nlce.utils.save import load_optimized_vqe
-from qcomp_nlce.utils.circuit import (
+from src.qcomp_nlce.utils.save import load_optimized_vqe
+from src.qcomp_nlce.utils.circuit import (
     apply_parameters,
     circuit_matrix_elements,
     prep_circ_superpos,
     circ_ham_expectation_values,
 )
-from qcomp_nlce.utils.hardware import (
+from src.qcomp_nlce.utils.hardware import (
     BACKEND_ALIAS,
     PROVIDER_ALIAS,
     BACKEND_TYPES,
@@ -22,13 +22,13 @@ from qcomp_nlce.utils.hardware import (
     compile_circuit_for_backend,
 )
 from qiskit_ibm_transpiler import generate_ai_pass_manager
-from qcomp_nlce.utils.hamiltonian import (
+from src.qcomp_nlce.utils.hamiltonian import (
     projector_ham,
     trace_dist,
     index_bits,
 )
-from qcomp_nlce.utils.statevector import hamming_weight_states
-from qcomp_nlce.utils.stats import sum_std
+from src.qcomp_nlce.utils.statevector import hamming_weight_states
+from src.qcomp_nlce.utils.stats import sum_std
 import numpy as np
 
 

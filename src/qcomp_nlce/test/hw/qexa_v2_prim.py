@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import get_backend, backend_estimate
+from src.qcomp_nlce.utils import get_backend, backend_estimate
 from qiskit import QuantumCircuit
 from data_manager import ExperimentDataManager
 from qiskit.visualization import plot_distribution

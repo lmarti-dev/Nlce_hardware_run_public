@@ -2,20 +2,20 @@ from pathlib import Path
 
 import numpy as np
 
-from qcomp_nlce.utils.folders import res_sim_dir
-from qcomp_nlce.utils.results import show_diffs
-from qcomp_nlce.utils.workflow_utils import (
+from src.qcomp_nlce.utils.folders import res_sim_dir
+from src.qcomp_nlce.utils.results import show_diffs
+from src.qcomp_nlce.utils.workflow_utils import (
     vqe_dispersion,
     tfim_ed_dispersion,
     sweep_dispersion,
     plot_all_backends_dispersions_montecarlo,
 )
-from qcomp_nlce.utils.vqe import get_optimal_n_layers
-from qcomp_nlce.utils.stats import mc_disp_from_res_dict
-from qcomp_nlce.utils.hardware import PROVIDER_ALIAS, BACKEND_TYPES
-from qcomp_nlce.utils.overlap import HADAMARD_TESTS
-from qcomp_nlce.utils.constants import ALGORITHMS_ALIAS
-from qcomp_nlce.utils.hamiltonian import model_str
+from src.qcomp_nlce.utils.vqe import get_optimal_n_layers
+from src.qcomp_nlce.utils.stats import mc_disp_from_res_dict
+from src.qcomp_nlce.utils.hardware import PROVIDER_ALIAS, BACKEND_TYPES
+from src.qcomp_nlce.utils.overlap import HADAMARD_TESTS
+from src.qcomp_nlce.utils.constants import ALGORITHMS_ALIAS
+from src.qcomp_nlce.utils.hamiltonian import model_str
 from data_manager import ExperimentDataManager
 
 import matplotlib.pyplot as plt

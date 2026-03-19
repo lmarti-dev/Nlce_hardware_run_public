@@ -5,9 +5,9 @@ from pathlib import Path
 import ast
 
 from qiskit import QuantumCircuit
-from qcomp_nlce.utils.vqe import get_optimal_n_layers
-from qcomp_nlce.utils.hamiltonian import get_ground_energy, TFIM
-from qcomp_nlce.hw.gs.subspace_sampling_hw import measure_ground_state_energy_estimator
+from src.qcomp_nlce.utils.vqe import get_optimal_n_layers
+from src.qcomp_nlce.utils.hamiltonian import get_ground_energy, TFIM
+from src.qcomp_nlce.hw.gs.subspace_sampling_hw import measure_ground_state_energy_estimator
 
 
 # Path to optimized parameters file

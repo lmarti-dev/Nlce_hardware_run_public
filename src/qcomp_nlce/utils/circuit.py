@@ -3,7 +3,7 @@ from qiskit.circuit.gate import Gate
 from qiskit.circuit import ClassicalRegister
 from qiskit.quantum_info import Operator, SparsePauliOp
 import numpy as np
-from qcomp_nlce.utils.hamiltonian import from_bitstring, hamming_weight, index_bits
+from src.qcomp_nlce.utils.hamiltonian import from_bitstring, hamming_weight, index_bits
 from typing import Union, Literal
 from qiskit.circuit import CircuitInstruction
 from qiskit.circuit.parametertable import ParameterView

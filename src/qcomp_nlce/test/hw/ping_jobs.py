@@ -5,7 +5,7 @@ Load jobs from a list of job ids and get results
 from mqp.qiskit_provider.job import MQPJob
 from mqp.qiskit_provider import MQPProvider
 from qiskit.providers import JobStatus
-from qcomp_nlce.utils import get_token
+from src.qcomp_nlce.utils import get_token
 
 
 def load_jobs_from_ids(jobids: list):

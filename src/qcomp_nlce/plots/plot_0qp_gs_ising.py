@@ -1,9 +1,9 @@
 from data_manager import ExperimentDataManager
-from qcomp_nlce.utils.workflow_utils import (
+from src.qcomp_nlce.utils.workflow_utils import (
     plot_0qp_gs_nlce,
     plot_bitstring_props,
 )
-from qcomp_nlce.utils import DATA_DIR
+from src.qcomp_nlce.utils import DATA_DIR
 import matplotlib.pyplot as plt
 from fauplotstyle import style
 from pathlib import Path

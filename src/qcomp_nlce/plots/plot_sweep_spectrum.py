@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from qcomp_nlce.utils import TFIM, get_sweep_spectrum, model_str
+from src.qcomp_nlce.utils import TFIM, get_sweep_spectrum, model_str
 import numpy as np
 from fauplotstyle import style
 from data_manager import ExperimentDataManager

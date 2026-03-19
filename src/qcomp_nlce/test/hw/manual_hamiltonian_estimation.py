@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     hamming_weight_states,
     measure_hamiltonian_elements,
     res_sim_dir,
@@ -9,7 +9,7 @@ from qcomp_nlce.utils import (
     apply_parameters,
     HAM_NAME_VAR,
 )
-from qcomp_nlce.utils.results import pretty_print_diff, pretty_print
+from src.qcomp_nlce.utils.results import pretty_print_diff, pretty_print
 from pathlib import Path
 
 n_qubits_max = 5
