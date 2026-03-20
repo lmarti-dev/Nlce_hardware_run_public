@@ -5,7 +5,6 @@ def cluster_dispersion(N: int, H_effective: np.ndarray, k: float) -> float:
     mat_el = np.zeros((N, N), dtype=complex)
     for i in range(N):
         for j in range(N):
-
             # Calculate the phase factor exp(1im*k*(i-j)) and multiply with the matrix element
             # Here k is the momentum, and i, j are the site indices
             func = H_effective[i, j] * np.exp(1j * k * (i - j))
@@ -27,7 +26,6 @@ def cluster_dispersion(N: int, H_effective: np.ndarray, k: float) -> float:
 def dispersion_1d_thermodynamic(
     k: float, H_eff_Nb: np.ndarray, H_eff_Ns: np.ndarray
 ) -> float:
-
     # Compute the difference between the sums of the "big" and "small" arrays
     Nb = H_eff_Nb.shape[0]
     Ns = H_eff_Ns.shape[0]
@@ -39,24 +37,22 @@ def dispersion_1d_thermodynamic(
     return func_w
 
 
-def _ladder_momentum_projectors(n_rungs: int, kx: float) -> tuple[np.ndarray, np.ndarray]:
-    
+def _ladder_momentum_projectors(
+    n_rungs: int, kx: float
+) -> tuple[np.ndarray, np.ndarray]:
     n_sites = 2 * n_rungs
     v_leg0 = np.zeros(n_sites, dtype=complex)
     v_leg1 = np.zeros(n_sites, dtype=complex)
 
     for r in range(n_rungs):
         phase = np.exp(1j * kx * r)
-        v_leg0[r] = phase              # leg 0: sites 0..n_rungs-1
-        v_leg1[n_rungs + r] = phase    # leg 1: sites n_rungs..2*n_rungs-1
+        v_leg0[r] = phase  # leg 0: sites 0..n_rungs-1
+        v_leg1[n_rungs + r] = phase  # leg 1: sites n_rungs..2*n_rungs-1
 
     return v_leg0, v_leg1
 
 
-def project_ladder_to_k_space(
-    H_eff: np.ndarray, n_rungs: int, kx: float
-) -> np.ndarray:
-
+def project_ladder_to_k_space(H_eff: np.ndarray, n_rungs: int, kx: float) -> np.ndarray:
     v0, v1 = _ladder_momentum_projectors(n_rungs, kx)
     H_k = np.zeros((2, 2), dtype=complex)
     H_k[0, 0] = v0.conj() @ H_eff @ v0
@@ -69,7 +65,6 @@ def project_ladder_to_k_space(
 def dispersion_ladder_thermodynamic(
     kx: float, ky: float, H_eff_Nb: np.ndarray, H_eff_Ns: np.ndarray
 ) -> np.ndarray:
-   
     Nb = H_eff_Nb.shape[0] // 2  # number of rungs in bigger cluster
     Ns = H_eff_Ns.shape[0] // 2  # number of rungs in smaller cluster
 
@@ -86,11 +81,9 @@ def exact_dispersion_1qp_1d(j: float, k: np.ndarray):
 
 
 def heff_n_expectation_values_1d(n_qubits: int, ff: int = 2) -> int:
-
     total = 0
 
     for q in (n_qubits - 1, n_qubits):
-
         # 2 per overlap element
         overlap = 2 * q**2
         # 1 per diagonal, 4 per nondiagonal element

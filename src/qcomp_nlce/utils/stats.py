@@ -85,7 +85,19 @@ def get_heff_mc_sampler(
     overlap_std_s: np.ndarray,
     gs_s: np.ndarray,
     gs_std_s: np.ndarray,
+    options:dict={},
+
 ) -> callable:
+    
+    for which in ("exd","eld","gsd"):
+        k1 = "sigma_scale_"+which
+        if k1 not in options:
+            options[k1] = 1.0
+
+        k2 = "sigma_add_"+which
+        if k2 not in options:
+            options[k2] = 1.0
+
 
     def sampler(ks, sigma_scale: float = 1.0, sigma_add: float = 0.0):
 
@@ -120,7 +132,7 @@ def get_heff_mc_sampler(
 
 
 def res_dict_sampler(
-    _d: dict, circ: ALGORITHMS_ALIAS, to_eotm: bool, gsd_sup_fac: int = 1
+    _d: dict, circ: ALGORITHMS_ALIAS, to_eotm: bool, gsd_sup_fac: int = 1,options:dict={}
 ) -> dict[callable]:
 
     # to_eotm: unfortunately,
@@ -177,6 +189,7 @@ def res_dict_sampler(
                 overlap_std_s,
                 gs_expectation_s,
                 gs_expectation_std_s,
+                **options,
             )
             samplers[be] = sampler
     return samplers
@@ -195,18 +208,26 @@ def mc_disp_from_res_dict(
     disps = {}
     samplers = res_dict_sampler(_d, circ, to_eotm, gsd_sup_fac)
     for be in samplers:
-        sampler = samplers[be]
-        sampled = np.zeros((len(ks), n_samples))
-        for n in range(n_samples):
-            print(f"{1+n:0>6n}/{n_samples}", end="\r")
-            sampled[:, n] = sampler(ks, **sampler_opts)
-
-        mc_mean = np.mean(sampled, axis=1)
-        mc_std = np.std(sampled, axis=1)
-
-        disps[be] = {
-            "mean": mc_mean,
-            "std": mc_std,
+        if be=="statevector":
+            # no statevector mc sampling because it is 0
+            disps[be] = {
+            "mean": 0,
+            "std": 0,
             "n_samples": n_samples,
         }
+        else:
+            sampler = samplers[be]
+            sampled = np.zeros((len(ks), n_samples))
+            for n in range(n_samples):
+                print(f"{1+n:0>6n}/{n_samples}", end="\r")
+                sampled[:, n] = sampler(ks, **sampler_opts)
+
+            mc_mean = np.mean(sampled, axis=1)
+            mc_std = np.std(sampled, axis=1)
+
+            disps[be] = {
+                "mean": mc_mean,
+                "std": mc_std,
+                "n_samples": n_samples,
+            }
     return disps

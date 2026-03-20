@@ -19,7 +19,7 @@ def count_to_awakening(secs: int):
     print("I have awoken")
 
 
-def keep_trying(func: Callable[[bool, str], None], provider_name: str):
+def keep_trying(func: Callable[[bool, str], None], provider_name: str,debug:bool=False):
     success = False
     while not success:
         try:
@@ -29,6 +29,8 @@ def keep_trying(func: Callable[[bool, str], None], provider_name: str):
             func(True, which_backends=["real_backend"])
             success = True
         except Exception as e:
+            if debug:
+                raise e
             print(f"Encoutered exception: ({type(e).__name__}) {e}")
             count_to_awakening(30)
 
@@ -43,4 +45,5 @@ if __name__ == "__main__":
     # keep_trying(workflow_nq_aqt_ladder, "AQT")
     # keep_trying(workflow_nq_aqt_j100, "AQT")
     # keep_trying(workflow_nq_aqt_j80, "AQT")
+
     keep_trying(workflow_nq_aqt_sweep, "AQT")

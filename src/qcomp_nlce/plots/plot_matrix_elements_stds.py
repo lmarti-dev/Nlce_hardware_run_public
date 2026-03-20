@@ -55,7 +55,6 @@ def get_gs(
 
 
 def plot_matrix_breakdown(item: list[str, str, str], dry_run: bool = True):
-
     fpath = item[0]
     which_algorithm = item[1]
     which_backend = item[2]
@@ -80,7 +79,7 @@ def plot_matrix_breakdown(item: list[str, str, str], dry_run: bool = True):
     n_reps = jobj["inputs"]["n_reps"]
     n_shots *= n_reps
 
-    SIZES_D = {"dict_l": f"{nq} qubits", "dict_s": f"{nq-1} qubits"}
+    SIZES_D = {"dict_l": f"{nq} qubits", "dict_s": f"{nq - 1} qubits"}
     WHICH_D = {
         "eld": rf"$\langle j | U | k \rangle$",
         "exd": rf"$\langle j | U^\dagger H U | k \rangle$",
@@ -88,7 +87,6 @@ def plot_matrix_breakdown(item: list[str, str, str], dry_run: bool = True):
 
     for ind_x, size in enumerate(("dict_l", "dict_s")):
         for ind_y, which in enumerate(("eld", "exd")):
-
             mat, stds = get_matrix(jobj, size, which, which_backend, which_algorithm)
             stds /= np.sqrt(n_shots)
             nq = len(mat)
@@ -142,7 +140,6 @@ def parnum(val: float, std: float) -> str:
 
 
 def plot_matrix_breakdown_error(item: list[str, str, str], dry_run: bool = True):
-
     fpath = item[0]
     which_algorithm = item[1]
     which_backend = item[2]
@@ -167,7 +164,7 @@ def plot_matrix_breakdown_error(item: list[str, str, str], dry_run: bool = True)
     n_reps = jobj["inputs"]["n_reps"]
     n_shots *= n_reps
 
-    SIZES_D = {"dict_l": f"{nq} qubits", "dict_s": f"{nq-1} qubits"}
+    SIZES_D = {"dict_l": f"{nq} qubits", "dict_s": f"{nq - 1} qubits"}
     WHICH_D = {
         "eld": rf"$\langle j | U | k \rangle$",
         "exd": rf"$\langle j | U^\dagger H U | k \rangle$",
@@ -175,7 +172,6 @@ def plot_matrix_breakdown_error(item: list[str, str, str], dry_run: bool = True)
 
     for ind_x, size in enumerate(("dict_l", "dict_s")):
         for ind_y, which_mat in enumerate(("eld", "exd")):
-
             mat, stds = get_matrix(
                 jobj, size, which_mat, which_backend, which_algorithm
             )
@@ -227,7 +223,6 @@ def plot_matrix_breakdown_error(item: list[str, str, str], dry_run: bool = True)
 
 
 if __name__ == "__main__":
-
     style()
     dry_run = False
     which_backend = "real_backend"

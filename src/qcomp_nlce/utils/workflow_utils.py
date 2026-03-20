@@ -25,6 +25,7 @@ from src.qcomp_nlce.utils import (
 from src.qcomp_nlce.utils.dispersion import (
     dispersion_1d_thermodynamic,
     exact_dispersion_1qp_1d,
+    dispersion_ladder_thermodynamic,
 )
 
 from src.qcomp_nlce.utils.hardware import BACKEND_LABELS
@@ -149,7 +150,6 @@ def vqe_heff(
     n_reps: int,
     which_model: str,
 ) -> dict:
-
     hamiltonian1, elem_circuit, elem_weights, ground_energy = load_optimized_vqe(
         elem_dirname
     )
@@ -187,7 +187,6 @@ def vqe_heff(
 
 
 def pick_model(n_qubits: int, J: float, hl: float, ladder: bool):
-
     ham_j, ham_h = TFIM(
         n_qubits,
         1,
@@ -281,7 +280,6 @@ def get_heff_values(
     solve: bool = True,
     n_reps: int = 1,
 ):
-
     print(f"Using {which_hadamard_test} hadamard test")
     print("-- Computing <j|U|k> --")
     elements_dict = loop_measure_1qp_elements_v2(
@@ -383,7 +381,6 @@ def plot_multiple_dispersions_1d(_l: list[dict]) -> plt.Figure:
 def plot_all_backends_dispersions_montecarlo(
     _d: dict, which_circ: list = None, which_model: str = None
 ) -> plt.Figure:
-
     ks = _d["inputs"]["ks"]
     j = _d["inputs"]["J"]
 
@@ -453,7 +450,6 @@ def plot_all_backends_dispersions_montecarlo(
 
 
 def tfim_chain_ed_nlce(q1: int, q2: int, ratio: float) -> float:
-
     ham1 = TFIM(n_qubits=q1, h=1, J=ratio)
     e1 = get_ground_energy(ham1)
 

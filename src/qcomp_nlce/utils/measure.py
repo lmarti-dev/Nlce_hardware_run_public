@@ -1,5 +1,9 @@
 from qiskit.primitives import StatevectorSampler, PrimitiveJob, StatevectorEstimator
-from src.qcomp_nlce.utils.hardware import backend_sample, backend_estimate, BACKEND_ALIAS
+from src.qcomp_nlce.utils.hardware import (
+    backend_sample,
+    backend_estimate,
+    BACKEND_ALIAS,
+)
 from src.qcomp_nlce.utils.hamiltonian import to_bitstring
 from src.qcomp_nlce.utils.statevector import (
     sv_estimate_observables,
@@ -27,7 +31,6 @@ except ModuleNotFoundError:
 
 
 try:
-
     from qiskit.result import Result
 except Exception:
 
@@ -50,7 +53,6 @@ def circuit_estimation_job(
     n_shots: int = 1000,
 ):
     if backend == "statevector":
-
         job = sv_estimate_observables_jobs(circuit, observables, parameters, n_shots)
 
     else:
@@ -70,14 +72,12 @@ def trace_out_estimation(
     total = 0
     val = 0
     for k in counts.keys():
-
         # random spaces in my bitstrings?
         # actually meant to tell you that you didn't measure a qubit
         # oh my god how many different ways are there
         # there's a collective agreement not to represent bitstirng coherently
         parity_unbroken = True
         if has_parity in (0, 1):
-
             # if bitstring is even, z_parity is broken
             if sum([int(kk) for kk in k]) % 2 != has_parity:
                 parity_unbroken = False
