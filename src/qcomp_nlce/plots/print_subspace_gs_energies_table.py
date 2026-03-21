@@ -36,7 +36,7 @@ if __name__ == "__main__":
         ("vqe_tfim_20j_0hl_8q_ladder", "TFIM_20j_0hl", "vqe", "ladder"),
     ):
         fpath, fig_name, alg, notes = items
-        edm = ExperimentDataManager.load(Path(DATA_DIR, fpath))
+        edm = ExperimentDataManager.load(Path(DATA_DIR, "1qp", fpath))
         edm.use_calendar = False
         d = edm.load_last_saved_data_file
         if "model_dir" in d["inputs"]:

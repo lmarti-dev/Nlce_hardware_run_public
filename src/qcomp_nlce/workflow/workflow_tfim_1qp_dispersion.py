@@ -127,7 +127,7 @@ def workflow_nq_aqt(dry_run, J, which_backends: BACKEND_TYPES):
 
 def workflow_nq_aqt_sample_estim(dry_run, J, which_backends: BACKEND_TYPES):
     provider_name: PROVIDER_ALIAS = "AQT"
-    n_shots = int(200)
+    n_shots = int(2000)
     which_hadamard_test = "stefan"
     n_qubits_max = 5
     workflow_nq(
@@ -139,7 +139,7 @@ def workflow_nq_aqt_sample_estim(dry_run, J, which_backends: BACKEND_TYPES):
         which_backends,
         ["vqe"],
         J=J,
-        n_reps=10,
+        n_reps=1,
         n_steps=10,
         hl=0.0,
     )

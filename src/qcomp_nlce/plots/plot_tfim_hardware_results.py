@@ -31,7 +31,7 @@ for items in (
     ("vqe_tfim_100j_0hl_5q_run2", "TFIM_100j_0hl", "vqe"),
 ):
     fpath, fig_name, alg = items
-    edm = ExperimentDataManager.load(Path(DATA_DIR, fpath))
+    edm = ExperimentDataManager.load(Path(DATA_DIR, "1qp", fpath))
     edm.use_calendar = False
     d = edm.load_last_saved_data_file
     if "model_dir" in d["inputs"]:

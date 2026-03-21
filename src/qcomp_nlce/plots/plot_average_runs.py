@@ -83,7 +83,7 @@ if __name__ == "__main__":
         "vqe",
     )
     for item in (tfim_80j_0hl, tfim_80j_0hl_sweep, tfim_100j_0hl, tfim_50j_10hl):
-        fpaths = item[0]
+        fpaths = "1qp" / item[0]
         model_name = item[1]
         notes = item[2]
         plot_average_over_runs(m_edm, fpaths, model_name, notes, dry_run=dry_run)

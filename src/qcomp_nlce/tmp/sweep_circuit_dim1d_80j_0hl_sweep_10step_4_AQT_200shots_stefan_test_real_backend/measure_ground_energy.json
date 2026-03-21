@@ -1,7 +1,7 @@
 {
     "real_backend": {
         "name": "AQT20",
-        "error": 0.00100855097223564,
+        "error": 0.0010085509722350466,
         "energy": -4.480265465270191,
         "unique_bitstrings": {
             "type": "ndarray",

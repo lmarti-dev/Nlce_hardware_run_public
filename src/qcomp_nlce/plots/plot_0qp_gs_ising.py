@@ -19,7 +19,7 @@ m_edm = ExperimentDataManager(
 
 for items in ((fpath_tfim_80j_0hl, "TFIM_80j_0hl"),):
     fpath, fig_name = items
-    edm = ExperimentDataManager.load(Path(DATA_DIR, fpath))
+    edm = ExperimentDataManager.load(Path(DATA_DIR, "0qp", fpath))
     d = edm.load_last_saved_data_file
 
     fig = plot_0qp_gs_nlce(d)
