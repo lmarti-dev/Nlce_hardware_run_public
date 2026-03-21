@@ -5,7 +5,7 @@ from src.qcomp_nlce.utils.workflow_utils import (
 
 from src.qcomp_nlce.utils.results import average_result_matrices, show_diffs
 
-import matplotlib.pyplot as plt
+from fauplotstyle import style
 
 from data_manager import ExperimentDataManager
 from pathlib import Path
@@ -19,15 +19,14 @@ def load_diffs(fpath: Path):
 
 
 def plot_average_over_runs(
-    fpath: list[Path], model_name: str, notes: str = "", dry_run: bool = True
+    m_edm: ExperimentDataManager,
+    fpath: list[Path],
+    model_name: str,
+    notes: str = "",
+    dry_run: bool = True,
 ):
-
     if notes != "":
         notes = "_" + notes
-
-    m_edm = ExperimentDataManager(
-        f"plot_average_runs_{model_name}{notes}", project="nlce", dry_run=dry_run
-    )
 
     dicts = []
     for fpath in fpath:
@@ -45,6 +44,7 @@ def plot_average_over_runs(
     fig = plot_all_backends_dispersions_montecarlo(out_d)
 
     m_edm.var_dump(files=fpath, to_average=to_average, ref_dict=fpath[0])
+
     m_edm.save_figure(
         fig,
         filename=f"{model_name}{notes}_mean",
@@ -52,11 +52,14 @@ def plot_average_over_runs(
         add_timestamp=False,
     )
 
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":
-    dry_run = True
+    style()
+    dry_run = False
+
+    m_edm = ExperimentDataManager("plot_average_runs", project="nlce", dry_run=dry_run)
     # fpath_tfim_100j_0hl = [r"vqe_tfim_100j_0hl_5q"]
     # fpath_tfim_80j_0hl_sweep = [r"sweep_tfim_80j_0hl_5q"]
     tfim_80j_0hl = (
@@ -64,8 +67,23 @@ if __name__ == "__main__":
         "TFIM_80j_0hl",
         "vqe",
     )
-    for item in (tfim_80j_0hl,):
+    tfim_80j_0hl_sweep = (
+        [r"sweep_tfim_80j_0hl_5q", r"sweep_tfim_80j_0hl_5q_run2"],
+        "TFIM_80j_0hl",
+        "sweep",
+    )
+    tfim_100j_0hl = (
+        [r"vqe_tfim_100j_0hl_5q", r"vqe_tfim_100j_0hl_5q_run2"],
+        "TFIM_100j_0hl",
+        "vqe",
+    )
+    tfim_50j_10hl = (
+        [r"vqe_tfim_50j_10hl_5q", r"vqe_tfim_50j_10hl_5q_run2"],
+        "TFIM_50j_10hl",
+        "vqe",
+    )
+    for item in (tfim_80j_0hl, tfim_80j_0hl_sweep, tfim_100j_0hl, tfim_50j_10hl):
         fpaths = item[0]
         model_name = item[1]
         notes = item[2]
-        plot_average_over_runs(fpaths, model_name, notes, dry_run=dry_run)
+        plot_average_over_runs(m_edm, fpaths, model_name, notes, dry_run=dry_run)

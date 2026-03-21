@@ -26,65 +26,67 @@ def average_result_matrices(
         "system",
     ],
 ) -> dict:
-
     n_dicts = len(dicts)
 
     out_d = copy.deepcopy(dicts[0])
     ks = out_d["inputs"]["ks"]
     out_d["inputs"]["n_shots"] = 200 * n_dicts
 
-    for si in ("dict_l", "dict_s"):
-        for backend in backends:
-            if backend != "system":
-                for mnd in ("eld", "exd"):
-                    if mnd in to_average:
-                        out_d["results"]["vqe"][si][mnd][backend]["values"] = np.mean(
-                            list(
-                                d["results"]["vqe"][si][mnd][backend]["values"]
-                                for d in dicts
-                            ),
-                            axis=0,
-                        )
-                        out_d["results"]["vqe"][si][mnd][backend]["stds"] = mean_std(
-                            list(
-                                d["results"]["vqe"][si][mnd][backend]["stds"]
-                                for d in dicts
-                            ),
-                            axis=0,
-                        )
-                if "gsd" in to_average:
-                    out_d["results"]["vqe"][si]["gsd"][backend]["energy"] = np.mean(
-                        np.array(
-                            list(
-                                d["results"]["vqe"][si]["gsd"][backend]["energy"]
-                                for d in dicts
+    algs = out_d["results"].keys()
+    used_algs = (k for k in ("sweep", "vqe") if k in algs)
+    for alg in used_algs:
+        for si in ("dict_l", "dict_s"):
+            for backend in backends:
+                if backend != "system":
+                    for mnd in ("eld", "exd"):
+                        if mnd in to_average:
+                            out_d["results"][alg][si][mnd][backend]["values"] = np.mean(
+                                list(
+                                    d["results"][alg][si][mnd][backend]["values"]
+                                    for d in dicts
+                                ),
+                                axis=0,
+                            )
+                            out_d["results"][alg][si][mnd][backend]["stds"] = mean_std(
+                                list(
+                                    d["results"][alg][si][mnd][backend]["stds"]
+                                    for d in dicts
+                                ),
+                                axis=0,
+                            )
+                    if "gsd" in to_average:
+                        out_d["results"][alg][si]["gsd"][backend]["energy"] = np.mean(
+                            np.array(
+                                list(
+                                    d["results"][alg][si]["gsd"][backend]["energy"]
+                                    for d in dicts
+                                )
                             )
                         )
-                    )
-                    out_d["results"]["vqe"][si]["gsd"][backend]["std"] = mean_std(
-                        np.array(
-                            list(
-                                d["results"]["vqe"][si]["gsd"][backend]["std"]
-                                for d in dicts
+                        out_d["results"][alg][si]["gsd"][backend]["std"] = mean_std(
+                            np.array(
+                                list(
+                                    d["results"][alg][si]["gsd"][backend]["std"]
+                                    for d in dicts
+                                )
                             )
                         )
-                    )
 
-    for si in ("dict_l", "dict_s"):
-        for backend in backends:
-            if backend != "system":
-                eld = out_d["results"]["vqe"][si]["eld"]
-                gsd = out_d["results"]["vqe"][si]["gsd"]
-                exd = out_d["results"]["vqe"][si]["exd"]
-                heff = heff_backend_type(eld, gsd, exd, backend)
-                out_d["results"]["vqe"][si]["heff"][backend] = heff
-        disp = dispersion_all_backends(
-            out_d["results"]["vqe"]["dict_l"], out_d["results"]["vqe"]["dict_s"], ks
-        )
-    out_d["results"]["vqe"]["disp"] = disp
-    n_mc_samples = int(1e4)
-    mc_disp = mc_disp_from_res_dict(ks, out_d, "vqe", n_mc_samples, to_eotm=True)
-    out_d["results"]["vqe"]["mc_disp"] = mc_disp
+        for si in ("dict_l", "dict_s"):
+            for backend in backends:
+                if backend != "system":
+                    eld = out_d["results"][alg][si]["eld"]
+                    gsd = out_d["results"][alg][si]["gsd"]
+                    exd = out_d["results"][alg][si]["exd"]
+                    heff = heff_backend_type(eld, gsd, exd, backend)
+                    out_d["results"][alg][si]["heff"][backend] = heff
+            disp = dispersion_all_backends(
+                out_d["results"][alg]["dict_l"], out_d["results"][alg]["dict_s"], ks
+            )
+        out_d["results"][alg]["disp"] = disp
+        n_mc_samples = int(1e4)
+        mc_disp = mc_disp_from_res_dict(ks, out_d, alg, n_mc_samples, to_eotm=True)
+        out_d["results"][alg]["mc_disp"] = mc_disp
     return out_d
 
 
@@ -153,11 +155,9 @@ def show_diffs(d, which_backend: BACKEND_TYPES):
 
 
 def undepolarize_out_dict(out_d: dict, depol_rate: float) -> dict:
-
     ks = out_d["inputs"]["ks"]
 
     for si in ("dict_l", "dict_s"):
-
         for mnd in ("eld", "exd"):
             for backend in out_d["results"]["vqe"][si][mnd]:
                 if backend != "system":

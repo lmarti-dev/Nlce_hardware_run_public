@@ -1,8 +1,5 @@
 from data_manager import ExperimentDataManager
-from src.qcomp_nlce.utils.workflow_utils import (
-    plot_all_backends_dispersions_montecarlo,
-)
-import matplotlib.pyplot as plt
+
 from fauplotstyle import style
 from src.qcomp_nlce.utils import DATA_DIR
 from pathlib import Path
@@ -28,11 +25,15 @@ if __name__ == "__main__":
 
     o = []
     for items in (
-        (fpath_tfim_80j_0hl, "TFIM_80j_0hl", "vqe", ""),
-        (fpath_tfim_80j_0hl_run2, "TFIM_80j_0hl", "vqe", "alt. run"),
-        (fpath_tfim_80j_0hl_sweep, "TFIM_80j_0hl", "sweep", "sweep"),
-        (fpath_tfim_100j_0hl, "TFIM_100j_0hl", "vqe", ""),
-        (fpath_tfim_20j_0hl_ladder, "TFIM_20j_0hl", "vqe", "ladder"),
+        ("vqe_tfim_80j_0hl_5q", "TFIM_80j_0hl", "vqe", ""),
+        ("vqe_tfim_80j_0hl_5q_run2", "TFIM_80j_0hl", "vqe", "2nd run"),
+        ("sweep_tfim_80j_0hl_5q", "TFIM_80j_0hl", "sweep", "sweep"),
+        ("sweep_tfim_80j_0hl_5q_run2", "TFIM_80j_0hl", "sweep", "sweep 2nd run"),
+        ("vqe_tfim_100j_0hl_5q", "TFIM_100j_0hl", "vqe", ""),
+        ("vqe_tfim_100j_0hl_5q_run2", "TFIM_100j_0hl", "vqe", "2nd run"),
+        ("vqe_tfim_50j_10hl_5q", "TFIM_50j_10hl", "vqe", ""),
+        ("vqe_tfim_50j_10hl_5q_run2", "TFIM_50j_10hl", "vqe", "2nd run"),
+        ("vqe_tfim_20j_0hl_8q_ladder", "TFIM_20j_0hl", "vqe", "ladder"),
     ):
         fpath, fig_name, alg, notes = items
         edm = ExperimentDataManager.load(Path(DATA_DIR, fpath))
@@ -65,6 +66,6 @@ if __name__ == "__main__":
                 nn = f"({notes}) "
             else:
                 nn = notes
-            s = rf"$J/h={j}, h_l={hl}$ {nn}& ${qs}$ & ${etopow(err)}$ & ${bp*100:.1f}$\%"
+            s = rf"$J/h={j}, h_l={hl}$ {nn}& ${qs}$ & ${etopow(err)}$ & ${bp * 100:.1f}$\%"
             o.append(s)
     print(" \\\\\n".join(o))

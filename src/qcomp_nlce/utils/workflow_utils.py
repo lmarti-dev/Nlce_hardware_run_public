@@ -25,7 +25,7 @@ from src.qcomp_nlce.utils import (
 from src.qcomp_nlce.utils.dispersion import (
     dispersion_1d_thermodynamic,
     exact_dispersion_1qp_1d,
-    dispersion_ladder_thermodynamic,
+    dispersion_switcher,
 )
 
 from src.qcomp_nlce.utils.hardware import BACKEND_LABELS
@@ -46,9 +46,7 @@ def dispersion_all_backends(dict_l: dict, dict_s: dict, ks: np.ndarray):
     for which_backend in dict_l["heff"].keys():
         H_eff_Nb = dict_l["heff"][which_backend]
         H_eff_Ns = dict_s["heff"][which_backend]
-        disp[which_backend] = [
-            dispersion_1d_thermodynamic(k, H_eff_Nb, H_eff_Ns) for k in ks
-        ]
+        disp[which_backend] = [dispersion_switcher(k, H_eff_Nb, H_eff_Ns) for k in ks]
     return disp
 
 
@@ -346,7 +344,7 @@ def ed_dispersion(
 ) -> list[float]:
     heff_l = H_effective_ed(hamiltonian_l)
     heff_s = H_effective_ed(hamiltonian_s)
-    return [dispersion_1d_thermodynamic(k, heff_l, heff_s) for k in ks]
+    return [dispersion_switcher(k, heff_l, heff_s) for k in ks]
 
 
 def plot_all_backends_dispersions(_d: dict) -> plt.Figure:
@@ -413,17 +411,29 @@ def plot_all_backends_dispersions_montecarlo(
                     linewidth = 0.75
                     capsize = 1
                     markersize = 4
-                ax.errorbar(
-                    ks,
-                    disp[be],
-                    res[circ]["mc_disp"][be]["std"],
-                    fmt=fmt,
-                    linewidth=linewidth,
-                    label=BACKEND_LABELS[be],
-                    color=BACKEND_COLORS[be],
-                    capsize=capsize,
-                    markersize=markersize,
-                )
+                if be == "statevector":
+                    ax.plot(
+                        ks,
+                        disp[be],
+                        fmt,
+                        linewidth=linewidth,
+                        label=BACKEND_LABELS[be],
+                        color=BACKEND_COLORS[be],
+                        markersize=markersize,
+                    )
+                else:
+                    yerr = res[circ]["mc_disp"][be]["std"]
+                    ax.errorbar(
+                        ks,
+                        disp[be],
+                        yerr,
+                        fmt=fmt,
+                        linewidth=linewidth,
+                        label=BACKEND_LABELS[be],
+                        color=BACKEND_COLORS[be],
+                        capsize=capsize,
+                        markersize=markersize,
+                    )
     if which_model is None:
         if "which_model" in _d["inputs"].keys():
             which_model = _d["inputs"]["which_model"]
@@ -439,6 +449,7 @@ def plot_all_backends_dispersions_montecarlo(
             color=BACKEND_COLORS["analytic"],
         )
 
+    ax.set_ylim(bottom=0)
     ax.set_ylabel(r"$\omega(k)$")
     ax.set_xlabel("$k$")
     ax.legend(
