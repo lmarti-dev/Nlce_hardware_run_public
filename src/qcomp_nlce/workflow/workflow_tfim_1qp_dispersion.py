@@ -125,6 +125,26 @@ def workflow_nq_aqt(dry_run, J, which_backends: BACKEND_TYPES):
     )
 
 
+def workflow_nq_aqt_sample_estim(dry_run, J, which_backends: BACKEND_TYPES):
+    provider_name: PROVIDER_ALIAS = "AQT"
+    n_shots = int(200)
+    which_hadamard_test = "stefan"
+    n_qubits_max = 5
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["vqe"],
+        J=J,
+        n_reps=10,
+        n_steps=10,
+        hl=0.0,
+    )
+
+
 def workflow_nq_aqt_sampling(dry_run, J, which_backends: BACKEND_TYPES):
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
@@ -385,4 +405,5 @@ if __name__ == "__main__":
     # workflow_nq_aqt_hl(False, ["real_backend", "fake_backend", "statevector"])
     # workflow_nq_aqt_j100(False, ["real_backend", "fake_backend", "statevector"])
     # workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
+    workflow_nq_aqt_sample_estim(False, 0.8, ["statevector", "fake_backend"])
     # workflow_nq_aqt_sweep(False, ["real_backend", "fake_backend", "statevector"])

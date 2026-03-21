@@ -14,12 +14,14 @@ from fauplotstyle import style
 def count_to_awakening(secs: int):
     print("I sleep but I will awaken")
     for s in range(secs):
-        print(f"in {secs-s:0>6} seconds", end="\r")
+        print(f"in {secs - s:0>6} seconds", end="\r")
         sleep(1)
     print("I have awoken")
 
 
-def keep_trying(func: Callable[[bool, str], None], provider_name: str,debug:bool=False):
+def keep_trying(
+    func: Callable[[bool, str], None], provider_name: str, debug: bool = False
+):
     success = False
     while not success:
         try:
@@ -40,10 +42,9 @@ def keep_trying(func: Callable[[bool, str], None], provider_name: str,debug:bool
 
 
 if __name__ == "__main__":
-
-    # keep_trying(workflow_nq_aqt_hl, "AQT")
+    keep_trying(workflow_nq_aqt_hl, "AQT")
     # keep_trying(workflow_nq_aqt_ladder, "AQT")
-    # keep_trying(workflow_nq_aqt_j100, "AQT")
-    # keep_trying(workflow_nq_aqt_j80, "AQT")
+    keep_trying(workflow_nq_aqt_j100, "AQT")
+    keep_trying(workflow_nq_aqt_j80, "AQT")
 
     keep_trying(workflow_nq_aqt_sweep, "AQT")

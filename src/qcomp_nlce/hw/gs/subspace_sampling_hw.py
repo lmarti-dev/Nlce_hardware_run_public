@@ -175,6 +175,17 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
     return d
 
 
+def merge_count_list(clist: list[dict]) -> dict:
+    counts_out = {}
+    for c in clist:
+        for k in c:
+            if k in counts_out.keys():
+                counts_out[k] += c[k]
+            else:
+                counts_out[k] = c[k]
+    return counts_out
+
+
 def measure_ground_state_energy_subspace_sampling_v2(
     hamiltonian: SparsePauliOp,
     ground_energy: float,
@@ -182,7 +193,7 @@ def measure_ground_state_energy_subspace_sampling_v2(
     which_backend: BACKEND_TYPES,
     n_shots: int = 1e3,
     provider_name: str = "AQT",
-    n_reps: int = 1,
+    n_reps: int = 10,
     reps_per_job: int = 5,
 ) -> dict:
     reps_per_job = min(n_reps, reps_per_job)
@@ -217,6 +228,9 @@ def measure_ground_state_energy_subspace_sampling_v2(
 
     elif which_backend == "statevector":
         bn = which_backend
+        # return the true ground energy.
+        #  I couldn't just get the VQE value
+        # because it'd be worse
         return {
             which_backend: {
                 "name": bn,
@@ -255,7 +269,12 @@ def measure_ground_state_energy_subspace_sampling_v2(
                 parameters=[],
                 n_shots=n_shots,
             )
-            counts = get_counts_from_res(job.result(), hamiltonian.num_qubits, 0)
+            count_list = []
+            for n in range(reps_per_job):
+                count_list.append(
+                    get_counts_from_res(job.result(), hamiltonian.num_qubits, n)
+                )
+            counts = merge_count_list(count_list)
             run_list.append(counts)
 
             if on_hardware:

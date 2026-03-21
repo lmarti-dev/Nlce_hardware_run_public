@@ -29,8 +29,8 @@ def sv_estimate_observables_jobs(
     if parameters_exist(parameters):
         for idx in range(len(ctr)):
             ctr[idx].append(parameters)
-    print("Ignoring shots arguments, wait till qiskit changes StatevectorEstimator")
-    print("Getting the expectation value")
+    # "Ignoring shots arguments, wait till qiskit changes StatevectorEstimator")
+    # "Getting the expectation value")
     job = estimator.run(ctr, precision=0)
 
     return job
