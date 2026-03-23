@@ -405,5 +405,6 @@ if __name__ == "__main__":
     # workflow_nq_aqt_hl(False, ["real_backend", "fake_backend", "statevector"])
     # workflow_nq_aqt_j100(False, ["real_backend", "fake_backend", "statevector"])
     # workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
-    workflow_nq_aqt_sample_estim(False, 0.8, ["statevector", "fake_backend"])
+    # workflow_nq_aqt_sample_estim(False, 0.8, ["statevector", "fake_backend"])
     # workflow_nq_aqt_sweep(False, ["real_backend", "fake_backend", "statevector"])
+    workflow_nq_aqt_ladder(False, ["real_backend", "fake_backend", "statevector"])

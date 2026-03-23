@@ -2,6 +2,7 @@ import copy
 from src.qcomp_nlce.utils.workflow_utils import (
     heff_backend_type,
     dispersion_all_backends,
+    dispersion_switcher,
 )
 
 from src.qcomp_nlce.utils.stats import (
@@ -116,7 +117,7 @@ def plot_disps(ds: list[dict], labels: list[str] = None):
                 exd = d["results"]["vqe"][si]["exd"]
                 heff = heff_backend_type(eld, gsd, exd, backend)
                 heffs.append(heff)
-            disp = [dispersion_1d_thermodynamic(k, heffs[0], heffs[1]) for k in ks]
+            disp = [dispersion_switcher(k, heffs[0], heffs[1]) for k in ks]
             disps[backend] = disp
         all_disps[labels[ind]] = disps
     fig, ax = plt.subplots()

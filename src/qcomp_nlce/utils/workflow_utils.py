@@ -23,7 +23,6 @@ from src.qcomp_nlce.utils import (
     pfeuty_energy,
 )
 from src.qcomp_nlce.utils.dispersion import (
-    dispersion_1d_thermodynamic,
     exact_dispersion_1qp_1d,
     dispersion_switcher,
 )

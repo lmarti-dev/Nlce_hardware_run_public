@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Union
 
 
 def cluster_dispersion(N: int, H_effective: np.ndarray, k: float) -> float:
@@ -23,7 +24,9 @@ def cluster_dispersion(N: int, H_effective: np.ndarray, k: float) -> float:
 # H_effective_Ns : H_effective for smaller cluster of two (N-1 spins)
 
 
-def dispersion_switcher(k: float, H_eff_Nb: np.ndarray, H_eff_Ns: np.ndarray):
+def dispersion_switcher(
+    k: Union[float, tuple], H_eff_Nb: np.ndarray, H_eff_Ns: np.ndarray
+):
     if isinstance(k, float):
         return dispersion_1d_thermodynamic(k, H_eff_Nb, H_eff_Ns)
     else:
