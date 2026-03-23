@@ -1,7 +1,7 @@
 from qiskit import QuantumCircuit, ClassicalRegister
 from qiskit.quantum_info import SparsePauliOp
 import numpy as np
-from qcomp_nlce.utils.measure import (
+from src.qcomp_nlce.utils.measure import (
     sample_counts_circuit,
     circuit_estimation_job,
     circuit_sampling_job,
@@ -9,14 +9,14 @@ from qcomp_nlce.utils.measure import (
     std_from_shots,
     trace_out_estimation,
 )
-from qcomp_nlce.utils.hamiltonian import (
+from src.qcomp_nlce.utils.hamiltonian import (
     index_bits,
     projector_ham,
     trace_dist,
     get_tfim_ratio,
     HAM_NAME_VAR,
 )
-from qcomp_nlce.utils.circuit import (
+from src.qcomp_nlce.utils.circuit import (
     to_controlled_gate,
     apply_parameters,
     circuit_instruction_to_circuit,
@@ -24,7 +24,7 @@ from qcomp_nlce.utils.circuit import (
     circuit_to_matrix,
 )
 
-from qcomp_nlce.utils.save import (
+from src.qcomp_nlce.utils.save import (
     tmp_entry_exists,
     add_tmp_entry_and_save,
     load_tmp_item,
@@ -39,13 +39,13 @@ from qcomp_nlce.utils.save import (
     init_run_split,
 )
 
-from qcomp_nlce.utils.unscented_transform import (
+from src.qcomp_nlce.utils.unscented_transform import (
     unscented_transform,
     complex_to_double_real,
     vectorize_complex_func,
 )
 
-from qcomp_nlce.utils.hardware import (
+from src.qcomp_nlce.utils.hardware import (
     is_hardware_run,
     BACKEND_ALIAS,
     BACKEND_TYPES,
@@ -53,7 +53,7 @@ from qcomp_nlce.utils.hardware import (
     circuits_to_sampler_payload,
 )
 
-from qcomp_nlce.utils.stats import sum_std, mean_std
+from src.qcomp_nlce.utils.stats import sum_std, mean_std
 
 from qiskit.primitives import EstimatorResult, PrimitiveResult
 
@@ -191,7 +191,6 @@ def iterative_hadamard_test_off_diag(
     custom_idx: list[list[int]] = None,
     handcraft: bool = True,
 ):
-
     if x == y:
         jUj, std = iterative_hadamard_test_projecto_estimo(
             circuit, parameters, n_shots, x, y, backend, custom_idx, handcraft
@@ -273,7 +272,6 @@ def iterative_hadamard_test_projecto_estimo(
     custom_idx: list[list[int]] = None,
     handcraft: bool = True,
 ):
-
     # this one computes <x|U|y> without doing the x(j) in the iterative hadamard
     # which avoids some of the 0 overlap issue
     # but it's more annyoing
@@ -331,7 +329,6 @@ def build_stefan_circuit_estimator(
         hadam_circuit.cx(0, y + 1)
     hadam_circuit.append(apply_parameters(circuit, parameters), range(1, n_qubits))
     for x in x_inds:
-
         hadam_circuit.cx(0, x + 1)
 
     return hadam_circuit
@@ -378,7 +375,6 @@ def stefan_hadamard_test(
     n_reps: int = 10,
     reps_per_job: int = 5,
 ):
-
     reps_per_job = min(n_reps, reps_per_job)
     # this is Stefan Wolf's test, a bit modified though
     # because <0|u|0> in our case cancels perfectly, so
@@ -398,7 +394,7 @@ def stefan_hadamard_test(
         remaining_runs = n_runs - len(run_list)
 
         for run_ind in range(remaining_runs):
-            print(f"Run number {run_ind+1}/{remaining_runs}", end="\r")
+            print(f"Run number {run_ind + 1}/{remaining_runs}", end="\r")
 
             stef_circuit = build_stefan_circuit_estimator(circuit, parameters, x, y)
             proj = projector_ham(circuit.num_qubits, bitstring="0" * len(x))
@@ -422,8 +418,9 @@ def stefan_hadamard_test(
             run_list.append([vals, stds])
             if on_hardware:
                 tmp_save_run_file(_dirname, run_list)
-        ol, std = np.mean([v[0] for v in run_list]), mean_std(
-            np.array([v[1] for v in run_list]).flatten()
+        ol, std = (
+            np.mean([v[0] for v in run_list]),
+            mean_std(np.array([v[1] for v in run_list]).flatten()),
         )
         if on_hardware:
             tmp_delete_run_file(_dirname)
@@ -454,7 +451,6 @@ def hadamard_test_circuit(
     real_part: bool = True,
     handcraft: bool = True,
 ) -> QuantumCircuit:
-
     n_qubits = circuit.num_qubits + 1
     hadam_circuit = QuantumCircuit(n_qubits)
     hadam_circuit.h(0)
@@ -503,7 +499,6 @@ def get_n0n1_hadam_counts(
 def hadam_diff(
     counts: dict, n_shots: int, keys: dict[str, str] = {"p0": "0", "p1": "1"}
 ) -> float:
-
     n0, n1 = get_n0n1_hadam_counts(counts, keys)
     if n0 == 0 and n1 == 0:
         return 0, 0
@@ -625,7 +620,6 @@ def measure_matrix_element(
     handcraft: bool = True,
     n_reps: int = 1,
 ) -> Union[complex, tuple[complex, complex]]:
-
     # This computes <x|U|y>
 
     if which_hadamard_test == "stefan" or which_hadamard_test == "stefan_samples":
@@ -726,7 +720,6 @@ def measure_matrix_elements(
     handcraft: bool = True,
     n_reps: int = 1,
 ) -> np.ndarray:
-
     vals = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
     stds = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
 
@@ -736,7 +729,6 @@ def measure_matrix_elements(
     if on_hardware:
         filename = f"{_dirname}/measure_matrix_elements.json"
         try:
-
             computed_values = load_tmp_item(filename)
         except FileNotFoundError:
             print(f"Starting from scratch (hadamard {which_hadamard_test} test)")
@@ -781,11 +773,8 @@ def measure_matrix_elements(
 def estimation_from_samples(
     res: PrimitiveResult, hamiltonian: SparsePauliOp
 ) -> tuple[complex, complex]:
-
-    counts = get_counts_from_res(res, hamiltonian.num_qubits)
-
-    z_counts = counts[0]
-    x_counts = counts[1]
+    z_counts = get_counts_from_res(res, hamiltonian.num_qubits, 0)
+    x_counts = get_counts_from_res(res, hamiltonian.num_qubits, 1)
 
     z_vals = []
     z_stds = []
@@ -801,7 +790,7 @@ def estimation_from_samples(
 
     for jj in range(hamiltonian.num_qubits):
         # set last arg to 1 to enable mitigation.
-        val, std = trace_out_estimation(z_counts, [jj], 1)
+        val, std = trace_out_estimation(z_counts, [jj], -1)
         z_vals.append(val)
         z_stds.append(std)
 
@@ -874,7 +863,6 @@ def estimate_ham_with_reps(
     which_backend: BACKEND_TYPES,
     reps_per_job: int = 5,
 ):
-
     reps_per_job = min(n_reps, reps_per_job)
     if backend != "statevector" and ("IQM" in backend.name or "EQE" in backend.name):
         job = measure_manual_circuit(backend, circuit, hamiltonian, n_shots)
@@ -891,8 +879,7 @@ def estimate_ham_with_reps(
     remaining_runs = n_runs - len(run_list)
 
     for run_ind in range(remaining_runs):
-
-        print(f"Run number {run_ind+1}/{remaining_runs}", end="\r")
+        print(f"Run number {run_ind + 1}/{remaining_runs}", end="\r")
 
         job = circuit_estimation_job(
             [circuit for _ in range(reps_per_job)],
@@ -917,7 +904,6 @@ def estimate_ham_with_reps(
 
 
 def res_to_lists(res: Union[EstimatorResult, Any]) -> tuple[list, list]:
-
     try:
         n_reps = len(res.values)
         vals = res.values
@@ -931,7 +917,6 @@ def res_to_lists(res: Union[EstimatorResult, Any]) -> tuple[list, list]:
 
 
 def average_res_over_reps(res: Union[EstimatorResult, Any]):
-
     if isinstance(res, EstimatorResult):
         n_reps = len(res.values)
     else:
@@ -944,12 +929,18 @@ def average_res_over_reps(res: Union[EstimatorResult, Any]):
             val, std = res[0].data.evs, res[0].data.stds
     else:
         if isinstance(res, EstimatorResult):
-            val, std = np.mean([res.values[k] for k in range(n_reps)]), mean_std(
-                np.array([np.sqrt(res.metadata[k]["variance"]) for k in range(n_reps)])
+            val, std = (
+                np.mean([res.values[k] for k in range(n_reps)]),
+                mean_std(
+                    np.array(
+                        [np.sqrt(res.metadata[k]["variance"]) for k in range(n_reps)]
+                    )
+                ),
             )
         else:
-            val, std = np.mean([res[k].data.evs for k in range(n_reps)]), mean_std(
-                np.array([res[k].data.stds for k in range(n_reps)])
+            val, std = (
+                np.mean([res[k].data.evs for k in range(n_reps)]),
+                mean_std(np.array([res[k].data.stds for k in range(n_reps)])),
             )
     return val, std
 
@@ -964,7 +955,6 @@ def measure_hamiltonian_elements_v2(
     n_shots: int,
     n_reps: int = 10,
 ):
-
     vals = np.zeros((len(states), len(states)), dtype=complex)
     stds = np.zeros((len(states), len(states)), dtype=complex)
 

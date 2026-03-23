@@ -1,7 +1,7 @@
 import numpy as np
 from qiskit_ibm_runtime import QiskitRuntimeService
 
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     backend_estimate,
     sv_estimate_observables,
     load_optimized_vqe,
@@ -9,7 +9,7 @@ from qcomp_nlce.utils import (
 )
 from data_manager import ExperimentDataManager
 
-from qcomp_nlce.utils.hardware import get_token
+from src.qcomp_nlce.utils.hardware import get_token
 
 
 # THIS FILE IS DEPRECATED AND WILL SOON BE DELETED

@@ -1,6 +1,6 @@
 from fauplotstyle import style
 import matplotlib.pyplot as plt
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     exact_dispersion_1qp_1d,
     BACKEND_LABELS,
     BACKEND_COLORS,
@@ -66,21 +66,17 @@ for crun in (
     sv_label = BACKEND_LABELS["statevector"]
     fb_label = BACKEND_LABELS["fake_backend"]
 
-    ax.errorbar(
+    ax.plot(
         ks,
         sv10,
-        sverr10,
-        capsize=2,
-        fmt="x-",
+        "x-",
         color=BACKEND_COLORS["statevector"],
         label=f"{sv_label}, 10 steps",
     )
-    ax.errorbar(
+    ax.plot(
         ks,
         sv20,
-        sverr20,
-        capsize=2,
-        fmt="o-",
+        "o-",
         color=BACKEND_COLORS["statevector"],
         label=f"{sv_label}, 20 steps",
     )

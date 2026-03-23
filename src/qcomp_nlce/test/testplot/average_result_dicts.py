@@ -1,7 +1,7 @@
 from data_manager import ExperimentDataManager
 import numpy as np
-from qcomp_nlce.utils.workflow_1d import heff_backend_type
-from qcomp_nlce.utils.results import plot_disps, average_result_matrices, show_diffs
+from src.qcomp_nlce.utils.workflow_1d import heff_backend_type
+from src.qcomp_nlce.utils.results import plot_disps, average_result_matrices, show_diffs
 import matplotlib.pyplot as plt
 import copy
 from pathlib import Path

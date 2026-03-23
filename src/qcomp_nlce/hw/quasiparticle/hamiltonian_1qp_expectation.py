@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal
 
 import numpy as np
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     circ_ham_expectation_values,
     compare_with_true,
     get_appropriate_fake_backend,

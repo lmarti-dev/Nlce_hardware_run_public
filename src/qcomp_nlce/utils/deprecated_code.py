@@ -1,12 +1,12 @@
 import copy
 from data_manager import ExperimentDataManager
-from qcomp_nlce.utils.workflow_utils import (
+from src.qcomp_nlce.utils.workflow_utils import (
     heff_backend_type,
     dispersion_all_backends,
     plot_all_backends_dispersions_montecarlo,
 )
 
-from qcomp_nlce.utils.stats import mean_std, mc_disp_from_res_dict
+from src.qcomp_nlce.utils.stats import mean_std, mc_disp_from_res_dict
 
 import matplotlib.pyplot as plt
 import numpy as np

@@ -1,5 +1,5 @@
 from qiskit_ibm_runtime import QiskitRuntimeService
-from qcomp_nlce.utils import get_token
+from src.qcomp_nlce.utils import get_token
 
 service = QiskitRuntimeService(
     channel="ibm_quantum",

@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import TFIM
+from src.qcomp_nlce.utils import TFIM
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
 from scipy.optimize import minimize

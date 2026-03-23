@@ -13,7 +13,7 @@ from iqm.qiskit_iqm import transpile_to_IQM
 from iqm_v2_utils import IQMFakePerfect, IQMBackendEstimator
 
 
-from qcomp_nlce.utils import measure_pauli_circuit
+from src.qcomp_nlce.utils import measure_pauli_circuit
 
 
 def random_pauli_op(n_qubits: int, locality: int = 2) -> SparsePauliOp:

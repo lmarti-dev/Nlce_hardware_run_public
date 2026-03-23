@@ -1,9 +1,9 @@
 from data_manager import ExperimentDataManager
-from qcomp_nlce.utils.workflow_utils import (
+from src.qcomp_nlce.utils.workflow_utils import (
     plot_0qp_gs_nlce,
     plot_bitstring_props,
 )
-from qcomp_nlce.utils import DATA_DIR
+from src.qcomp_nlce.utils import DATA_DIR
 import matplotlib.pyplot as plt
 from fauplotstyle import style
 from pathlib import Path
@@ -19,7 +19,7 @@ m_edm = ExperimentDataManager(
 
 for items in ((fpath_tfim_80j_0hl, "TFIM_80j_0hl"),):
     fpath, fig_name = items
-    edm = ExperimentDataManager.load(Path(DATA_DIR, fpath))
+    edm = ExperimentDataManager.load(Path(DATA_DIR, "0qp", fpath))
     d = edm.load_last_saved_data_file
 
     fig = plot_0qp_gs_nlce(d)

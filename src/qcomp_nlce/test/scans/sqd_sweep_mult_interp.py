@@ -1,11 +1,11 @@
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     TFIM,
     get_min_gap,
     get_tfim_sweep_circuit,
     get_ground_energy,
     get_max_energy,
 )
-from qcomp_nlce.hw.gs.subspace_sampling_hw import (
+from src.qcomp_nlce.hw.gs.subspace_sampling_hw import (
     measure_ground_state_energy_subspace_sampling_v2,
     measure_ground_state_energy_estimator,
 )

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import argparse
 from pathlib import Path
 
-from qcomp_nlce.utils.dispersion import dispersion_ladder_thermodynamic
+from src.qcomp_nlce.utils.dispersion import dispersion_ladder_thermodynamic
 
 RES_SIM = Path(__file__).parent.parent.parent / "res_sim"
 DATA_DIR = RES_SIM / "dispersion_data_ladder"

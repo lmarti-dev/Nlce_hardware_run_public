@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     get_backend,
     backend_sample,
     get_counts_from_res,

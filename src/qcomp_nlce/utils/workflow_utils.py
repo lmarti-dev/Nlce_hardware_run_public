@@ -1,13 +1,13 @@
-from qcomp_nlce.hw.gs.subspace_sampling_hw import (
+from src.qcomp_nlce.hw.gs.subspace_sampling_hw import (
     loop_measure_ground_state_energy_subspace_sampling_v2,
 )
-from qcomp_nlce.hw.quasiparticle.hamiltonian_1qp_expectation import (
+from src.qcomp_nlce.hw.quasiparticle.hamiltonian_1qp_expectation import (
     loop_measure_1qp_expectations_v2,
 )
-from qcomp_nlce.hw.quasiparticle.unitary_1qp_sector import (
+from src.qcomp_nlce.hw.quasiparticle.unitary_1qp_sector import (
     loop_measure_1qp_elements_v2,
 )
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     TFIM,
     apply_parameters,
     get_min_gap,
@@ -22,17 +22,18 @@ from qcomp_nlce.utils import (
     get_ground_energy,
     pfeuty_energy,
 )
-from qcomp_nlce.utils.dispersion import (
+from src.qcomp_nlce.utils.dispersion import (
     dispersion_1d_thermodynamic,
     exact_dispersion_1qp_1d,
+    dispersion_switcher,
 )
 
-from qcomp_nlce.utils.hardware import BACKEND_LABELS
+from src.qcomp_nlce.utils.hardware import BACKEND_LABELS
 import io
 import json
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
-from qcomp_nlce.utils.effective_hamiltonian import H_effective, H_effective_ed
+from src.qcomp_nlce.utils.effective_hamiltonian import H_effective, H_effective_ed
 
 
 import matplotlib.pyplot as plt
@@ -45,9 +46,7 @@ def dispersion_all_backends(dict_l: dict, dict_s: dict, ks: np.ndarray):
     for which_backend in dict_l["heff"].keys():
         H_eff_Nb = dict_l["heff"][which_backend]
         H_eff_Ns = dict_s["heff"][which_backend]
-        disp[which_backend] = [
-            dispersion_1d_thermodynamic(k, H_eff_Nb, H_eff_Ns) for k in ks
-        ]
+        disp[which_backend] = [dispersion_switcher(k, H_eff_Nb, H_eff_Ns) for k in ks]
     return disp
 
 
@@ -149,7 +148,6 @@ def vqe_heff(
     n_reps: int,
     which_model: str,
 ) -> dict:
-
     hamiltonian1, elem_circuit, elem_weights, ground_energy = load_optimized_vqe(
         elem_dirname
     )
@@ -187,7 +185,6 @@ def vqe_heff(
 
 
 def pick_model(n_qubits: int, J: float, hl: float, ladder: bool):
-
     ham_j, ham_h = TFIM(
         n_qubits,
         1,
@@ -281,7 +278,6 @@ def get_heff_values(
     solve: bool = True,
     n_reps: int = 1,
 ):
-
     print(f"Using {which_hadamard_test} hadamard test")
     print("-- Computing <j|U|k> --")
     elements_dict = loop_measure_1qp_elements_v2(
@@ -348,7 +344,7 @@ def ed_dispersion(
 ) -> list[float]:
     heff_l = H_effective_ed(hamiltonian_l)
     heff_s = H_effective_ed(hamiltonian_s)
-    return [dispersion_1d_thermodynamic(k, heff_l, heff_s) for k in ks]
+    return [dispersion_switcher(k, heff_l, heff_s) for k in ks]
 
 
 def plot_all_backends_dispersions(_d: dict) -> plt.Figure:
@@ -383,7 +379,6 @@ def plot_multiple_dispersions_1d(_l: list[dict]) -> plt.Figure:
 def plot_all_backends_dispersions_montecarlo(
     _d: dict, which_circ: list = None, which_model: str = None
 ) -> plt.Figure:
-
     ks = _d["inputs"]["ks"]
     j = _d["inputs"]["J"]
 
@@ -416,17 +411,29 @@ def plot_all_backends_dispersions_montecarlo(
                     linewidth = 0.75
                     capsize = 1
                     markersize = 4
-                ax.errorbar(
-                    ks,
-                    disp[be],
-                    res[circ]["mc_disp"][be]["std"],
-                    fmt=fmt,
-                    linewidth=linewidth,
-                    label=BACKEND_LABELS[be],
-                    color=BACKEND_COLORS[be],
-                    capsize=capsize,
-                    markersize=markersize,
-                )
+                if be == "statevector":
+                    ax.plot(
+                        ks,
+                        disp[be],
+                        fmt,
+                        linewidth=linewidth,
+                        label=BACKEND_LABELS[be],
+                        color=BACKEND_COLORS[be],
+                        markersize=markersize,
+                    )
+                else:
+                    yerr = res[circ]["mc_disp"][be]["std"]
+                    ax.errorbar(
+                        ks,
+                        disp[be],
+                        yerr,
+                        fmt=fmt,
+                        linewidth=linewidth,
+                        label=BACKEND_LABELS[be],
+                        color=BACKEND_COLORS[be],
+                        capsize=capsize,
+                        markersize=markersize,
+                    )
     if which_model is None:
         if "which_model" in _d["inputs"].keys():
             which_model = _d["inputs"]["which_model"]
@@ -442,6 +449,7 @@ def plot_all_backends_dispersions_montecarlo(
             color=BACKEND_COLORS["analytic"],
         )
 
+    ax.set_ylim(bottom=0)
     ax.set_ylabel(r"$\omega(k)$")
     ax.set_xlabel("$k$")
     ax.legend(
@@ -453,7 +461,6 @@ def plot_all_backends_dispersions_montecarlo(
 
 
 def tfim_chain_ed_nlce(q1: int, q2: int, ratio: float) -> float:
-
     ham1 = TFIM(n_qubits=q1, h=1, J=ratio)
     e1 = get_ground_energy(ham1)
 

@@ -1,6 +1,6 @@
 from qiskit import QuantumCircuit
 import numpy as np
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     circuit_matrix_elements,
     measure_matrix_elements,
     get_appropriate_fake_backend,
@@ -105,31 +105,18 @@ def measure_1qp_elements_v2(
         bn = backend.name
     # Session mode for faster execution
 
-    if which_backend == "real_backend":
-        with Session(backend) as s:
-            comp_vals, stds = measure_matrix_elements(
-                circuit,
-                comp_states,
-                circuit.parameters,
-                backend,
-                which_backend,
-                n_shots,
-                custom_idx=custom_idx,
-                which_hadamard_test=which_hadamard_test,
-                n_reps=n_reps,
-            )
-    else:
-        comp_vals, stds = measure_matrix_elements(
-            circuit,
-            comp_states,
-            circuit.parameters,
-            backend,
-            which_backend,
-            n_shots,
-            custom_idx=custom_idx,
-            which_hadamard_test=which_hadamard_test,
-            n_reps=n_reps,
-        )
+
+    comp_vals, stds = measure_matrix_elements(
+        circuit,
+        comp_states,
+        circuit.parameters,
+        backend,
+        which_backend,
+        n_shots,
+        custom_idx=custom_idx,
+        which_hadamard_test=which_hadamard_test,
+        n_reps=n_reps,
+    )
     print(f"{which_backend} ({bn})")
     td = compare_with_true(true_comp_vals, comp_vals, bn)
 

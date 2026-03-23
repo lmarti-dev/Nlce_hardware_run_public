@@ -1,6 +1,6 @@
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import Statevector
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     iterative_hadamard_test_off_diag,
     get_appropriate_fake_backend,
     custom_idx_groups_of_n,

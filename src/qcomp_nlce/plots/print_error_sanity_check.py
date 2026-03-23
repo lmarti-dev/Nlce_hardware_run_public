@@ -1,7 +1,7 @@
 from data_manager import ExperimentDataManager
 import matplotlib.pyplot as plt
 from fauplotstyle import style
-from qcomp_nlce.utils import DATA_DIR
+from src.qcomp_nlce.utils import DATA_DIR
 from pathlib import Path
 import numpy as np
 

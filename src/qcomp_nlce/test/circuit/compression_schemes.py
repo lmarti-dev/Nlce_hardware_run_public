@@ -1,17 +1,17 @@
-from qcomp_nlce.utils.folders import res_sim_dir
-from qcomp_nlce.utils.circuit import apply_parameters, circ_stats
-from qcomp_nlce.utils.sweep import sweep_time_from_steps, get_tfim_sweep_circuit
-from qcomp_nlce.utils.save import load_optimized_vqe
-from qcomp_nlce.utils.hardware import (
+from src.qcomp_nlce.utils.folders import res_sim_dir
+from src.qcomp_nlce.utils.circuit import apply_parameters, circ_stats
+from src.qcomp_nlce.utils.sweep import sweep_time_from_steps, get_tfim_sweep_circuit
+from src.qcomp_nlce.utils.save import load_optimized_vqe
+from src.qcomp_nlce.utils.hardware import (
     compile_circuit_for_backend,
     get_appropriate_fake_backend,
     compute_mean_circ_stats,
     get_backend,
 )
-from qcomp_nlce.utils.hamiltonian import TFIM
+from src.qcomp_nlce.utils.hamiltonian import TFIM
 from pathlib import Path
 from qiskit import QuantumCircuit
-from qcomp_nlce.utils.overlap import build_stefan_circuits_sample
+from src.qcomp_nlce.utils.overlap import build_stefan_circuits_sample
 
 
 def test_compilation_schemes(circuit: QuantumCircuit | list, provider_name: str):

@@ -1,11 +1,11 @@
-from qcomp_nlce.utils.results import undepolarize_out_dict
+from src.qcomp_nlce.utils.results import undepolarize_out_dict
 from data_manager import ExperimentDataManager
-from qcomp_nlce.utils.workflow_utils import (
+from src.qcomp_nlce.utils.workflow_utils import (
     plot_all_backends_dispersions_montecarlo,
 )
 import matplotlib.pyplot as plt
 from fauplotstyle import style
-from qcomp_nlce.utils import DATA_DIR
+from src.qcomp_nlce.utils import DATA_DIR
 from pathlib import Path
 
 style()

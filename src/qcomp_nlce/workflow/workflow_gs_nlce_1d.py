@@ -1,7 +1,7 @@
-from qcomp_nlce.hw.gs.subspace_sampling_hw import (
+from src.qcomp_nlce.hw.gs.subspace_sampling_hw import (
     loop_measure_ground_state_energy_subspace_sampling_v2,
 )
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     load_optimized_vqe,
     res_sim_dir,
     model_str,
@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 from fauplotstyle import style
 
-from qcomp_nlce.utils.workflow_utils import plot_0qp_gs_nlce
+from src.qcomp_nlce.utils.workflow_utils import plot_0qp_gs_nlce
 
 
 def gs_subspace_run(

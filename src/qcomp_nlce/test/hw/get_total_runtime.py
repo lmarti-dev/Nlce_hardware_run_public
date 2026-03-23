@@ -4,7 +4,7 @@
 # go through all of them and do wall clock time + quantum device time.
 
 
-from qcomp_nlce.utils import get_token
+from src.qcomp_nlce.utils import get_token
 
 from mqp.qiskit_provider.job import MQPJob
 from mqp.qiskit_provider import MQPProvider

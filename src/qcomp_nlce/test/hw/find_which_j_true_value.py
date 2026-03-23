@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import TFIM, get_ground_energy
+from src.qcomp_nlce.utils import TFIM, get_ground_energy
 
 
 hw = {

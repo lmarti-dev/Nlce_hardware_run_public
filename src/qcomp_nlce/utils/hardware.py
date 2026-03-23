@@ -11,7 +11,7 @@ from iqm.iqm_client import CircuitCompilationOptions
 from iqm.iqm_client.models import HeraldingMode, DDMode
 
 from qiskit.providers.fake_provider import GenericBackendV2
-from qcomp_nlce.utils.iqm_utils import (
+from src.qcomp_nlce.utils.iqm_utils import (
     IQMFakePerfect,
     IQMFakePrettyGood,
     IQMFakeReallyGood,
@@ -91,7 +91,7 @@ class NotABackend: ...
 
 from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
 
-from qcomp_nlce.utils.circuit import (
+from src.qcomp_nlce.utils.circuit import (
     isa_circuit_param_dict,
     parameters_dict,
     parameters_exist,
@@ -100,7 +100,7 @@ from qcomp_nlce.utils.circuit import (
 )
 
 try:
-    from qcomp_nlce.utils.aqt_utils import (
+    from src.qcomp_nlce.utils.aqt_utils import (
         aqt_better_fake_backend,
         OfflineSimulatorResourceBetter,
     )
@@ -110,7 +110,7 @@ except ModuleNotFoundError:
     class OfflineSimulatorResourceBetter: ...
 
 
-from qcomp_nlce.utils.hamiltonian import get_tfim_ratio, get_tfim_xx, HAM_NAME_VAR
+from src.qcomp_nlce.utils.hamiltonian import get_tfim_ratio, get_tfim_xx, HAM_NAME_VAR
 from qiskit_ibm_runtime import QiskitRuntimeService, IBMBackend
 
 

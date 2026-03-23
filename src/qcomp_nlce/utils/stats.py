@@ -1,8 +1,8 @@
 import numpy as np
-from qcomp_nlce.utils.dispersion import dispersion_1d_thermodynamic
-from qcomp_nlce.utils.constants import ALGORITHMS_ALIAS
-from qcomp_nlce.utils.effective_hamiltonian import H_effective
-from qcomp_nlce.utils.save import load_result_matrices
+from src.qcomp_nlce.utils.dispersion import dispersion_switcher
+from src.qcomp_nlce.utils.constants import ALGORITHMS_ALIAS
+from src.qcomp_nlce.utils.effective_hamiltonian import H_effective
+from src.qcomp_nlce.utils.save import load_result_matrices
 from pathlib import Path
 
 
@@ -85,10 +85,18 @@ def get_heff_mc_sampler(
     overlap_std_s: np.ndarray,
     gs_s: np.ndarray,
     gs_std_s: np.ndarray,
+    options: dict = {},
 ) -> callable:
+    for which in ("exd", "eld", "gsd"):
+        k1 = "sigma_scale_" + which
+        if k1 not in options:
+            options[k1] = 1.0
+
+        k2 = "sigma_add_" + which
+        if k2 not in options:
+            options[k2] = 1.0
 
     def sampler(ks, sigma_scale: float = 1.0, sigma_add: float = 0.0):
-
         sa_expect_l = complex_normal(
             loc=expect_l,
             scale=(expect_std_l + (1 + 1j) * sigma_add) * sigma_scale,
@@ -114,15 +122,18 @@ def get_heff_mc_sampler(
         H_eff_Nb = H_effective(sa_gs_l, sa_expect_l, sa_overlap_l)
         H_eff_Ns = H_effective(sa_gs_s, sa_expect_s, sa_overlap_s)
 
-        return [dispersion_1d_thermodynamic(k, H_eff_Nb, H_eff_Ns) for k in ks]
+        return [dispersion_switcher(k, H_eff_Nb, H_eff_Ns) for k in ks]
 
     return sampler
 
 
 def res_dict_sampler(
-    _d: dict, circ: ALGORITHMS_ALIAS, to_eotm: bool, gsd_sup_fac: int = 1
+    _d: dict,
+    circ: ALGORITHMS_ALIAS,
+    to_eotm: bool,
+    gsd_sup_fac: int = 1,
+    options: dict = {},
 ) -> dict[callable]:
-
     # to_eotm: unfortunately,
     # not all backends compute stds the same way
     # so we need to set this by hand
@@ -177,6 +188,7 @@ def res_dict_sampler(
                 overlap_std_s,
                 gs_expectation_s,
                 gs_expectation_std_s,
+                **options,
             )
             samplers[be] = sampler
     return samplers
@@ -191,22 +203,29 @@ def mc_disp_from_res_dict(
     to_eotm: bool = False,
     gsd_sup_fac: float = 1,
 ) -> dict:
-
     disps = {}
     samplers = res_dict_sampler(_d, circ, to_eotm, gsd_sup_fac)
     for be in samplers:
-        sampler = samplers[be]
-        sampled = np.zeros((len(ks), n_samples))
-        for n in range(n_samples):
-            print(f"{1+n:0>6n}/{n_samples}", end="\r")
-            sampled[:, n] = sampler(ks, **sampler_opts)
+        if be == "statevector":
+            # no statevector mc sampling because it is 0
+            disps[be] = {
+                "mean": 0,
+                "std": 0,
+                "n_samples": n_samples,
+            }
+        else:
+            sampler = samplers[be]
+            sampled = np.zeros((len(ks), n_samples))
+            for n in range(n_samples):
+                print(f"{1 + n:0>6n}/{n_samples}", end="\r")
+                sampled[:, n] = sampler(ks, **sampler_opts)
 
-        mc_mean = np.mean(sampled, axis=1)
-        mc_std = np.std(sampled, axis=1)
+            mc_mean = np.mean(sampled, axis=1)
+            mc_std = np.std(sampled, axis=1)
 
-        disps[be] = {
-            "mean": mc_mean,
-            "std": mc_std,
-            "n_samples": n_samples,
-        }
+            disps[be] = {
+                "mean": mc_mean,
+                "std": mc_std,
+                "n_samples": n_samples,
+            }
     return disps

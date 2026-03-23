@@ -1,6 +1,6 @@
 from qiskit import QuantumCircuit
 import numpy as np
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     circuit_matrix_elements,
     measure_matrix_elements,
     get_appropriate_fake_backend,

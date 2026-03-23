@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     TFIM,
     get_min_gap,
     get_tfim_ratio,

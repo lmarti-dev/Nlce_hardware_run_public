@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import swap_test, hadamard_test
+from src.qcomp_nlce.utils import swap_test, hadamard_test
 from qiskit import QuantumCircuit
 
 n_shots = 100000

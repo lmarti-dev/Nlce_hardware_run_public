@@ -1,7 +1,7 @@
 import numpy as np
 from uuid import uuid4
 
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     get_ground_energy,
     get_tfim_sweep_circuit,
     TFIM,

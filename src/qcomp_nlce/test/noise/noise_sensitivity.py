@@ -1,8 +1,8 @@
 from data_manager import ExperimentDataManager
 import matplotlib.pyplot as plt
 
-from qcomp_nlce.utils.stats import mc_disp_from_res_dict
-from qcomp_nlce.utils.dispersion import exact_dispersion_1qp_1d
+from src.qcomp_nlce.utils.stats import mc_disp_from_res_dict
+from src.qcomp_nlce.utils.dispersion import exact_dispersion_1qp_1d
 import numpy as np
 
 if __name__ == "__main__":

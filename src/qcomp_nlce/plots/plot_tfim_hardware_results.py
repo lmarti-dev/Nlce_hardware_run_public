@@ -1,10 +1,10 @@
 from data_manager import ExperimentDataManager
-from qcomp_nlce.utils.workflow_utils import (
+from src.qcomp_nlce.utils.workflow_utils import (
     plot_all_backends_dispersions_montecarlo,
 )
 import matplotlib.pyplot as plt
 from fauplotstyle import style
-from qcomp_nlce.utils import DATA_DIR
+from src.qcomp_nlce.utils import DATA_DIR
 from pathlib import Path
 
 style()
@@ -21,14 +21,17 @@ m_edm = ExperimentDataManager(
 )
 
 for items in (
-    # (fpath_tfim_80j_0hl, "TFIM_80j_0hl", "vqe"),
-    # (fpath_tfim_80j_0hl_run2, "TFIM_80j_0hl", "vqe"),
-    # (fpath_tfim_50j_10hl, "TFIM_50j_10hl", "vqe"),
-    (fpath_tfim_80j_0hl_sweep, "TFIM_80j_0hl", "sweep"),
-    # (fpath_tfim_100j_0hl, "TFIM_100j_0hl", "vqe"),
+    ("vqe_tfim_80j_0hl_5q", "TFIM_80j_0hl", "vqe"),
+    ("vqe_tfim_80j_0hl_5q_run2", "TFIM_80j_0hl", "vqe"),
+    ("vqe_tfim_50j_10hl_5q", "TFIM_50j_10hl", "vqe"),
+    ("vqe_tfim_50j_10hl_5q_run2", "TFIM_50j_10hl", "vqe"),
+    ("sweep_tfim_80j_0hl_5q", "TFIM_80j_0hl", "sweep"),
+    ("sweep_tfim_80j_0hl_5q_run2", "TFIM_80j_0hl", "sweep"),
+    ("vqe_tfim_100j_0hl_5q", "TFIM_100j_0hl", "vqe"),
+    ("vqe_tfim_100j_0hl_5q_run2", "TFIM_100j_0hl", "vqe"),
 ):
     fpath, fig_name, alg = items
-    edm = ExperimentDataManager.load(Path(DATA_DIR, fpath))
+    edm = ExperimentDataManager.load(Path(DATA_DIR, "1qp", fpath))
     edm.use_calendar = False
     d = edm.load_last_saved_data_file
     if "model_dir" in d["inputs"]:

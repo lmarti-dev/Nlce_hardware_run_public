@@ -5,13 +5,13 @@ from qiskit.quantum_info import SparsePauliOp, Statevector, partial_trace
 from scipy.optimize import minimize
 from itertools import combinations
 from collections.abc import Callable
-from qcomp_nlce.utils.circuit import (
+from src.qcomp_nlce.utils.circuit import (
     apply_parameters,
     circuit_to_matrix,
     parameters_exist,
 )
-from qcomp_nlce.utils.hardware import circuits_to_estimator_payload
-from qcomp_nlce.utils.hamiltonian import from_bitstring
+from src.qcomp_nlce.utils.hardware import circuits_to_estimator_payload
+from src.qcomp_nlce.utils.hamiltonian import from_bitstring
 from typing import Literal
 import multiprocessing
 
@@ -29,7 +29,9 @@ def sv_estimate_observables_jobs(
     if parameters_exist(parameters):
         for idx in range(len(ctr)):
             ctr[idx].append(parameters)
-    job = estimator.run(ctr, precision=1 / np.sqrt(n_shots))
+    # "Ignoring shots arguments, wait till qiskit changes StatevectorEstimator")
+    # "Getting the expectation value")
+    job = estimator.run(ctr, precision=0)
 
     return job
 
@@ -89,7 +91,6 @@ def optimize_circuit(
         xks.append(xk)
 
     if cost is None:
-
         # def cost(xk: np.ndarray):
         #     result = sv_expectation_observables(
         #         circuit=circuit,

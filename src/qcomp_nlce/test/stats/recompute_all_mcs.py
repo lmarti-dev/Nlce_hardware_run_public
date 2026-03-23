@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from data_manager import ExperimentDataManager, ExtendedJSONDecoder, ExtendedJSONEncoder
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     mc_disp_from_res_dict,
 )
 import numpy as np

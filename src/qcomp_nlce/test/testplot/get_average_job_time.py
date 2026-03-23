@@ -3,7 +3,7 @@ from mqp.qiskit_provider import MQPProvider, MQPBackend
 from qiskit.providers import JobStatus
 
 
-from qcomp_nlce.utils import get_token, sampler_result_to_json
+from src.qcomp_nlce.utils import get_token, sampler_result_to_json
 
 
 TOKEN = get_token("LRZ")

@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     build_stefan_circuits_sample,
     load_optimized_vqe,
     res_sim_dir,

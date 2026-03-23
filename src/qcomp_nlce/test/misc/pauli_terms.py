@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import get_pauli_indices, TFIM
+from src.qcomp_nlce.utils import get_pauli_indices, TFIM
 
 
 ham = TFIM(n_qubits=4, h=1, J=0.7)

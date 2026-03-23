@@ -1,6 +1,6 @@
 from data_manager import ExperimentDataManager
 
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     load_optimized_vqe,
     load_sweep,
     get_tfim_ratio,

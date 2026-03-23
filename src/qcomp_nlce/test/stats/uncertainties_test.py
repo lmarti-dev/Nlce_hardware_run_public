@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     H_effective,
     dispersion_1d_thermodynamic,
     dispersion_1d_thermodynamic_ks_UT,

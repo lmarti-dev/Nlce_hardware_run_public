@@ -1,7 +1,7 @@
-from qcomp_nlce.utils.effective_hamiltonian import (
+from src.qcomp_nlce.utils.effective_hamiltonian import (
     H_effective,
 )
-from qcomp_nlce.utils.dispersion import (
+from src.qcomp_nlce.utils.dispersion import (
     dispersion_1d_thermodynamic,
     exact_dispersion_1qp_1d,
 )

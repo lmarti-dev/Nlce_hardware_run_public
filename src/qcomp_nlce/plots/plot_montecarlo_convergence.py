@@ -1,10 +1,10 @@
 from data_manager import ExperimentDataManager
-from qcomp_nlce.utils.stats import mc_disp_from_res_dict
+from src.qcomp_nlce.utils.stats import mc_disp_from_res_dict
 import matplotlib.pyplot as plt
 from fauplotstyle import style
 import numpy as np
 from pathlib import Path
-from qcomp_nlce.utils.save import DATA_DIR
+from src.qcomp_nlce.utils.save import DATA_DIR
 
 style()
 dry_run = False

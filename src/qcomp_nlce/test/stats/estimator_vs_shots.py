@@ -1,4 +1,4 @@
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     get_appropriate_fake_backend,
     backend_estimate,
     backend_sample,

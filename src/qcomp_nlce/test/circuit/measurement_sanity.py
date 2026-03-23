@@ -2,7 +2,7 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit import QuantumCircuit
 from qiskit.primitives import StatevectorSampler
 from qiskit.circuit.random import random_circuit
-from qcomp_nlce.utils import circuit_to_matrix
+from src.qcomp_nlce.utils import circuit_to_matrix
 import numpy as np
 
 

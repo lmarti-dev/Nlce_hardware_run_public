@@ -5,7 +5,7 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
-from qcomp_nlce.utils import (
+from src.qcomp_nlce.utils import (
     get_tfim_sweep_circuit,
     TFIM,
     get_min_gap,

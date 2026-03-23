@@ -2,20 +2,20 @@ from pathlib import Path
 
 import numpy as np
 
-from qcomp_nlce.utils.folders import res_sim_dir
-from qcomp_nlce.utils.results import show_diffs
-from qcomp_nlce.utils.workflow_utils import (
+from src.qcomp_nlce.utils.folders import res_sim_dir
+from src.qcomp_nlce.utils.results import show_diffs
+from src.qcomp_nlce.utils.workflow_utils import (
     vqe_dispersion,
     tfim_ed_dispersion,
     sweep_dispersion,
     plot_all_backends_dispersions_montecarlo,
 )
-from qcomp_nlce.utils.vqe import get_optimal_n_layers
-from qcomp_nlce.utils.stats import mc_disp_from_res_dict
-from qcomp_nlce.utils.hardware import PROVIDER_ALIAS, BACKEND_TYPES
-from qcomp_nlce.utils.overlap import HADAMARD_TESTS
-from qcomp_nlce.utils.constants import ALGORITHMS_ALIAS
-from qcomp_nlce.utils.hamiltonian import model_str
+from src.qcomp_nlce.utils.vqe import get_optimal_n_layers
+from src.qcomp_nlce.utils.stats import mc_disp_from_res_dict
+from src.qcomp_nlce.utils.hardware import PROVIDER_ALIAS, BACKEND_TYPES
+from src.qcomp_nlce.utils.overlap import HADAMARD_TESTS
+from src.qcomp_nlce.utils.constants import ALGORITHMS_ALIAS
+from src.qcomp_nlce.utils.hamiltonian import model_str
 from data_manager import ExperimentDataManager
 
 import matplotlib.pyplot as plt
@@ -23,7 +23,6 @@ from fauplotstyle import style
 
 
 def workflow_nq_ibm(dry_run):
-
     J = 1
     which_backends = [
         # "real_backend",
@@ -47,7 +46,6 @@ def workflow_nq_ibm(dry_run):
 
 
 def workflow_nq_qexa(dry_run):
-
     J = 1
     which_backends = [
         # "real_backend",
@@ -72,7 +70,6 @@ def workflow_nq_qexa(dry_run):
 
 
 def workflow_nq_eqe(dry_run):
-
     J = 0.8
     which_backends = [
         "real_backend",
@@ -109,7 +106,6 @@ def workflow_nq_aqt_j80(dry_run, which_backends: BACKEND_TYPES):
 
 
 def workflow_nq_aqt(dry_run, J, which_backends: BACKEND_TYPES):
-
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
     which_hadamard_test = "stefan"
@@ -129,8 +125,27 @@ def workflow_nq_aqt(dry_run, J, which_backends: BACKEND_TYPES):
     )
 
 
-def workflow_nq_aqt_sampling(dry_run, J, which_backends: BACKEND_TYPES):
+def workflow_nq_aqt_sample_estim(dry_run, J, which_backends: BACKEND_TYPES):
+    provider_name: PROVIDER_ALIAS = "AQT"
+    n_shots = int(2000)
+    which_hadamard_test = "stefan"
+    n_qubits_max = 5
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["vqe"],
+        J=J,
+        n_reps=5,
+        n_steps=10,
+        hl=0.0,
+    )
 
+
+def workflow_nq_aqt_sampling(dry_run, J, which_backends: BACKEND_TYPES):
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
     which_hadamard_test = "stefan"
@@ -152,7 +167,6 @@ def workflow_nq_aqt_sampling(dry_run, J, which_backends: BACKEND_TYPES):
 
 
 def workflow_nq_aqt_sweep(dry_run, which_backends: BACKEND_TYPES):
-
     J = 0.8
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
@@ -174,7 +188,6 @@ def workflow_nq_aqt_sweep(dry_run, which_backends: BACKEND_TYPES):
 
 
 def workflow_nq_aqt_sweepsims(dry_run: bool, J: float, which_backends: BACKEND_TYPES):
-
     n_shots = int(200)
     which_hadamard_test = "stefan"
     n_qubits_max = 5
@@ -196,7 +209,6 @@ def workflow_nq_aqt_sweepsims(dry_run: bool, J: float, which_backends: BACKEND_T
 
 
 def workflow_nq_aqt_ladder(dry_run, which_backends):
-
     J = 0.20
 
     provider_name: PROVIDER_ALIAS = "AQT"
@@ -219,7 +231,6 @@ def workflow_nq_aqt_ladder(dry_run, which_backends):
 
 
 def workflow_nq_aqt_hl(dry_run, which_backends: BACKEND_TYPES):
-
     J = 0.5
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
@@ -270,8 +281,10 @@ def workflow_nq(
         qubits_max_str = str(n_qubits_max)
         qubits_min_str = str(n_qubits_max - 1)
 
-    vqe_l_dir = f"{qubits_max_str}q_{get_optimal_n_layers(n_qubits_max,ladder,hl)}l"
-    vqe_s_dir = f"{qubits_min_str}q_{get_optimal_n_layers(n_qubits_max-1,ladder,hl)}l"
+    vqe_l_dir = f"{qubits_max_str}q_{get_optimal_n_layers(n_qubits_max, ladder, hl)}l"
+    vqe_s_dir = (
+        f"{qubits_min_str}q_{get_optimal_n_layers(n_qubits_max - 1, ladder, hl)}l"
+    )
 
     # dirty trick
     # now there are multiple names going around
@@ -389,8 +402,8 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    # workflow_nq_aqt_sampling(False, 0.8, ["fake_backend", "statevector"])
-    # workflow_nq_aqt_sweepsims(False, 0.8, ["fake_backend", "statevector"])
+    # workflow_nq_aqt_hl(False, ["real_backend", "fake_backend", "statevector"])
+    # workflow_nq_aqt_j100(False, ["real_backend", "fake_backend", "statevector"])
     # workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
-    workflow_nq_aqt_hl(False, ["real_backend", "fake_backend", "statevector"])
+    workflow_nq_aqt_sample_estim(False, 0.8, ["statevector", "fake_backend"])
     # workflow_nq_aqt_sweep(False, ["real_backend", "fake_backend", "statevector"])
