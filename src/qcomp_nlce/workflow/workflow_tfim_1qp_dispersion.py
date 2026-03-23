@@ -139,7 +139,7 @@ def workflow_nq_aqt_sample_estim(dry_run, J, which_backends: BACKEND_TYPES):
         which_backends,
         ["vqe"],
         J=J,
-        n_reps=1,
+        n_reps=5,
         n_steps=10,
         hl=0.0,
     )
