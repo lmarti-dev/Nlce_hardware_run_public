@@ -135,7 +135,7 @@ def pretty_print(a):
     print(np.array_str(a, precision=3, suppress_small=True))
 
 
-def show_diffs(d, which_backend: BACKEND_TYPES):
+def show_diffs(d, which_backend: BACKEND_TYPES, show_vals: bool = False):
     algos = [f for f in d["results"].keys() if f != "ed"]
 
     print(f"# {which_backend}")
@@ -143,13 +143,14 @@ def show_diffs(d, which_backend: BACKEND_TYPES):
         for algorithm in algos:
             for dd in ("dict_s", "dict_l"):
                 info = f"({which_backend}, {which}, {algorithm}, {dd})"
-                print(f"## VALS {info}")
                 vals_be = d["results"][algorithm][dd][which][which_backend]["values"]
                 vals_true = d["results"][algorithm][dd][which]["system"]["values"]
+                if show_vals:
+                    print(f"## VALS {info}")
 
-                pretty_print(vals_be)
-                print(f"## TRUE {info}")
-                pretty_print(vals_true)
+                    pretty_print(vals_be)
+                    print(f"## TRUE {info}")
+                    pretty_print(vals_true)
                 print(f"## DIFF {info}")
                 pretty_print_diff(vals_be, vals_true)
 
