@@ -40,12 +40,16 @@ import numpy as np
 from pathlib import Path
 
 
-def dispersion_all_backends(dict_l: dict, dict_s: dict, ks: np.ndarray):
+def dispersion_all_backends(
+    dict_l: dict, dict_s: dict, ks: np.ndarray, ladder: bool = False
+):
     disp = {}
     for which_backend in dict_l["heff"].keys():
         H_eff_Nb = dict_l["heff"][which_backend]
         H_eff_Ns = dict_s["heff"][which_backend]
-        disp[which_backend] = [dispersion_switcher(k, H_eff_Nb, H_eff_Ns) for k in ks]
+        disp[which_backend] = [
+            dispersion_switcher(k, H_eff_Nb, H_eff_Ns, ladder) for k in ks
+        ]
     return disp
 
 
@@ -86,7 +90,11 @@ def vqe_dispersion(
         which_model=which_model,
     )
 
-    return dict_l, dict_s, dispersion_all_backends(dict_l, dict_s, ks)
+    return (
+        dict_l,
+        dict_s,
+        dispersion_all_backends(dict_l, dict_s, ks, "ladder" in which_model),
+    )
 
 
 def sweep_dispersion(
@@ -133,7 +141,11 @@ def sweep_dispersion(
         ladder=ladder,
     )
 
-    return dict_l, dict_s, dispersion_all_backends(dict_l, dict_s, ks)
+    return (
+        dict_l,
+        dict_s,
+        dispersion_all_backends(dict_l, dict_s, ks, "ladder" in which_model),
+    )
 
 
 def vqe_heff(
@@ -335,15 +347,18 @@ def tfim_ed_dispersion(
 ):
     hamiltonian_l = TFIM(n_qubits_max, 1, J, longitudinal_field=hl, ladder=ladder)
     hamiltonian_s = TFIM(n_qubits_max - 1, 1, J, longitudinal_field=hl, ladder=ladder)
-    return ed_dispersion(hamiltonian_l, hamiltonian_s, ks)
+    return ed_dispersion(hamiltonian_l, hamiltonian_s, ks, ladder)
 
 
 def ed_dispersion(
-    hamiltonian_l: SparsePauliOp, hamiltonian_s: SparsePauliOp, ks: np.ndarray
+    hamiltonian_l: SparsePauliOp,
+    hamiltonian_s: SparsePauliOp,
+    ks: np.ndarray,
+    ladder: bool = False,
 ) -> list[float]:
     heff_l = H_effective_ed(hamiltonian_l)
     heff_s = H_effective_ed(hamiltonian_s)
-    return [dispersion_switcher(k, heff_l, heff_s) for k in ks]
+    return [dispersion_switcher(k, heff_l, heff_s, ladder) for k in ks]
 
 
 def plot_all_backends_dispersions(_d: dict) -> plt.Figure:
@@ -380,6 +395,7 @@ def plot_all_backends_dispersions_montecarlo(
 ) -> plt.Figure:
     ks = _d["inputs"]["ks"]
     j = _d["inputs"]["J"]
+    _ladder = _d["inputs"]["ladder"]
 
     fig, ax = plt.subplots()
     res = _d["results"]
@@ -391,12 +407,23 @@ def plot_all_backends_dispersions_montecarlo(
         if circ == "ed":
             disp = res[circ]["disp"]
             for be in disp:
-                ax.plot(
-                    ks,
-                    disp[be],
-                    label=BACKEND_LABELS[circ],
-                    color=BACKEND_COLORS["ed"],
-                )
+                if _ladder:
+                    labels = BACKEND_LABELS[circ]
+                    for _b in (0, 1):
+                        ax.plot(
+                            ks,
+                            np.array(disp[be])[:, _b],
+                            label=labels,
+                            color=BACKEND_COLORS["ed"],
+                        )
+                        labels = None
+                else:
+                    ax.plot(
+                        ks,
+                        disp[be],
+                        label=BACKEND_LABELS[circ],
+                        color=BACKEND_COLORS["ed"],
+                    )
         else:
             disp = res[circ]["disp"]
             for be in res[circ]["mc_disp"]:
@@ -411,28 +438,60 @@ def plot_all_backends_dispersions_montecarlo(
                     capsize = 1
                     markersize = 4
                 if be == "statevector":
-                    ax.plot(
-                        ks,
-                        disp[be],
-                        fmt,
-                        linewidth=linewidth,
-                        label=BACKEND_LABELS[be],
-                        color=BACKEND_COLORS[be],
-                        markersize=markersize,
-                    )
+                    if _ladder:
+                        labels = BACKEND_LABELS[be]
+                        for _b in (0, 1):
+                            ax.plot(
+                                ks,
+                                np.array(disp[be])[:, _b],
+                                fmt,
+                                linewidth=linewidth,
+                                label=labels,
+                                color=BACKEND_COLORS[be],
+                                markersize=markersize,
+                            )
+                            labels = None
+
+                    else:
+                        ax.plot(
+                            ks,
+                            disp[be],
+                            fmt,
+                            linewidth=linewidth,
+                            label=BACKEND_LABELS[be],
+                            color=BACKEND_COLORS[be],
+                            markersize=markersize,
+                        )
                 else:
-                    yerr = res[circ]["mc_disp"][be]["std"]
-                    ax.errorbar(
-                        ks,
-                        disp[be],
-                        yerr,
-                        fmt=fmt,
-                        linewidth=linewidth,
-                        label=BACKEND_LABELS[be],
-                        color=BACKEND_COLORS[be],
-                        capsize=capsize,
-                        markersize=markersize,
-                    )
+                    if _ladder:
+                        yerr = np.array(res[circ]["mc_disp"][be]["std"])
+                        labels = BACKEND_LABELS[be]
+                        for _b in (0, 1):
+                            ax.errorbar(
+                                ks,
+                                np.array(disp[be])[:, _b],
+                                yerr[_b, :],
+                                fmt=fmt,
+                                linewidth=linewidth,
+                                label=labels,
+                                color=BACKEND_COLORS[be],
+                                capsize=capsize,
+                                markersize=markersize,
+                            )
+                            labels = None
+                    else:
+                        yerr = res[circ]["mc_disp"][be]["std"]
+                        ax.errorbar(
+                            ks,
+                            disp[be],
+                            yerr,
+                            fmt=fmt,
+                            linewidth=linewidth,
+                            label=BACKEND_LABELS[be],
+                            color=BACKEND_COLORS[be],
+                            capsize=capsize,
+                            markersize=markersize,
+                        )
     if which_model is None:
         if "which_model" in _d["inputs"].keys():
             which_model = _d["inputs"]["which_model"]

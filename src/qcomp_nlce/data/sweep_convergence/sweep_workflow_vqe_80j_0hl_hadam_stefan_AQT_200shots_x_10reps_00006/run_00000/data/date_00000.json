@@ -1,0 +1,2868 @@
+{
+    "results": {
+        "sweep": {
+            "dict_l": {
+                "eld": {
+                    "system": {
+                        "n_qubits": 5,
+                        "values": {
+                            "type": "ndarray",
+                            "args": [
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.8048085528320009,
+                                            "imag": -0.5100535053104108
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.05776344748164181,
+                                            "imag": 0.09098803705353517
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.009166538343959446,
+                                            "imag": 0.0076539627387477846
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.000988389678334139,
+                                            "imag": -0.0009061349982539586
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 8.642432378208912e-05,
+                                            "imag": -0.00012339435855251502
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.05776609309682198,
+                                            "imag": 0.09098365883535026
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.803693042147185,
+                                            "imag": -0.5111617150015547
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.05782546873048737,
+                                            "imag": 0.09092110218157984
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.00915786478187527,
+                                            "imag": 0.007659106187971213
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.0009884220358779726,
+                                            "imag": -0.000906081771173857
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.00916609138769145,
+                                            "imag": 0.007654318218162403
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.05782545424541059,
+                                            "imag": 0.0909210940621728
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.8036921694785741,
+                                            "imag": -0.5111601185523801
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.05782545424541063,
+                                            "imag": 0.09092109406217282
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.009166091387691448,
+                                            "imag": 0.007654318218162404
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.0009884220358779726,
+                                            "imag": -0.0009060817711738572
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.009157864781875268,
+                                            "imag": 0.007659106187971208
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.05782546873048737,
+                                            "imag": 0.09092110218157984
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.8036930421471848,
+                                            "imag": -0.5111617150015548
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.057766093096822006,
+                                            "imag": 0.09098365883535028
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 8.642432378208915e-05,
+                                            "imag": -0.000123394358552515
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.0009883896783341388,
+                                            "imag": -0.0009061349982539585
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.009166538343959448,
+                                            "imag": 0.0076539627387477846
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.057763447481641826,
+                                            "imag": 0.0909880370535352
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.804808552832001,
+                                            "imag": -0.5100535053104112
+                                        }
+                                    }
+                                ]
+                            ],
+                            "kwargs": {
+                                "dtype": "complex128"
+                            }
+                        }
+                    },
+                    "statevector": {
+                        "name": "statevector",
+                        "trace_dist": 3.1650163781046015,
+                        "values": {
+                            "type": "ndarray",
+                            "args": [
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.8048085528320004,
+                                            "imag": -0.5100535053104116
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.05776344748164183,
+                                            "imag": 0.09098803705353507
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.009166538343959437,
+                                            "imag": 0.007653962738747789
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.0009883896783341396,
+                                            "imag": -0.0009061349982539576
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 8.6424323782089e-05,
+                                            "imag": -0.000123394358552515
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.05776609309682205,
+                                            "imag": 0.09098365883535023
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.8036930421471846,
+                                            "imag": -0.511161715001555
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.05782546873048741,
+                                            "imag": 0.09092110218157971
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.009157864781875262,
+                                            "imag": 0.007659106187971209
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.0009884220358779732,
+                                            "imag": -0.0009060817711738558
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.009166091387691437,
+                                            "imag": 0.007654318218162409
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.05782545424541063,
+                                            "imag": 0.09092109406217279
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.8036921694785735,
+                                            "imag": -0.5111601185523806
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.05782545424541063,
+                                            "imag": 0.09092109406217275
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.00916609138769144,
+                                            "imag": 0.007654318218162407
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.0009884220358779732,
+                                            "imag": -0.0009060817711738557
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.009157864781875259,
+                                            "imag": 0.007659106187971207
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.05782546873048736,
+                                            "imag": 0.09092110218157975
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.8036930421471843,
+                                            "imag": -0.5111617150015547
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.05776609309682206,
+                                            "imag": 0.09098365883535027
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 8.642432378208904e-05,
+                                            "imag": -0.00012339435855251497
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.0009883896783341388,
+                                            "imag": -0.000906134998253958
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.009166538343959436,
+                                            "imag": 0.0076539627387477846
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.05776344748164183,
+                                            "imag": 0.09098803705353517
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.8048085528320001,
+                                            "imag": -0.5100535053104113
+                                        }
+                                    }
+                                ]
+                            ],
+                            "kwargs": {
+                                "dtype": "complex128"
+                            }
+                        },
+                        "stds": {
+                            "type": "ndarray",
+                            "args": [
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ]
+                            ],
+                            "kwargs": {
+                                "dtype": "complex128"
+                            }
+                        }
+                    }
+                },
+                "gsd": {
+                    "system": {
+                        "ground_energy": -5.652069816767468,
+                        "n_qubits": 5,
+                        "hamiltonian": {
+                            "__type__": "settings",
+                            "__module__": "qiskit.quantum_info.operators.symplectic.sparse_pauli_op",
+                            "__class__": "SparsePauliOp",
+                            "__value__": {
+                                "data": {
+                                    "__type__": "settings",
+                                    "__module__": "qiskit.quantum_info.operators.symplectic.pauli_list",
+                                    "__class__": "PauliList",
+                                    "__value__": {
+                                        "data": [
+                                            "XXIII",
+                                            "IXXII",
+                                            "IIXXI",
+                                            "IIIXX",
+                                            "ZIIII",
+                                            "IZIII",
+                                            "IIZII",
+                                            "IIIZI",
+                                            "IIIIZ"
+                                        ]
+                                    }
+                                },
+                                "coeffs": {
+                                    "type": "ndarray",
+                                    "args": [
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -0.8,
+                                                "imag": 0.0
+                                            }
+                                        },
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -0.8,
+                                                "imag": 0.0
+                                            }
+                                        },
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -0.8,
+                                                "imag": 0.0
+                                            }
+                                        },
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -0.8,
+                                                "imag": 0.0
+                                            }
+                                        },
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -1.0,
+                                                "imag": 0.0
+                                            }
+                                        },
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -1.0,
+                                                "imag": 0.0
+                                            }
+                                        },
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -1.0,
+                                                "imag": 0.0
+                                            }
+                                        },
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -1.0,
+                                                "imag": 0.0
+                                            }
+                                        },
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -1.0,
+                                                "imag": 0.0
+                                            }
+                                        }
+                                    ],
+                                    "kwargs": {
+                                        "dtype": "complex128"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "statevector": {
+                        "name": "statevector",
+                        "error": 0,
+                        "energy": -5.652069816767468,
+                        "unique_bitstrings": [],
+                        "bitstring_prop": 0,
+                        "n_shots": 0,
+                        "std": 0,
+                        "counts": {},
+                        "n_reps": 0
+                    }
+                },
+                "exd": {
+                    "system": {
+                        "n_qubits": 5,
+                        "values": {
+                            "type": "ndarray",
+                            "args": [
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -3.018617672624353,
+                                            "imag": -1.3858485225022072e-16
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.800127233637552,
+                                            "imag": 3.9613374066726604e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.006210568796946363,
+                                            "imag": 3.9958870542378357e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0002501115031962962,
+                                            "imag": 5.752089701017611e-07
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 7.62391283956196e-06,
+                                            "imag": 1.4800071917020738e-18
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8001272336375522,
+                                            "imag": -3.961337406661693e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -3.012311489472886,
+                                            "imag": 2.0813760852600953e-17
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8002501367210213,
+                                            "imag": 3.6511333809070993e-07
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.006211818587514609,
+                                            "imag": -4.217481080689902e-17
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0002501115031962872,
+                                            "imag": -5.752089701065065e-07
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.006210568796946347,
+                                            "imag": -3.99588705423725e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8002501367210215,
+                                            "imag": -3.651133380855868e-07
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -3.0123165780732073,
+                                            "imag": 1.6457465664118496e-16
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8002501367210219,
+                                            "imag": -3.6511333802162253e-07
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.0062105687969463376,
+                                            "imag": -3.99588705423981e-05
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.00025011150319629335,
+                                            "imag": -5.752089700995253e-07
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.006211818587514589,
+                                            "imag": 7.496373013762112e-17
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8002501367210216,
+                                            "imag": 3.651133381514659e-07
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -3.0123114894728857,
+                                            "imag": 1.9715604250569805e-16
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8001272336375524,
+                                            "imag": -3.961337406655474e-05
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 7.623912839562052e-06,
+                                            "imag": -1.8482874614806114e-18
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0002501115031962959,
+                                            "imag": 5.752089701046896e-07
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.006210568796946346,
+                                            "imag": 3.995887054237263e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8001272336375522,
+                                            "imag": 3.961337406658483e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -3.0186176726243548,
+                                            "imag": -1.0681311900128181e-16
+                                        }
+                                    }
+                                ]
+                            ],
+                            "kwargs": {
+                                "dtype": "complex128"
+                            }
+                        }
+                    },
+                    "statevector": {
+                        "name": "statevector",
+                        "trace_dist": 5.9974322354211276e-15,
+                        "values": {
+                            "type": "ndarray",
+                            "args": [
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -3.0186176726243543,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8001272336375518,
+                                            "imag": 3.9613374065217144e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.006210568796946703,
+                                            "imag": 3.995887054197844e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0002501115031960932,
+                                            "imag": 5.752089704547103e-07
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 7.623912838816693e-06,
+                                            "imag": -2.220446049250313e-16
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8001272336375518,
+                                            "imag": -3.9613374065217144e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -3.0123114894728857,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8002501367210222,
+                                            "imag": 3.6511333889599484e-07
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.006211818587513962,
+                                            "imag": -0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0002501115031974255,
+                                            "imag": -5.752089702326657e-07
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.006210568796946703,
+                                            "imag": -3.995887054197844e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8002501367210222,
+                                            "imag": -3.6511333889599484e-07
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -3.0123165780732064,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8002501367210229,
+                                            "imag": -3.6511333822986103e-07
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.0062105687969453705,
+                                            "imag": -3.99588705417564e-05
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0002501115031960932,
+                                            "imag": -5.752089704547103e-07
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.006211818587513962,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8002501367210229,
+                                            "imag": 3.6511333822986103e-07
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -3.012311489472885,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8001272336375542,
+                                            "imag": -3.961337406632737e-05
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 7.623912838816693e-06,
+                                            "imag": 2.220446049250313e-16
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0002501115031974255,
+                                            "imag": 5.752089702326657e-07
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.0062105687969453705,
+                                            "imag": 3.99588705417564e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8001272336375542,
+                                            "imag": 3.961337406632737e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -3.018617672624355,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ]
+                            ],
+                            "kwargs": {
+                                "dtype": "complex128"
+                            }
+                        },
+                        "stds": {
+                            "type": "ndarray",
+                            "args": [
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ]
+                            ],
+                            "kwargs": {
+                                "dtype": "complex128"
+                            }
+                        }
+                    }
+                },
+                "heff": {
+                    "statevector": {
+                        "type": "ndarray",
+                        "args": [
+                            [
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 2.6333342025042716,
+                                        "imag": 2.220446049250313e-16
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.8000948039053553,
+                                        "imag": -0.0011209226026635821
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.006269157872163131,
+                                        "imag": 0.0005158582796174066
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 0.00028076322439421573,
+                                        "imag": 2.2460155632713502e-05
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 1.1474418408857507e-05,
+                                        "imag": -9.942133921692076e-17
+                                    }
+                                }
+                            ],
+                            [
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.8000948039053554,
+                                        "imag": 0.0011209226026633878
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 2.639876871753696,
+                                        "imag": 4.440892098500626e-16
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.8002806574749565,
+                                        "imag": -6.3112130035680725e-06
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.006215066272790407,
+                                        "imag": -1.6514567491299204e-15
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 0.00028076322439655674,
+                                        "imag": -2.24601556330032e-05
+                                    }
+                                }
+                            ],
+                            [
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.006269157872163089,
+                                        "imag": -0.0005158582796174344
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.8002806574749564,
+                                        "imag": 6.311213003540317e-06
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 2.6397520330536866,
+                                        "imag": 0.0
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.8002806574749577,
+                                        "imag": 6.311213004067673e-06
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.006269157872158565,
+                                        "imag": -0.0005158582796170597
+                                    }
+                                }
+                            ],
+                            [
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 0.0002807632243942192,
+                                        "imag": -2.2460155632710033e-05
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.0062150662727904205,
+                                        "imag": 1.6653345369377348e-15
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.8002806574749577,
+                                        "imag": -6.311213004012162e-06
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 2.639876871753697,
+                                        "imag": -2.220446049250313e-16
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.800094803905356,
+                                        "imag": 0.001120922602662805
+                                    }
+                                }
+                            ],
+                            [
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 1.1474418408857724e-05,
+                                        "imag": 9.942133921692076e-17
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 0.00028076322439655587,
+                                        "imag": 2.24601556330032e-05
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.006269157872158565,
+                                        "imag": 0.0005158582796170597
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.800094803905356,
+                                        "imag": -0.0011209226026627772
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 2.633334202504278,
+                                        "imag": 0.0
+                                    }
+                                }
+                            ]
+                        ],
+                        "kwargs": {
+                            "dtype": "complex128"
+                        }
+                    }
+                }
+            },
+            "dict_s": {
+                "eld": {
+                    "system": {
+                        "n_qubits": 4,
+                        "values": {
+                            "type": "ndarray",
+                            "args": [
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.7171042272245813,
+                                            "imag": -0.6166886352668329
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.08791546313021563,
+                                            "imag": 0.1019204792952659
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.011887804312900062,
+                                            "imag": 0.014226285390325086
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.0022529226956867145,
+                                            "imag": -0.0013156840369394722
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0879191503470684,
+                                            "imag": 0.10190786744639761
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.7145231270511472,
+                                            "imag": -0.6183725020086086
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.08803025823533542,
+                                            "imag": 0.10172687344795348
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.011886146065827427,
+                                            "imag": 0.01422707350406376
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.011886146065827427,
+                                            "imag": 0.01422707350406377
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.08803025823533545,
+                                            "imag": 0.10172687344795349
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.7145231270511472,
+                                            "imag": -0.6183725020086084
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.08791915034706833,
+                                            "imag": 0.1019078674463976
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.0022529226956867145,
+                                            "imag": -0.001315684036939472
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.01188780431290006,
+                                            "imag": 0.014226285390325086
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.08791546313021563,
+                                            "imag": 0.10192047929526592
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.717104227224581,
+                                            "imag": -0.6166886352668327
+                                        }
+                                    }
+                                ]
+                            ],
+                            "kwargs": {
+                                "dtype": "complex128"
+                            }
+                        }
+                    },
+                    "statevector": {
+                        "name": "statevector",
+                        "trace_dist": 2.5430081622623213,
+                        "values": {
+                            "type": "ndarray",
+                            "args": [
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.7171042272245816,
+                                            "imag": -0.616688635266833
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.08791546313021567,
+                                            "imag": 0.101920479295266
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.011887804312900067,
+                                            "imag": 0.014226285390325086
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.0022529226956867154,
+                                            "imag": -0.001315684036939473
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.08791915034706842,
+                                            "imag": 0.10190786744639767
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.7145231270511473,
+                                            "imag": -0.6183725020086082
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.08803025823533545,
+                                            "imag": 0.10172687344795349
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.011886146065827436,
+                                            "imag": 0.01422707350406377
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.01188614606582744,
+                                            "imag": 0.014227073504063768
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.08803025823533545,
+                                            "imag": 0.10172687344795349
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.7145231270511472,
+                                            "imag": -0.6183725020086079
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0879191503470684,
+                                            "imag": 0.10190786744639764
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.002252922695686715,
+                                            "imag": -0.0013156840369394733
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.011887804312900065,
+                                            "imag": 0.01422628539032509
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.08791546313021567,
+                                            "imag": 0.10192047929526599
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.7171042272245813,
+                                            "imag": -0.6166886352668328
+                                        }
+                                    }
+                                ]
+                            ],
+                            "kwargs": {
+                                "dtype": "complex128"
+                            }
+                        },
+                        "stds": {
+                            "type": "ndarray",
+                            "args": [
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ]
+                            ],
+                            "kwargs": {
+                                "dtype": "complex128"
+                            }
+                        }
+                    }
+                },
+                "gsd": {
+                    "system": {
+                        "ground_energy": -4.4847886031761925,
+                        "n_qubits": 4,
+                        "hamiltonian": {
+                            "__type__": "settings",
+                            "__module__": "qiskit.quantum_info.operators.symplectic.sparse_pauli_op",
+                            "__class__": "SparsePauliOp",
+                            "__value__": {
+                                "data": {
+                                    "__type__": "settings",
+                                    "__module__": "qiskit.quantum_info.operators.symplectic.pauli_list",
+                                    "__class__": "PauliList",
+                                    "__value__": {
+                                        "data": [
+                                            "XXII",
+                                            "IXXI",
+                                            "IIXX",
+                                            "ZIII",
+                                            "IZII",
+                                            "IIZI",
+                                            "IIIZ"
+                                        ]
+                                    }
+                                },
+                                "coeffs": {
+                                    "type": "ndarray",
+                                    "args": [
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -0.8,
+                                                "imag": 0.0
+                                            }
+                                        },
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -0.8,
+                                                "imag": 0.0
+                                            }
+                                        },
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -0.8,
+                                                "imag": 0.0
+                                            }
+                                        },
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -1.0,
+                                                "imag": 0.0
+                                            }
+                                        },
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -1.0,
+                                                "imag": 0.0
+                                            }
+                                        },
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -1.0,
+                                                "imag": 0.0
+                                            }
+                                        },
+                                        {
+                                            "type": "complex",
+                                            "kwargs": {
+                                                "real": -1.0,
+                                                "imag": 0.0
+                                            }
+                                        }
+                                    ],
+                                    "kwargs": {
+                                        "dtype": "complex128"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "statevector": {
+                        "name": "statevector",
+                        "error": 0,
+                        "energy": -4.4847886031761925,
+                        "unique_bitstrings": [],
+                        "bitstring_prop": 0,
+                        "n_shots": 0,
+                        "std": 0,
+                        "counts": {},
+                        "n_reps": 0
+                    }
+                },
+                "exd": {
+                    "system": {
+                        "n_qubits": 4,
+                        "values": {
+                            "type": "ndarray",
+                            "args": [
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -2.020452485957912,
+                                            "imag": 1.4988351382355247e-16
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8002929975399632,
+                                            "imag": -4.675341572532154e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.010240779998588793,
+                                            "imag": 0.00011804269475065144
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0005695154376781612,
+                                            "imag": -6.4316476842247176e-18
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8002929975399632,
+                                            "imag": 4.6753415725543784e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -2.0100006378480577,
+                                            "imag": 3.3407119822487697e-18
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8005695154376771,
+                                            "imag": -6.748715292814554e-17
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.010240779998588755,
+                                            "imag": -0.00011804269475065034
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.0102407799985888,
+                                            "imag": -0.00011804269475061875
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8005695154376773,
+                                            "imag": 8.485864330545538e-17
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -2.0100006378480573,
+                                            "imag": -9.212605705637372e-17
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8002929975399627,
+                                            "imag": 4.675341572576792e-05
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.000569515437678162,
+                                            "imag": 8.088045063057196e-20
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.010240779998588748,
+                                            "imag": 0.00011804269475064439
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8002929975399626,
+                                            "imag": -4.6753415725630005e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -2.0204524859579105,
+                                            "imag": 1.8947212373058107e-16
+                                        }
+                                    }
+                                ]
+                            ],
+                            "kwargs": {
+                                "dtype": "complex128"
+                            }
+                        }
+                    },
+                    "statevector": {
+                        "name": "statevector",
+                        "trace_dist": 3.0373642336033065e-15,
+                        "values": {
+                            "type": "ndarray",
+                            "args": [
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -2.020452485957912,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.800292997539963,
+                                            "imag": -4.6753415724687386e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.010240779998587968,
+                                            "imag": 0.00011804269475046425
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0005695154376772482,
+                                            "imag": 2.220446049250313e-16
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.800292997539963,
+                                            "imag": 4.6753415724687386e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -2.0100006378480577,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8005695154376768,
+                                            "imag": -4.440892098500626e-16
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.010240779998588412,
+                                            "imag": -0.00011804269475046425
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.010240779998587968,
+                                            "imag": -0.00011804269475046425
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8005695154376768,
+                                            "imag": 4.440892098500626e-16
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -2.0100006378480577,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8002929975399629,
+                                            "imag": 4.675341572712988e-05
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0005695154376772482,
+                                            "imag": -2.220446049250313e-16
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.010240779998588412,
+                                            "imag": 0.00011804269475046425
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -0.8002929975399629,
+                                            "imag": -4.675341572712988e-05
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": -2.0204524859579105,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ]
+                            ],
+                            "kwargs": {
+                                "dtype": "complex128"
+                            }
+                        },
+                        "stds": {
+                            "type": "ndarray",
+                            "args": [
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    },
+                                    {
+                                        "type": "complex",
+                                        "kwargs": {
+                                            "real": 0.0,
+                                            "imag": 0.0
+                                        }
+                                    }
+                                ]
+                            ],
+                            "kwargs": {
+                                "dtype": "complex128"
+                            }
+                        }
+                    }
+                },
+                "heff": {
+                    "statevector": {
+                        "type": "ndarray",
+                        "args": [
+                            [
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 2.4640398588974755,
+                                        "imag": 0.0
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.8002124059810015,
+                                        "imag": -0.0021141592564843936
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.01039362946209843,
+                                        "imag": 0.0009516131181938892
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 0.0007158926624471866,
+                                        "imag": 1.9081958235744878e-16
+                                    }
+                                }
+                            ],
+                            [
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.8002124059810016,
+                                        "imag": 0.002114159256484449
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 2.475084223648943,
+                                        "imag": -1.1102230246251565e-16
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.8007158926624484,
+                                        "imag": 5.551115123125783e-17
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.010393629462100831,
+                                        "imag": -0.0009516131181935145
+                                    }
+                                }
+                            ],
+                            [
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.010393629462098458,
+                                        "imag": -0.0009516131181938961
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.8007158926624482,
+                                        "imag": -5.551115123125783e-17
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 2.4750842236489423,
+                                        "imag": 1.1102230246251565e-16
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.8002124059810022,
+                                        "imag": 0.0021141592564864475
+                                    }
+                                }
+                            ],
+                            [
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 0.0007158926624471901,
+                                        "imag": -1.9081958235744878e-16
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.010393629462100859,
+                                        "imag": 0.0009516131181935422
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": -0.8002124059810022,
+                                        "imag": -0.002114159256486503
+                                    }
+                                },
+                                {
+                                    "type": "complex",
+                                    "kwargs": {
+                                        "real": 2.4640398588974755,
+                                        "imag": -1.1102230246251565e-16
+                                    }
+                                }
+                            ]
+                        ],
+                        "kwargs": {
+                            "dtype": "complex128"
+                        }
+                    }
+                }
+            },
+            "disp": {
+                "statevector": [
+                    {
+                        "type": "ndarray",
+                        "args": 1.7124875504281256,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 1.7320067846928016,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 1.7900935047450943,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 1.8853457518720003,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 2.015463348406019,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 2.1773017593326056,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 2.3669458798014515,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 2.5798020055561235,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 2.8107057033133014,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 3.054042886863412,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 3.303881211499432,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 3.55410895054483,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 3.798578748872229,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 4.031253912832444,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 4.246355011039128,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 4.4385043759473355,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 4.602865562664611,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 4.735274029324277,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 4.832354475298846,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 4.8916197078020645,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 4.911545887827444,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    }
+                ]
+            },
+            "mc_disp": {
+                "statevector": {
+                    "mean": 0,
+                    "std": 0,
+                    "n_samples": 10000
+                }
+            }
+        },
+        "ed": {
+            "disp": {
+                "statevector": [
+                    {
+                        "type": "ndarray",
+                        "args": 0.4395779187379487,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 0.49412573575549334,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 0.6489270420487241,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 0.8799046161173854,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 1.154286623888673,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 1.4391021484010267,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 1.7089181827072064,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 1.9504706043270321,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 2.1630011459389813,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 2.3546320681463015,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 2.5364369829150526,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 2.7165322639324714,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 2.8963066701435825,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 3.0699431576028715,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 3.227058630522894,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 3.3571088441211785,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 3.4536159626486764,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 3.516474883563257,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 3.5514712977193916,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 3.5673299498595092,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    },
+                    {
+                        "type": "ndarray",
+                        "args": 3.571625547848754,
+                        "kwargs": {
+                            "dtype": "float64"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "inputs": {
+        "ks": {
+            "type": "ndarray",
+            "args": [
+                0.0,
+                0.15707963267948966,
+                0.3141592653589793,
+                0.47123889803846897,
+                0.6283185307179586,
+                0.7853981633974483,
+                0.9424777960769379,
+                1.0995574287564276,
+                1.2566370614359172,
+                1.413716694115407,
+                1.5707963267948966,
+                1.7278759594743862,
+                1.8849555921538759,
+                2.0420352248333655,
+                2.199114857512855,
+                2.356194490192345,
+                2.5132741228718345,
+                2.670353755551324,
+                2.827433388230814,
+                2.9845130209103035,
+                3.141592653589793
+            ],
+            "kwargs": {
+                "dtype": "float64"
+            }
+        },
+        "J": 0.8,
+        "hl": 0.0,
+        "ladder": false,
+        "provider_name": "AQT",
+        "group_size": null,
+        "n_qubits": 5,
+        "n_shots": 200,
+        "n_steps": 3,
+        "n_mc_samples": 10000,
+        "which_algorithms": [
+            "sweep"
+        ],
+        "which_backends": [
+            "statevector"
+        ],
+        "which_hadamard_test": "stefan",
+        "n_reps": 10,
+        "model_dir": "vqe_80j_0hl"
+    },
+    "__timestamp": "2026_03_23_17_48_45"
+}

@@ -29,6 +29,7 @@ for items in (
     ("sweep_tfim_80j_0hl_5q_run2", "TFIM_80j_0hl", "sweep"),
     ("vqe_tfim_100j_0hl_5q", "TFIM_100j_0hl", "vqe"),
     ("vqe_tfim_100j_0hl_5q_run2", "TFIM_100j_0hl", "vqe"),
+    ("vqe_tfim_20j_0hl_8q_ladder", "TFIM_20j_0hl_ladder", "vqe"),
 ):
     fpath, fig_name, alg = items
     edm = ExperimentDataManager.load(Path(DATA_DIR, "1qp", fpath))

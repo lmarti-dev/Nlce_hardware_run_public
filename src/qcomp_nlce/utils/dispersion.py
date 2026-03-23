@@ -1,5 +1,4 @@
 import numpy as np
-from typing import Union
 
 
 def cluster_dispersion(N: int, H_effective: np.ndarray, k: float) -> float:
@@ -25,12 +24,15 @@ def cluster_dispersion(N: int, H_effective: np.ndarray, k: float) -> float:
 
 
 def dispersion_switcher(
-    k: Union[float, tuple], H_eff_Nb: np.ndarray, H_eff_Ns: np.ndarray
+    k: float,
+    H_eff_Nb: np.ndarray,
+    H_eff_Ns: np.ndarray,
+    ladder: bool = False,
 ):
-    if isinstance(k, float):
+    if not ladder:
         return dispersion_1d_thermodynamic(k, H_eff_Nb, H_eff_Ns)
     else:
-        return dispersion_ladder_thermodynamic(k[0], k[1], H_eff_Nb, H_eff_Ns)
+        return dispersion_ladder_thermodynamic(k, H_eff_Nb, H_eff_Ns)
 
 
 def dispersion_1d_thermodynamic(
@@ -75,7 +77,6 @@ def project_ladder_to_k_space(H_eff: np.ndarray, n_rungs: int, kx: float) -> np.
 def dispersion_ladder_thermodynamic(
     k: float, H_eff_Nb: np.ndarray, H_eff_Ns: np.ndarray
 ) -> np.ndarray:
-
     Nb = H_eff_Nb.shape[0] // 2  # number of rungs in bigger cluster
     Ns = H_eff_Ns.shape[0] // 2  # number of rungs in smaller cluster
 
@@ -84,6 +85,7 @@ def dispersion_ladder_thermodynamic(
 
     H_k_inf = H_k_big - H_k_small
     evals = np.sort(np.real(np.linalg.eigvals(H_k_inf)))
+    # len(evals) == 2
     return evals
 
 

@@ -33,6 +33,8 @@ def average_result_matrices(
     ks = out_d["inputs"]["ks"]
     out_d["inputs"]["n_shots"] = 200 * n_dicts
 
+    _ladder = out_d["inputs"]["ladder"]
+
     algs = out_d["results"].keys()
     used_algs = (k for k in ("sweep", "vqe") if k in algs)
     for alg in used_algs:
@@ -82,7 +84,10 @@ def average_result_matrices(
                     heff = heff_backend_type(eld, gsd, exd, backend)
                     out_d["results"][alg][si]["heff"][backend] = heff
             disp = dispersion_all_backends(
-                out_d["results"][alg]["dict_l"], out_d["results"][alg]["dict_s"], ks
+                out_d["results"][alg]["dict_l"],
+                out_d["results"][alg]["dict_s"],
+                ks,
+                _ladder,
             )
         out_d["results"][alg]["disp"] = disp
         n_mc_samples = int(1e4)
@@ -158,7 +163,7 @@ def show_diffs(d, which_backend: BACKEND_TYPES, show_vals: bool = False):
 
 def undepolarize_out_dict(out_d: dict, depol_rate: float) -> dict:
     ks = out_d["inputs"]["ks"]
-
+    _ladder = out_d["inputs"]["ladder"]
     for si in ("dict_l", "dict_s"):
         for mnd in ("eld", "exd"):
             for backend in out_d["results"]["vqe"][si][mnd]:
@@ -182,7 +187,10 @@ def undepolarize_out_dict(out_d: dict, depol_rate: float) -> dict:
                 heff = heff_backend_type(eld, gsd, exd, backend)
                 out_d["results"]["vqe"][si]["heff"][backend] = heff
         disp = dispersion_all_backends(
-            out_d["results"]["vqe"]["dict_l"], out_d["results"]["vqe"]["dict_s"], ks
+            out_d["results"]["vqe"]["dict_l"],
+            out_d["results"]["vqe"]["dict_s"],
+            ks,
+            _ladder,
         )
     out_d["results"]["vqe"]["disp"] = disp
     n_mc_samples = int(1e4)

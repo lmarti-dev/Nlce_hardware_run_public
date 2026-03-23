@@ -52,7 +52,6 @@ if __name__ == "__main__":
             "vqe",
             n_samples=n_samples,
             to_eotm=True,
-            gsd_sup_fac=1 / np.sqrt(newrep),
         )
         mc_stds.append(np.mean(disp[backend]["std"]))
         std_on_std.append(np.mean(disp[backend]["std"]))

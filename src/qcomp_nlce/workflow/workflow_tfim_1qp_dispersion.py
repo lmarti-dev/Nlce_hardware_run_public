@@ -208,6 +208,27 @@ def workflow_nq_aqt_sweepsims(dry_run: bool, J: float, which_backends: BACKEND_T
             )
 
 
+def workflow_nq_aqt_sweepconv(dry_run: bool, J: float, which_backends: BACKEND_TYPES):
+    n_shots = int(200)
+    which_hadamard_test = "stefan"
+    n_qubits_max = 5
+    (2, 5, 10, 15, 20, 40)
+    for n_steps in (3, 4, 7, 30, 50, 100):
+        workflow_nq(
+            dry_run,
+            n_qubits_max,
+            which_hadamard_test,
+            "AQT",
+            n_shots,
+            which_backends,
+            ["sweep"],
+            J=J,
+            n_reps=10,
+            n_steps=n_steps,
+            hl=0.0,
+        )
+
+
 def workflow_nq_aqt_ladder(dry_run, which_backends):
     J = 0.20
 
@@ -215,6 +236,7 @@ def workflow_nq_aqt_ladder(dry_run, which_backends):
     n_shots = int(200)
     which_hadamard_test = "stefan"
     n_qubits_max = 4
+    ks = np.linspace(-np.pi, np.pi, 21)
     workflow_nq(
         dry_run,
         n_qubits_max,
@@ -227,6 +249,7 @@ def workflow_nq_aqt_ladder(dry_run, which_backends):
         n_reps=10,
         hl=0,
         ladder=True,
+        ks=ks,
     )
 
 
@@ -268,10 +291,12 @@ def workflow_nq(
     n_reps: int = 1,
     hl: float = 0,
     ladder: bool = False,
+    ks: np.ndarray = None,
 ):
     # avoid the "unused arguments" warning
     # warnings.filterwarnings("ignore")
-    ks = np.linspace(0, np.pi, 21)
+    if ks is None:
+        ks = np.linspace(0, np.pi, 21)
     group_size = None
     if ladder:
         qubits_max_str = f"{n_qubits_max}x2"
@@ -408,3 +433,4 @@ if __name__ == "__main__":
     # workflow_nq_aqt_sample_estim(False, 0.8, ["statevector", "fake_backend"])
     # workflow_nq_aqt_sweep(False, ["real_backend", "fake_backend", "statevector"])
     workflow_nq_aqt_ladder(False, ["real_backend", "fake_backend", "statevector"])
+    # workflow_nq_aqt_sweepconv(False, 0.8, ["statevector"])
