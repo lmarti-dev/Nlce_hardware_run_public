@@ -16,62 +16,12 @@ def _cluster_dir(n_rungs: int, J: float, hl: float) -> Path:
     return DATA_DIR / f"j{int(J*100)}_hl{int(hl*100)}" / f"{n_rungs}x2"
 
 
-# ── High-symmetry path ──────────────────────────────────────────────────────
-
-def high_symmetry_path(n_points_per_segment: int = 50):
-    """Build the high-symmetry path:
-        (pi,0) -> (pi,pi) -> (0,0) -> (pi,0) -> (pi/2,pi/2)
-
-    Returns:
-        kxs, kys: arrays of (kx, ky) along the path
-        tick_positions: cumulative-distance positions of the corner points
-        tick_labels: labels for the corner points
-    """
-    corners = [
-        (np.pi, 0),
-        (np.pi, np.pi),
-        (0, 0),
-        (np.pi, 0),
-        (np.pi / 2, np.pi / 2),
-    ]
-    labels = [
-        r"$(\pi,0)$",
-        r"$(\pi,\pi)$",
-        r"$(0,0)$",
-        r"$(\pi,0)$",
-        r"$(\pi/2,\pi/2)$",
-    ]
-
-    kxs, kys, dists = [], [], []
-    cum_dist = 0.0
-    tick_positions = [0.0]
-
-    for i in range(len(corners) - 1):
-        x0, y0 = corners[i]
-        x1, y1 = corners[i + 1]
-        seg_len = np.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
-
-        # Don't duplicate the start point of each segment (except the very first)
-        n = n_points_per_segment
-        t = np.linspace(0, 1, n, endpoint=(i == len(corners) - 2))
-        if i > 0:
-            t = t[1:]  # skip duplicate corner
-
-        for ti in t:
-            kxs.append(x0 + ti * (x1 - x0))
-            kys.append(y0 + ti * (y1 - y0))
-            dists.append(cum_dist + ti * seg_len)
-
-        cum_dist += seg_len
-        tick_positions.append(cum_dist)
-
-    return (
-        np.array(kxs),
-        np.array(kys),
-        np.array(dists),
-        tick_positions,
-        labels,
-    )
+def k_vals(n_points: int = 100):
+   
+    ks = np.linspace(-np.pi, np.pi, n_points)
+    tick_positions = [-np.pi, 0.0, np.pi]
+    tick_labels = [r"$-\pi$", r"$0$", r"$\pi$"]
+    return ks, tick_positions, tick_labels
 
 
 # ── Loading ──────────────────────────────────────────────────────────────────
@@ -120,10 +70,10 @@ def plot_nlce_ladder(
     J: float,
     hl: float,
     save: bool = True,
-    n_points_per_segment: int = 50,
+    n_points: int = 100,
 ):
-    """Plot NLCE ladder dispersion along the high-symmetry BZ path."""
-    kxs, kys, dists, tick_pos, tick_labels = high_symmetry_path(n_points_per_segment)
+    """Plot NLCE ladder dispersion along k = 0 to pi."""
+    ks, tick_pos, tick_labels = k_vals(n_points)
 
     # Load all needed cluster sizes
     all_n = sorted(set(n for pair in cluster_pairs for n in pair))
@@ -133,44 +83,42 @@ def plot_nlce_ladder(
 
     # Style constants matching reference figure
     COLORS = {
-        "ed": "#1f1f1f",       # black — Exact NLCE
-        "sv": "#1f77b4",       # blue — Statevector
-        "sv_shots": "#ff7f0e", # orange — Statevector (shots)
-        "fb": "#2ca02c",       # green — Fake Backend
+        "ed": "black",       
+        "sv": "blue",       
+        "sv_shots":"orange", 
+        "fb": "green",       
     }
     MARKERS = {
-        "ed": "s",             # square
-        "sv": "o",             # circle
-        "sv_shots": "^",       # triangle up
-        "fb": "v",             # triangle down
+        "ed": "s",             
+        "sv": "o",             
+        "sv_shots": "^",       
+        "fb": "v",             
     }
     LW = 2.0
     MS = 6
-    # Subsample points for markers so they don't overlap
-    n_k = len(dists)
+    n_k = len(ks)
     marker_every = max(1, n_k // 10)
 
     for idx, (n_big, n_small) in enumerate(cluster_pairs):
         big, small = cache[n_big], cache[n_small]
-        n_max = 2 * n_big  # total qubits in biggest cluster
 
         # ED — two bands
         if big["ed"] is not None and small["ed"] is not None:
-            disp = np.array([dispersion_ladder_thermodynamic(kx, ky, big["ed"], small["ed"])
-                             for kx, ky in zip(kxs, kys)])  # shape (n_k, 2)
+            disp = np.array([dispersion_ladder_thermodynamic(k, big["ed"], small["ed"])
+                             for k in ks])  # shape (n_k, 2)
             for band in range(disp.shape[1]):
-                label = f"Exact NLCE" if band == 0 else None
-                ax.plot(dists, disp[:, band], '-', color=COLORS["ed"],
+                label = "NLCE+ED" if band == 0 else None
+                ax.plot(ks, disp[:, band], '-', color=COLORS["ed"],
                         marker=MARKERS["ed"], markevery=marker_every, markersize=MS,
                         linewidth=LW, label=label)
 
         # Exact SV (VQE) — two bands
         if big["sv"] is not None and small["sv"] is not None:
-            disp = np.array([dispersion_ladder_thermodynamic(kx, ky, big["sv"], small["sv"])
-                             for kx, ky in zip(kxs, kys)])
+            disp = np.array([dispersion_ladder_thermodynamic(k, big["sv"], small["sv"])
+                             for k in ks])
             for band in range(disp.shape[1]):
-                label = f"Statevector" if band == 0 else None
-                ax.plot(dists, disp[:, band], '-', color=COLORS["sv"],
+                label = "Statevector" if band == 0 else None
+                ax.plot(ks, disp[:, band], '-', color=COLORS["sv"],
                         marker=MARKERS["sv"], markevery=marker_every, markersize=MS,
                         linewidth=LW, label=label)
 
@@ -178,8 +126,8 @@ def plot_nlce_ladder(
         if big["sv_shots"] and small["sv_shots"]:
             n_reps = min(len(big["sv_shots"]), len(small["sv_shots"]))
             all_disp = np.array([
-                [dispersion_ladder_thermodynamic(kx, ky, big["sv_shots"][r], small["sv_shots"][r])
-                 for kx, ky in zip(kxs, kys)]
+                [dispersion_ladder_thermodynamic(k, big["sv_shots"][r], small["sv_shots"][r])
+                 for k in ks]
                 for r in range(n_reps)
             ])  # shape (n_reps, n_k, 2)
             mean = np.mean(all_disp, axis=0)  # (n_k, 2)
@@ -187,10 +135,10 @@ def plot_nlce_ladder(
                    if n_reps > 1 else np.zeros_like(mean))
             marker_idx = np.arange(0, n_k, marker_every)
             for band in range(mean.shape[1]):
-                label = f"Statevector (shots)" if band == 0 else None
-                ax.plot(dists, mean[:, band], '-', color=COLORS["sv_shots"],
+                label = "Statevector (shots)" if band == 0 else None
+                ax.plot(ks, mean[:, band], '-', color=COLORS["sv_shots"],
                         linewidth=LW, alpha=0.7)
-                ax.errorbar(dists[marker_idx], mean[marker_idx, band],
+                ax.errorbar(ks[marker_idx], mean[marker_idx, band],
                             yerr=sem[marker_idx, band],
                             fmt=MARKERS["sv_shots"], color=COLORS["sv_shots"],
                             markersize=MS, capsize=3, capthick=1.5,
@@ -200,8 +148,8 @@ def plot_nlce_ladder(
         if big["fb"] and small["fb"]:
             n_reps = min(len(big["fb"]), len(small["fb"]))
             all_disp = np.array([
-                [dispersion_ladder_thermodynamic(kx, ky, big["fb"][r], small["fb"][r])
-                 for kx, ky in zip(kxs, kys)]
+                [dispersion_ladder_thermodynamic(k, big["fb"][r], small["fb"][r])
+                 for k in ks]
                 for r in range(n_reps)
             ])  # shape (n_reps, n_k, 2)
             mean = np.mean(all_disp, axis=0)
@@ -209,24 +157,20 @@ def plot_nlce_ladder(
                    if n_reps > 1 else np.zeros_like(mean))
             marker_idx = np.arange(0, n_k, marker_every)
             for band in range(mean.shape[1]):
-                label = f"Fake Backend" if band == 0 else None
-                ax.plot(dists, mean[:, band], '-', color=COLORS["fb"],
+                label = "Fake Backend" if band == 0 else None
+                ax.plot(ks, mean[:, band], '-', color=COLORS["fb"],
                         linewidth=LW, alpha=0.7)
-                ax.errorbar(dists[marker_idx], mean[marker_idx, band],
+                ax.errorbar(ks[marker_idx], mean[marker_idx, band],
                             yerr=sem[marker_idx, band],
                             fmt=MARKERS["fb"], color=COLORS["fb"],
                             markersize=MS, capsize=3, capthick=1.5,
                             linewidth=0, elinewidth=1.5, label=label)
 
-    # Vertical lines at high-symmetry points
-    for tp in tick_pos:
-        ax.axvline(tp, color='gray', linewidth=0.5, linestyle='-', alpha=0.5)
-
     ax.set_xticks(tick_pos)
     ax.set_xticklabels(tick_labels, fontsize=12)
     ax.set_xlim(tick_pos[0], tick_pos[-1])
-    ax.set_xlabel(r"$(k_x, k_y)$", fontsize=13)
-    ax.set_ylabel(r"$\omega(k_x, k_y)$", fontsize=13)
+    ax.set_xlabel(r"$k$", fontsize=13)
+    ax.set_ylabel(r"$\omega(k)$", fontsize=13)
     ax.set_title(f"1QP Dispersion — TFIM Ladder (J={J})", fontsize=14)
     ax.legend(fontsize=11, framealpha=0.9)
     ax.tick_params(axis='both', labelsize=11)

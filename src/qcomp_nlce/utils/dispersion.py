@@ -67,14 +67,14 @@ def project_ladder_to_k_space(
 
 
 def dispersion_ladder_thermodynamic(
-    kx: float, ky: float, H_eff_Nb: np.ndarray, H_eff_Ns: np.ndarray
+    k: float, H_eff_Nb: np.ndarray, H_eff_Ns: np.ndarray
 ) -> np.ndarray:
-   
+
     Nb = H_eff_Nb.shape[0] // 2  # number of rungs in bigger cluster
     Ns = H_eff_Ns.shape[0] // 2  # number of rungs in smaller cluster
 
-    H_k_big = project_ladder_to_k_space(H_eff_Nb, Nb, kx)
-    H_k_small = project_ladder_to_k_space(H_eff_Ns, Ns, kx)
+    H_k_big = project_ladder_to_k_space(H_eff_Nb, Nb, k)
+    H_k_small = project_ladder_to_k_space(H_eff_Ns, Ns, k)
 
     H_k_inf = H_k_big - H_k_small
     evals = np.sort(np.real(np.linalg.eigvals(H_k_inf)))
