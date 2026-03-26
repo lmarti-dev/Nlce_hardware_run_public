@@ -87,15 +87,6 @@ def get_heff_mc_sampler(
     gs_std_s: np.ndarray,
     options: dict = {},
 ) -> callable:
-    for which in ("exd", "eld", "gsd"):
-        k1 = "sigma_scale_" + which
-        if k1 not in options:
-            options[k1] = 1.0
-
-        k2 = "sigma_add_" + which
-        if k2 not in options:
-            options[k2] = 1.0
-
     def sampler(ks, sigma_scale: float = 1.0, sigma_add: float = 0.0):
         sa_expect_l = complex_normal(
             loc=expect_l,
@@ -122,7 +113,12 @@ def get_heff_mc_sampler(
         H_eff_Nb = H_effective(sa_gs_l, sa_expect_l, sa_overlap_l)
         H_eff_Ns = H_effective(sa_gs_s, sa_expect_s, sa_overlap_s)
 
-        return [dispersion_switcher(k, H_eff_Nb, H_eff_Ns) for k in ks]
+        if "ladder" in options:
+            ladder = options["ladder"]
+        else:
+            ladder = False
+
+        return [dispersion_switcher(k, H_eff_Nb, H_eff_Ns, ladder) for k in ks]
 
     return sampler
 
@@ -131,7 +127,6 @@ def res_dict_sampler(
     _d: dict,
     circ: ALGORITHMS_ALIAS,
     to_eotm: bool,
-    gsd_sup_fac: int = 1,
     options: dict = {},
 ) -> dict[callable]:
     # to_eotm: unfortunately,
@@ -165,7 +160,9 @@ def res_dict_sampler(
             expectations_std_l = res["dict_l"]["exd"][be]["stds"] * fac
             gs_expectation_l = res["dict_l"]["gsd"][be]["energy"]
             # alread EOTM form
-            gs_expectation_std_l = res["dict_l"]["gsd"][be]["std"] * gsd_sup_fac
+            gs_expectation_std_l = (
+                res["dict_l"]["gsd"][be]["std"] * options["gsd_sup_fac"]
+            )
 
             overlap_s = res["dict_s"]["eld"][be]["values"]
             overlap_std_s = res["dict_s"]["eld"][be]["stds"] * fac
@@ -173,8 +170,9 @@ def res_dict_sampler(
             expectations_std_s = res["dict_s"]["exd"][be]["stds"] * fac
             gs_expectation_s = res["dict_s"]["gsd"][be]["energy"]
             # alread EOTM form
-            gs_expectation_std_s = res["dict_s"]["gsd"][be]["std"] * gsd_sup_fac
-
+            gs_expectation_std_s = (
+                res["dict_s"]["gsd"][be]["std"] * options["gsd_sup_fac"]
+            )
             sampler = get_heff_mc_sampler(
                 expectations_l,
                 expectations_std_l,
@@ -188,7 +186,7 @@ def res_dict_sampler(
                 overlap_std_s,
                 gs_expectation_s,
                 gs_expectation_std_s,
-                **options,
+                options,
             )
             samplers[be] = sampler
     return samplers
@@ -201,10 +199,16 @@ def mc_disp_from_res_dict(
     n_samples: int = 10000,
     sampler_opts: dict = {},
     to_eotm: bool = False,
-    gsd_sup_fac: float = 1,
+    options: dict = {},
 ) -> dict:
     disps = {}
-    samplers = res_dict_sampler(_d, circ, to_eotm, gsd_sup_fac)
+    options = {}
+    if "gsd_sup_fac" not in options:
+        options["gsd_sup_fac"] = 1
+    if "ladder" not in options:
+        options["ladder"] = _d["inputs"]["ladder"]
+    _ladder = options["ladder"]
+    samplers = res_dict_sampler(_d, circ, to_eotm, options)
     for be in samplers:
         if be == "statevector":
             # no statevector mc sampling because it is 0
@@ -215,13 +219,24 @@ def mc_disp_from_res_dict(
             }
         else:
             sampler = samplers[be]
-            sampled = np.zeros((len(ks), n_samples))
+
+            if _ladder:
+                sampled = np.zeros((2, len(ks), n_samples))
+            else:
+                sampled = np.zeros((len(ks), n_samples))
             for n in range(n_samples):
                 print(f"{1 + n:0>6n}/{n_samples}", end="\r")
-                sampled[:, n] = sampler(ks, **sampler_opts)
+                if _ladder:
+                    sampled[:, :, n] = np.array(sampler(ks, **sampler_opts)).T
+                else:
+                    sampled[:, n] = sampler(ks, **sampler_opts)
 
-            mc_mean = np.mean(sampled, axis=1)
-            mc_std = np.std(sampled, axis=1)
+            if _ladder:
+                mc_mean = np.mean(sampled, axis=2)
+                mc_std = np.std(sampled, axis=2)
+            else:
+                mc_mean = np.mean(sampled, axis=1)
+                mc_std = np.std(sampled, axis=1)
 
             disps[be] = {
                 "mean": mc_mean,

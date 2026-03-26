@@ -2,6 +2,7 @@ import copy
 from src.qcomp_nlce.utils.workflow_utils import (
     heff_backend_type,
     dispersion_all_backends,
+    dispersion_switcher,
 )
 
 from src.qcomp_nlce.utils.stats import (
@@ -31,6 +32,8 @@ def average_result_matrices(
     out_d = copy.deepcopy(dicts[0])
     ks = out_d["inputs"]["ks"]
     out_d["inputs"]["n_shots"] = 200 * n_dicts
+
+    _ladder = out_d["inputs"]["ladder"]
 
     algs = out_d["results"].keys()
     used_algs = (k for k in ("sweep", "vqe") if k in algs)
@@ -81,7 +84,10 @@ def average_result_matrices(
                     heff = heff_backend_type(eld, gsd, exd, backend)
                     out_d["results"][alg][si]["heff"][backend] = heff
             disp = dispersion_all_backends(
-                out_d["results"][alg]["dict_l"], out_d["results"][alg]["dict_s"], ks
+                out_d["results"][alg]["dict_l"],
+                out_d["results"][alg]["dict_s"],
+                ks,
+                _ladder,
             )
         out_d["results"][alg]["disp"] = disp
         n_mc_samples = int(1e4)
@@ -116,7 +122,7 @@ def plot_disps(ds: list[dict], labels: list[str] = None):
                 exd = d["results"]["vqe"][si]["exd"]
                 heff = heff_backend_type(eld, gsd, exd, backend)
                 heffs.append(heff)
-            disp = [dispersion_1d_thermodynamic(k, heffs[0], heffs[1]) for k in ks]
+            disp = [dispersion_switcher(k, heffs[0], heffs[1]) for k in ks]
             disps[backend] = disp
         all_disps[labels[ind]] = disps
     fig, ax = plt.subplots()
@@ -157,7 +163,7 @@ def show_diffs(d, which_backend: BACKEND_TYPES, show_vals: bool = False):
 
 def undepolarize_out_dict(out_d: dict, depol_rate: float) -> dict:
     ks = out_d["inputs"]["ks"]
-
+    _ladder = out_d["inputs"]["ladder"]
     for si in ("dict_l", "dict_s"):
         for mnd in ("eld", "exd"):
             for backend in out_d["results"]["vqe"][si][mnd]:
@@ -181,7 +187,10 @@ def undepolarize_out_dict(out_d: dict, depol_rate: float) -> dict:
                 heff = heff_backend_type(eld, gsd, exd, backend)
                 out_d["results"]["vqe"][si]["heff"][backend] = heff
         disp = dispersion_all_backends(
-            out_d["results"]["vqe"]["dict_l"], out_d["results"]["vqe"]["dict_s"], ks
+            out_d["results"]["vqe"]["dict_l"],
+            out_d["results"]["vqe"]["dict_s"],
+            ks,
+            _ladder,
         )
     out_d["results"]["vqe"]["disp"] = disp
     n_mc_samples = int(1e4)

@@ -1,14 +1,5 @@
-import copy
-from data_manager import ExperimentDataManager
-from src.qcomp_nlce.utils.workflow_utils import (
-    heff_backend_type,
-    dispersion_all_backends,
-    plot_all_backends_dispersions_montecarlo,
-)
+from src.qcomp_nlce.utils.stats import mean_std
 
-from src.qcomp_nlce.utils.stats import mean_std, mc_disp_from_res_dict
-
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -37,7 +28,6 @@ def measure_matrix_elements_merge_circuits(
     n_shots: int,
     handcraft: bool = True,
 ):
-
     circs: list[QuantumCircuit] = []
     for state_x in comp_states:
         for state_y in comp_states:
@@ -88,7 +78,6 @@ def iterative_hadamard_test(
     custom_idx: list[list[int]] = None,
     handcraft: bool = True,
 ) -> float:
-
     # !!! This only works for initial state ket(0)
     circuits_re = iterative_hadamard_test_circuits(
         circuit=circuit,
@@ -191,7 +180,6 @@ def measure_hamiltonian_elements(
     n_shots: int,
     n_reps: int = 1,
 ):
-
     vals = np.zeros((len(states), len(states)), dtype=complex)
     stds = np.zeros((len(states), len(states)), dtype=complex)
 
@@ -199,7 +187,7 @@ def measure_hamiltonian_elements(
 
     if on_hardware:
         filename = (
-            f"{tmp_filename(circuit,which_backend)}/measure_hamiltonian_elements.json"
+            f"{tmp_filename(circuit, which_backend)}/measure_hamiltonian_elements.json"
         )
         try:
             computed_values = load_tmp_item(filename)
@@ -255,7 +243,6 @@ def measure_hamiltonian_element(
     n_shots: int,
     n_reps: int = 10,
 ) -> tuple[complex, complex]:
-
     if x == y:
         if "statevector" != backend and (
             "IQM" in backend.name or "EQE" in backend.name
@@ -305,7 +292,6 @@ def measure_hamiltonian_element(
             for n in range(n_reps):
                 jj = 4 * n
                 if isinstance(res, EstimatorResult):
-
                     val = (res.values[jj] - res.values[jj + 1]) / 2 + 1j * (
                         res.values[jj + 2] - res.values[jj + 3]
                     ) / 2
@@ -336,11 +322,9 @@ def measure_matrix_element(
     handcraft: bool = True,
     n_reps: int = 1,
 ) -> Union[complex, tuple[complex, complex]]:
-
     # This computes <x|U|y>
 
     if which_hadamard_test == "projecto-estimo":
-
         ol, std = iterative_hadamard_test_projecto_estimo(
             circuit,
             parameters,
@@ -371,7 +355,6 @@ def measure_matrix_element(
         return ol, std
 
     elif which_hadamard_test == "off-diag":
-
         jUk, kUj, std = iterative_hadamard_test_off_diag(
             circuit,
             parameters,
@@ -446,16 +429,14 @@ def measure_matrix_elements(
     handcraft: bool = True,
     n_reps: int = 1,
 ) -> np.ndarray:
-
     vals = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
     stds = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
 
     on_hardware = is_hardware_run(which_backend)
 
     if on_hardware:
-        filename = f"{tmp_dirname(circuit,which_backend)}/measure_matrix_elements.json"
+        filename = f"{tmp_dirname(circuit, which_backend)}/measure_matrix_elements.json"
         try:
-
             computed_values = load_tmp_item(filename)
         except FileNotFoundError:
             print(f"Starting from scratch (hadamard {which_hadamard_test} test)")
@@ -579,13 +560,13 @@ def measure_ground_state_energy_subspace_sampling(
         )
 
         print(
-            f"RealBackend ({real_backend.name}) {relerr(real_backend_energy):.5e} sub. mat.: {len(real_unique_bitstring)} × {len(real_unique_bitstring)}: {real_bitstring_prop*100:.3f}%"
+            f"RealBackend ({real_backend.name}) {relerr(real_backend_energy):.5e} sub. mat.: {len(real_unique_bitstring)} × {len(real_unique_bitstring)}: {real_bitstring_prop * 100:.3f}%"
         )
 
     print(f"Statevector {relerr(statevector_energy):.5e}")
 
     print(
-        f"FakeBackend ({fake_backend.name}) {relerr(fake_backend_energy):.5e} sub. mat.: {len(fake_unique_bitstring)} × {len(fake_unique_bitstring)}: {fake_backend_bitstring_prop*100:.3f}%"
+        f"FakeBackend ({fake_backend.name}) {relerr(fake_backend_energy):.5e} sub. mat.: {len(fake_unique_bitstring)} × {len(fake_unique_bitstring)}: {fake_backend_bitstring_prop * 100:.3f}%"
     )
 
     var_dict = {
