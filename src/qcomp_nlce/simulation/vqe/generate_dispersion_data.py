@@ -337,4 +337,4 @@ def generate_dispersion_data(
 
 
 if __name__ == "__main__":
-    generate_dispersion_data(J=1.0, hl=0.0, cluster_pairs=[(5, 4)])
+    generate_dispersion_data(J=0.3, hl=0.0, cluster_pairs=[(5, 4)])
