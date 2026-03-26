@@ -1,6 +1,6 @@
 
 # ── USER INPUT ────────────────────────────────────────────────────────────────
-J = 1.0                  # Ising coupling
+J = 0.3                # Ising coupling
 H = 1                    # transverse field strength
 HL = 0.0                 # longitudinal field strength
 HAS_LONGITUDINAL = False # whether the circuit has longitudinal field rotations
@@ -19,7 +19,7 @@ from qcomp_nlce.utils import (
     get_optimal_n_layers,
 )
 
-JULIA_DATA_DIR = Path(__file__).parent.parent / "julia_data" / "TFIM+LF"  # simulation/julia_data/TFIM+LF
+JULIA_DATA_DIR = Path(__file__).parent.parent / "julia_data" / "TFIM"  # simulation/julia_data/TFIM+LF
 
 
 def parse_filename(filename: str) -> dict:
