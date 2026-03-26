@@ -54,7 +54,7 @@ def plot_sweep_convergence(fpaths):
     ax.set_yscale("log")
     ax.set_xscale("log")
     ax.set_xlabel(r"Number of sweep steps")
-    ax.set_ylabel("Mean error. of dispersion")
+    ax.set_ylabel("Mean error of dispersion")
 
     m_edm.save_figure(
         fig,
@@ -70,18 +70,18 @@ if __name__ == "__main__":
     style()
 
     fpaths = [
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_23\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00011",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_23\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_23\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00001",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_23\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00002",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_23\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00003",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_23\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00004",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_23\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00005",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_23\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00006",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_23\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00007",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_23\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00008",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_23\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00009",
-        r"c:\Users\Moi4\Desktop\current\FAU\phd\data\2026_03_23\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00010",
+        r"sweep_convergence\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00011",
+        r"sweep_convergence\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps",
+        r"sweep_convergence\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00001",
+        r"sweep_convergence\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00002",
+        r"sweep_convergence\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00003",
+        r"sweep_convergence\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00004",
+        r"sweep_convergence\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00005",
+        r"sweep_convergence\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00006",
+        r"sweep_convergence\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00007",
+        r"sweep_convergence\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00008",
+        r"sweep_convergence\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00009",
+        r"sweep_convergence\sweep_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps_00010",
     ]
 
     plot_sweep_convergence(fpaths)
