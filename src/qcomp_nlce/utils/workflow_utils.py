@@ -258,6 +258,16 @@ def sweep_heff(
     )
 
 
+def apply_symmetries(eld: np.ndarray, exd: np.ndarray, alg: ALGORITHMS_ALIAS):
+    if alg == "vqe":
+        eld = (eld + eld[::-1, ::-1]) / 2
+
+    elif alg == "sweep":
+        eld = (eld + eld[::-1, ::-1].T + eld[::-1, ::-1] + eld.T) / 4
+    exd = (exd + exd[::-1, ::-1].T.conj() + exd.T.conj() + exd[::-1, ::-1]) / 4
+    return eld, exd
+
+
 def load_and_plot(fpath: Path):
     with io.open(fpath, "r", encoding="utf8") as f:
         d = json.loads(f.read())
@@ -281,19 +291,7 @@ def heff_backend_type(
     gs_expectation = gsd[which_backend][gsk]
 
     if reflect_symmetry:
-        if alg == "vqe":
-            overlap = (overlap + overlap[::-1, ::-1]) / 2
-
-        elif alg == "sweep":
-            overlap = (
-                overlap + overlap[::-1, ::-1].T + overlap[::-1, ::-1] + overlap.T
-            ) / 4
-        one_qp_expectation = (
-            one_qp_expectation
-            + one_qp_expectation[::-1, ::-1].T.conj()
-            + one_qp_expectation.T.conj()
-            + one_qp_expectation[::-1, ::-1]
-        ) / 4
+        overlap, one_qp_expectation = apply_symmetries(overlap, one_qp_expectation, alg)
 
     heff = H_effective(gs_expectation, one_qp_expectation, overlap)
 

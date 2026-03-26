@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from typing import Literal
-from src.qcomp_nlce.utils import BACKEND_TYPES, DATA_DIR
+from src.qcomp_nlce.utils import BACKEND_TYPES, DATA_DIR, ALGORITHMS_ALIAS
 from data_manager import ExperimentDataManager
 from fauplotstyle import style
 
@@ -124,6 +124,20 @@ def plot_matrix_breakdown(edm: ExperimentDataManager, item: list[str, str, str])
     )
 
 
+def apply_symmetry(
+    mat: np.ndarray, which: Literal["exd", "eld"], alg: ALGORITHMS_ALIAS
+):
+    if which == "eld" and alg == "vqe":
+        mat = (mat + mat[::-1, ::-1]) / 2
+
+    elif which == "eld" and alg == "sweep":
+        mat = (mat + mat[::-1, ::-1].T + mat[::-1, ::-1] + mat.T) / 4
+
+    else:
+        mat = (mat + mat[::-1, ::-1].T.conj() + mat.T.conj() + mat[::-1, ::-1]) / 4
+    return mat
+
+
 def parnum(val: float, std: float) -> str:
     if std == 0:
         return f"{val:.3f}"
@@ -163,6 +177,7 @@ def plot_matrix_breakdown_error(edm: ExperimentDataManager, item: list[str, str,
             mat, stds = get_matrix(
                 jobj, size, which_mat, which_backend, which_algorithm
             )
+            mat = apply_symmetry(mat, which_mat, which_algorithm)
             true_mat = get_true_values(jobj, size, which_mat, which_algorithm)
             stds /= np.sqrt(n_shots)
             nq = len(mat)
@@ -213,7 +228,7 @@ def plot_matrix_breakdown_error(edm: ExperimentDataManager, item: list[str, str,
 if __name__ == "__main__":
     style()
     dry_run = False
-    which_backend = "statevector"
+    which_backend = "real_backend"
 
     TFIM_80j_sweep_fpath = (
         r"1qp/sweep_tfim_80j_0hl_5q/run_00000/data/chestnuts_00000.json"

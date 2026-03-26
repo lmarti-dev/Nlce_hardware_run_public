@@ -21,12 +21,12 @@ from typing import Literal
 from qiskit.quantum_info import SparsePauliOp
 
 
-def tr_cx(n_qubits: int, which: Literal["X", "Y"]):
+def tr_cx(n_qubits: int, which: Literal["X", "Y"]) -> float:
 
     proj = projector_ham(n_qubits)
     ham = proj ^ SparsePauliOp(which)
 
-    return np.trace(ham.to_matrix())
+    return float(np.trace(ham.to_matrix()))
 
 
 def depol_overlap(o: np.ndarray, p: float, n_qubits: int):
@@ -61,10 +61,11 @@ def depol_expect(o: np.ndarray, p: float, trham: float, n_qubits: int):
 
 
 def depolarize(o: np.ndarray, tro: float, p: float, n_qubits: int) -> np.ndarray:
+    print(f"trace: {tro}")
     if isinstance(o, np.ndarray):
-        p = p + 1e-4 * (np.random.rand(o.shape) - 0.5)
+        p = p + 1e-1 * (np.random.rand(*o.shape) - 0.5)
     else:
-        p = p + 1e-4 * (np.random.rand() - 0.5)
+        p = p + 1e-1 * (np.random.rand() - 0.5)
 
     return (1 - p) * o + p * tro / (2**n_qubits)
 
@@ -102,16 +103,50 @@ def plot_depol_effect(fpath, dry_run):
 
     n_samples = 100
 
+    n_shots = 200
+
     depol_pows = np.linspace(-5, -1, 3)
     disps = np.zeros((len(depol_pows), len(ks), n_samples))
 
+    def sampler_errs(err):
+        sa_expect_l = complex_normal(
+            loc=expect_l,
+            scale=(1 + 1j) * err,
+        )
+        sa_overlap_l = complex_normal(
+            loc=overlap_l,
+            scale=(1 + 1j) * err,
+        )
+        sa_gs_l = complex_normal(
+            loc=gs_l,
+            scale=(1 + 1j) * err,
+        )
+        sa_expect_s = complex_normal(
+            loc=expect_s,
+            scale=(1 + 1j) * err,
+        )
+        sa_overlap_s = complex_normal(
+            loc=overlap_s,
+            scale=(1 + 1j) * err,
+        )
+        sa_gs_s = complex_normal(
+            loc=gs_s,
+            scale=(1 + 1j) * err,
+        )
+        return sa_expect_l, sa_overlap_l, sa_gs_l, sa_expect_s, sa_overlap_s, sa_gs_s
+
     def depoledheff(depol):
-        sa_expect_l = depol_expect(expect_l, depol, trham_l, n_qubits)
-        sa_expect_s = depol_expect(expect_s, depol, trham_s, n_qubits)
-        sa_overlap_l = depol_overlap(overlap_l, depol, n_qubits)
-        sa_overlap_s = depol_overlap(overlap_s, depol, n_qubits)
-        sa_gs_l = depolarize(gs_l, trham_l, depol, n_qubits)
-        sa_gs_s = depolarize(gs_s, trham_s, depol, n_qubits)
+
+        err_expect_l, err_overlap_l, err_gs_l, err_expect_s, err_overlap_s, err_gs_s = (
+            sampler_errs(1 / np.sqrt(n_shots))
+        )
+
+        sa_expect_l = depol_expect(err_expect_l, depol, trham_l, n_qubits)
+        sa_expect_s = depol_expect(err_expect_s, depol, trham_s, n_qubits)
+        sa_overlap_l = depol_overlap(err_overlap_l, depol, n_qubits)
+        sa_overlap_s = depol_overlap(err_overlap_s, depol, n_qubits)
+        sa_gs_l = depolarize(err_gs_l, trham_l, depol, n_qubits)
+        sa_gs_s = depolarize(err_gs_s, trham_s, depol, n_qubits)
 
         H_eff_Nb = H_effective(sa_gs_l, sa_expect_l, sa_overlap_l)
         H_eff_Ns = H_effective(sa_gs_s, sa_expect_s, sa_overlap_s)

@@ -54,7 +54,7 @@ def plot_sweep_convergence(fpaths):
     ax.set_yscale("log")
     ax.set_xscale("log")
     ax.set_xlabel(r"Number of sweep steps")
-    ax.set_ylabel("Mean standard dev. of dispersion")
+    ax.set_ylabel("Mean error. of dispersion")
 
     m_edm.save_figure(
         fig,
