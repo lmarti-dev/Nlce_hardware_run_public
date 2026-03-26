@@ -129,7 +129,7 @@ def tmp_entry_exists(l: TempListType, ind_x: int, ind_y: int):
     return False
 
 
-def tmp_dirname(circuit: QuantumCircuit, which_backend: str, postfix: str = ""):
+def tmp_dirname(circuit: QuantumCircuit, which_backend: str, postfix: str = "RUN2"):
     if "tmpname" not in circuit.metadata.keys():
         raise ValueError(f"You did not give a tmpname to the circuit: {circuit.name}")
 

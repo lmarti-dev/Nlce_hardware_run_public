@@ -6,7 +6,13 @@ from src.qcomp_nlce.utils import (
     exact_dispersion_1qp_1d,
     dispersion_1d_thermodynamic,
     projector_ham,
+    TFIM,
+    BACKEND_COLORS,
 )
+
+
+from src.qcomp_nlce.utils.workflow_utils import tfim_ed_dispersion
+
 from src.qcomp_nlce.utils.stats import complex_normal, H_effective
 from data_manager import ExperimentDataManager
 from pathlib import Path
@@ -23,7 +29,7 @@ def tr_cx(n_qubits: int, which: Literal["X", "Y"]):
     return np.trace(ham.to_matrix())
 
 
-def depol_cx(o: np.ndarray, p: float, n_qubits: int):
+def depol_overlap(o: np.ndarray, p: float, n_qubits: int):
     r = o.real
     i = o.imag
 
@@ -33,24 +39,39 @@ def depol_cx(o: np.ndarray, p: float, n_qubits: int):
     return depolarize(r, trr, p, n_qubits) + 1j * depolarize(i, tri, p, n_qubits)
 
 
-def depol_ham(o: complex, p, ham: SparsePauliOp, diag: bool):
-    n_qubits = ham.num_qubits
-    hammat = ham.to_matrix()
+def depol_hamelem(o: complex, p: float, trham: float, diag: bool, n_qubits: int):
 
-    o
+    if diag:
+        return depolarize(o, trham, p, n_qubits)
+    else:
+        # since it's approx the same circuit, off diag depol cancels out
+        # because gamma1 - gamma2 are ish the same
+        return (1 - p) * o
+
+
+def depol_expect(o: np.ndarray, p: float, trham: float, n_qubits: int):
+    out = np.zeros_like(o)
+    for ii in range(o.shape[0]):
+        for jj in range(o.shape[1]):
+            out[ii, jj] = depol_hamelem(
+                o[ii, jj], p, trham, diag=ii == jj, n_qubits=n_qubits
+            )
+
+    return out
 
 
 def depolarize(o: np.ndarray, tro: float, p: float, n_qubits: int) -> np.ndarray:
+    if isinstance(o, np.ndarray):
+        p = p + 1e-4 * (np.random.rand(o.shape) - 0.5)
+    else:
+        p = p + 1e-4 * (np.random.rand() - 0.5)
+
     return (1 - p) * o + p * tro / (2**n_qubits)
 
 
-def plot_errin_vs_errout():
-    fpath = "vqe_tfim_80j_0hl_5q"
+def plot_depol_effect(fpath, dry_run):
 
-    dry_run = False
-    m_edm = ExperimentDataManager(
-        "plot_instd_vs_out_std", project="nlce", dry_run=dry_run
-    )
+    m_edm = ExperimentDataManager("plot_effect_depol", project="nlce", dry_run=dry_run)
 
     backend = "statevector"
 
@@ -59,6 +80,16 @@ def plot_errin_vs_errout():
 
     ks = d["inputs"]["ks"]
     name = d["inputs"]["model_dir"]
+    j = d["inputs"]["J"]
+    hl = d["inputs"]["hl"]
+    ladder = d["inputs"]["ladder"]
+    n_qubits = d["inputs"]["n_qubits"]
+
+    ham_l = TFIM(n_qubits, 1, j, longitudinal_field=hl, ladder=ladder)
+    ham_s = TFIM(n_qubits - 1, 1, j, longitudinal_field=hl, ladder=ladder)
+
+    trham_l = np.trace(ham_l.to_matrix())
+    trham_s = np.trace(ham_s.to_matrix())
 
     expect_l = d["results"]["vqe"]["dict_l"]["exd"]["system"]["values"]
     expect_s = d["results"]["vqe"]["dict_s"]["exd"]["system"]["values"]
@@ -69,51 +100,70 @@ def plot_errin_vs_errout():
     gs_l = d["results"]["vqe"]["dict_l"]["gsd"]["system"]["ground_energy"]
     gs_s = d["results"]["vqe"]["dict_s"]["gsd"]["system"]["ground_energy"]
 
-    n_samples = 10000
+    n_samples = 100
 
-    std_pows = np.arange(-5, 0)
+    depol_pows = np.linspace(-5, -1, 3)
+    disps = np.zeros((len(depol_pows), len(ks), n_samples))
 
-    stds_in = []
-    disps = np.zeros((len(std_pows), len(ks), n_samples))
-
-    for depol_pow in np.linspace(-5, 1, 6):
-        depol = 10**depol_pow
-        sa_expect_l = depolarize(expect_l, trex)
+    def depoledheff(depol):
+        sa_expect_l = depol_expect(expect_l, depol, trham_l, n_qubits)
+        sa_expect_s = depol_expect(expect_s, depol, trham_s, n_qubits)
+        sa_overlap_l = depol_overlap(overlap_l, depol, n_qubits)
+        sa_overlap_s = depol_overlap(overlap_s, depol, n_qubits)
+        sa_gs_l = depolarize(gs_l, trham_l, depol, n_qubits)
+        sa_gs_s = depolarize(gs_s, trham_s, depol, n_qubits)
 
         H_eff_Nb = H_effective(sa_gs_l, sa_expect_l, sa_overlap_l)
         H_eff_Ns = H_effective(sa_gs_s, sa_expect_s, sa_overlap_s)
 
         return H_eff_Nb, H_eff_Ns
 
-    for jj, std_pow in enumerate(std_pows):
-        std = 10.0**std_pow
-        stds_in.append(std)
+    for jj, depol_pow in enumerate(depol_pows):
+        depol = 10**depol_pow
         for n in range(n_samples):
             print(f"{1 + n:0>6n}/{n_samples}", end="\r")
-            H_eff_Nb, H_eff_Ns = sampler_errs(std)
+            H_eff_Nb, H_eff_Ns = depoledheff(depol)
             disp = [dispersion_1d_thermodynamic(k, H_eff_Nb, H_eff_Ns) for k in ks]
             disps[jj, :, n] = disp
 
-    stds_out = np.mean(np.std(disps, axis=2), axis=1)
-    stds_out_std = np.std(np.std(disps, axis=2), axis=1)
+    meaned_disps = np.mean(disps, axis=2)
+    meaned_disps_std = np.std(disps, axis=2)
 
     fig, ax = plt.subplots()
-    ax.errorbar(
-        stds_in,
-        stds_out,
-        stds_out_std,
-        capsize=2,
-        fmt="x:",
-        linewidth=1,
+    for jj, depol_pow in enumerate(depol_pows):
+        ax.errorbar(
+            ks,
+            meaned_disps[jj, :],
+            meaned_disps_std[jj, :],
+            capsize=2,
+            fmt="x:",
+            linewidth=1,
+            label=f"$10^{{{depol_pow:n}}}$",
+        )
+    # ax.set_xscale("log")
+    # ax.set_yscale("log")
+    ax.set_xlabel(r"$\omega(k)$")
+    ax.set_ylabel(r"$k$")
+
+    if "_0hl" in name and "ladder" not in name:
+        ax.plot(
+            ks,
+            exact_dispersion_1qp_1d(j, ks),
+            label="Analytic",
+            color=BACKEND_COLORS["analytic"],
+        )
+    ax.plot(
+        ks,
+        tfim_ed_dispersion(n_qubits, j, ks, hl, ladder),
+        label=BACKEND_LABELS["ed"],
+        color=BACKEND_COLORS["ed"],
     )
-    ax.set_xscale("log")
-    ax.set_yscale("log")
-    ax.set_xlabel(r"Standard dev. of $\tilde{H}_{\mathrm{eff}}$")
-    ax.set_ylabel("Mean standard dev. of dispersion")
+
+    ax.legend()
 
     m_edm.save_figure(
         fig,
-        filename=f"stdinout_{n_samples}spl_{name}",
+        filename=f"depol_effect_{n_samples}spl_{name}",
         fig_shape="nice-y",
         add_timestamp=False,
     )
@@ -123,4 +173,5 @@ def plot_errin_vs_errout():
 
 if __name__ == "__main__":
     style()
-    plot_errin_vs_errout()
+    fpath = "1qp/vqe_tfim_80j_0hl_5q"
+    plot_depol_effect(fpath, True)

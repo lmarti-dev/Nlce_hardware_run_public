@@ -283,19 +283,17 @@ def heff_backend_type(
     if reflect_symmetry:
         if alg == "vqe":
             overlap = (overlap + overlap[::-1, ::-1]) / 2
-            one_qp_expectation = (
-                one_qp_expectation + one_qp_expectation[::-1, ::-1]
-            ) / 2
+
         elif alg == "sweep":
             overlap = (
                 overlap + overlap[::-1, ::-1].T + overlap[::-1, ::-1] + overlap.T
             ) / 4
-            one_qp_expectation = (
-                one_qp_expectation
-                + one_qp_expectation[::-1, ::-1].T
-                + one_qp_expectation.T
-                + one_qp_expectation[::-1, ::-1]
-            ) / 4
+        one_qp_expectation = (
+            one_qp_expectation
+            + one_qp_expectation[::-1, ::-1].T.conj()
+            + one_qp_expectation.T.conj()
+            + one_qp_expectation[::-1, ::-1]
+        ) / 4
 
     heff = H_effective(gs_expectation, one_qp_expectation, overlap)
 
