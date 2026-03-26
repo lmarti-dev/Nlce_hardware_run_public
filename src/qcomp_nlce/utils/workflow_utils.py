@@ -21,6 +21,7 @@ from src.qcomp_nlce.utils import (
     HAM_NAME_VAR,
     get_ground_energy,
     pfeuty_energy,
+    ALGORITHMS_ALIAS,
 )
 from src.qcomp_nlce.utils.dispersion import (
     exact_dispersion_1qp_1d,
@@ -263,7 +264,14 @@ def load_and_plot(fpath: Path):
     plot_all_backends_dispersions(d)
 
 
-def heff_backend_type(eld: dict, gsd: dict, exd: dict, which_backend: BACKEND_TYPES):
+def heff_backend_type(
+    eld: dict,
+    gsd: dict,
+    exd: dict,
+    alg: ALGORITHMS_ALIAS,
+    which_backend: BACKEND_TYPES,
+    reflect_symmetry: bool = True,
+):
     overlap = eld[which_backend]["values"]
     one_qp_expectation = exd[which_backend]["values"]
     if which_backend == "system":
@@ -271,6 +279,23 @@ def heff_backend_type(eld: dict, gsd: dict, exd: dict, which_backend: BACKEND_TY
     else:
         gsk = "energy"
     gs_expectation = gsd[which_backend][gsk]
+
+    if reflect_symmetry:
+        if alg == "vqe":
+            overlap = (overlap + overlap[::-1, ::-1]) / 2
+            one_qp_expectation = (
+                one_qp_expectation + one_qp_expectation[::-1, ::-1]
+            ) / 2
+        elif alg == "sweep":
+            overlap = (
+                overlap + overlap[::-1, ::-1].T + overlap[::-1, ::-1] + overlap.T
+            ) / 4
+            one_qp_expectation = (
+                one_qp_expectation
+                + one_qp_expectation[::-1, ::-1].T
+                + one_qp_expectation.T
+                + one_qp_expectation[::-1, ::-1]
+            ) / 4
 
     heff = H_effective(gs_expectation, one_qp_expectation, overlap)
 
@@ -326,11 +351,14 @@ def get_heff_values(
 
     heff = {}
 
+    alg = "vqe" if "vqe" in elem_circuit.metadata["tmpname"] else "sweep"
+
     for which_backend in which_backends:
         heff[which_backend] = heff_backend_type(
             elements_dict,
             ground_state_dict,
             expectations_dict,
+            alg,
             which_backend,
         )
 

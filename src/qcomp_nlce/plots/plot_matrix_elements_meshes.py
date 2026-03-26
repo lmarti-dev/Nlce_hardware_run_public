@@ -54,7 +54,7 @@ def get_gs(
     )
 
 
-def plot_matrix_breakdown(item: list[str, str, str], dry_run: bool = True):
+def plot_matrix_breakdown(edm: ExperimentDataManager, item: list[str, str, str]):
     fpath = item[0]
     which_algorithm = item[1]
     which_backend = item[2]
@@ -63,12 +63,6 @@ def plot_matrix_breakdown(item: list[str, str, str], dry_run: bool = True):
         which_model = jobj["inputs"]["model_dir"]
     else:
         which_model = jobj["inputs"]["which_model"]
-
-    edm = ExperimentDataManager(
-        f"plot_meshes_{which_backend}_{which_model}_{which_algorithm}",
-        project="nlce",
-        dry_run=dry_run,
-    )
 
     textcolors = ["k", "w"]
 
@@ -139,7 +133,7 @@ def parnum(val: float, std: float) -> str:
     return s1
 
 
-def plot_matrix_breakdown_error(item: list[str, str, str], dry_run: bool = True):
+def plot_matrix_breakdown_error(edm: ExperimentDataManager, item: list[str, str, str]):
     fpath = item[0]
     which_algorithm = item[1]
     which_backend = item[2]
@@ -148,12 +142,6 @@ def plot_matrix_breakdown_error(item: list[str, str, str], dry_run: bool = True)
         which_model = jobj["inputs"]["model_dir"]
     else:
         which_model = jobj["inputs"]["which_model"]
-
-    edm = ExperimentDataManager(
-        f"plot_meshes_{which_backend}_{which_model}_{which_algorithm}_V2",
-        project="nlce",
-        dry_run=dry_run,
-    )
 
     textcolors = ["k", "w"]
 
@@ -216,7 +204,7 @@ def plot_matrix_breakdown_error(item: list[str, str, str], dry_run: bool = True)
     edm.var_dump(**jobj["inputs"], fpath=fpath)
     edm.save_figure(
         fig,
-        f"{which_algorithm}_{which_backend}_{which_model}_meshes_std_V2",
+        f"{which_algorithm}_{which_backend}_{which_model}_meshes_error",
         fig_shape="double-size",
         add_timestamp=False,
     )
@@ -225,18 +213,35 @@ def plot_matrix_breakdown_error(item: list[str, str, str], dry_run: bool = True)
 if __name__ == "__main__":
     style()
     dry_run = False
-    which_backend = "real_backend"
+    which_backend = "statevector"
 
-    TFIM_80j_sweep_fpath = r"sweep_tfim_80j_0hl_5q/run_00000/data/apricots_00000.json"
-    TFIM_80j_vqe_fpath = r"vqe_tfim_80j_0hl_5q/run_00000/data/pistachios_00000.json"
-    TFIM_100j_vqe_fpath = r"vqe_tfim_100j_0hl_5q/run_00000/data/date_00000.json"
+    TFIM_80j_sweep_fpath = (
+        r"1qp/sweep_tfim_80j_0hl_5q/run_00000/data/chestnuts_00000.json"
+    )
+    TFIM_80j_vqe_fpath = r"1qp/vqe_tfim_80j_0hl_5q/run_00000/data/cantaloupe_00000.json"
+    TFIM_100j_vqe_fpath = r"1qp/vqe_tfim_100j_0hl_5q/run_00000/data/peanuts_00000.json"
+    TFIM_50j_10hl_vqe_fpath = (
+        r"1qp/vqe_tfim_50j_10hl_5q/run_00000/data/pears_00000.json"
+    )
+
+    TFIM_20j_ladder_vqe_fpath = (
+        r"1qp/vqe_tfim_20j_0hl_8q_ladder/run_00000/data/plantains_00000.json"
+    )
+
+    edm = ExperimentDataManager(
+        f"plot_meshes_{which_backend}",
+        project="nlce",
+        dry_run=dry_run,
+    )
 
     for item in (
-        (TFIM_80j_sweep_fpath, "sweep", "real_backend"),
-        (TFIM_80j_vqe_fpath, "vqe", "real_backend"),
-        (TFIM_100j_vqe_fpath, "vqe", "real_backend"),
+        (TFIM_80j_sweep_fpath, "sweep", which_backend),
+        (TFIM_80j_vqe_fpath, "vqe", which_backend),
+        (TFIM_100j_vqe_fpath, "vqe", which_backend),
+        (TFIM_50j_10hl_vqe_fpath, "vqe", which_backend),
+        (TFIM_20j_ladder_vqe_fpath, "vqe", which_backend),
     ):
-        plot_matrix_breakdown_error(item, dry_run)
-        plot_matrix_breakdown(item, dry_run)
+        plot_matrix_breakdown_error(edm, item)
+        plot_matrix_breakdown(edm, item)
 
     # plt.show()

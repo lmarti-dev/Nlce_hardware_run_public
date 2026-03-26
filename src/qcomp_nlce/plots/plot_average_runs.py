@@ -73,12 +73,20 @@ if __name__ == "__main__":
         "sweep",
     )
     tfim_100j_0hl = (
-        [r"vqe_tfim_100j_0hl_5q", r"vqe_tfim_100j_0hl_5q_run2"],
+        [
+            r"vqe_tfim_100j_0hl_5q",
+            r"vqe_tfim_100j_0hl_5q_run2",
+            r"vqe_tfim_100j_0hl_5q_run3",
+        ],
         "TFIM_100j_0hl",
         "vqe",
     )
     tfim_50j_10hl = (
-        [r"vqe_tfim_50j_10hl_5q", r"vqe_tfim_50j_10hl_5q_run2"],
+        [
+            r"vqe_tfim_50j_10hl_5q",
+            r"vqe_tfim_50j_10hl_5q_run2",
+            r"vqe_tfim_50j_10hl_5q_run3",
+        ],
         "TFIM_50j_10hl",
         "vqe",
     )

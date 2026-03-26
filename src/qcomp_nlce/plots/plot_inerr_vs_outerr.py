@@ -13,7 +13,7 @@ import numpy as np
 
 
 def plot_errin_vs_errout():
-    fpath = "vqe_tfim_80j_0hl_5q"
+    fpath = "1qp/vqe_tfim_80j_0hl_5q"
 
     dry_run = False
     m_edm = ExperimentDataManager("plot_inerrvsouterr", project="nlce", dry_run=dry_run)
@@ -79,13 +79,31 @@ def plot_errin_vs_errout():
         H_eff_Nb = H_effective(sa_gs_l, sa_expect_l, sa_overlap_l)
         H_eff_Ns = H_effective(sa_gs_s, sa_expect_s, sa_overlap_s)
 
-        return H_eff_Nb, H_eff_Ns
+        return (
+            H_eff_Nb,
+            H_eff_Ns,
+            sa_expect_l,
+            sa_overlap_l,
+            sa_gs_l,
+            sa_expect_s,
+            sa_overlap_s,
+            sa_gs_s,
+        )
 
     for n in range(n_samples):
         err += 0.01
         stds_in.append(err)
         print(f"{1 + n:0>6n}/{n_samples}", end="\r")
-        H_eff_Nb, H_eff_Ns = sampler_errs(err)
+        (
+            H_eff_Nb,
+            H_eff_Ns,
+            sa_expect_l,
+            sa_overlap_l,
+            sa_gs_l,
+            sa_expect_s,
+            sa_overlap_s,
+            sa_gs_s,
+        ) = sampler_errs(err)
         disp = np.array(
             [dispersion_1d_thermodynamic(k, H_eff_Nb, H_eff_Ns) for k in ks]
         )
@@ -93,7 +111,23 @@ def plot_errin_vs_errout():
         err_h_eff_nb = np.mean(np.abs(H_eff_Nb - true_heff_nb))
         err_h_eff_ns = np.mean(np.abs(H_eff_Ns - true_heff_ns))
 
-        errs_in.append(np.mean([err_h_eff_ns, err_h_eff_nb]))
+        err_mats_l = np.mean(
+            [
+                *np.abs(sa_expect_l - expect_l).flatten(),
+                *np.abs(sa_overlap_l - overlap_l).flatten(),
+                np.abs(sa_gs_l - gs_l),
+            ]
+        )
+
+        err_mats_s = np.mean(
+            [
+                *np.abs(sa_expect_s - expect_s).flatten(),
+                *np.abs(sa_overlap_s - overlap_s).flatten(),
+                np.abs(sa_gs_s - gs_s),
+            ]
+        )
+
+        errs_in.append(np.mean([err_mats_l, err_mats_s]))
         errs_out.append(np.mean(np.abs(disp - true_disp)))
         errs_out_std.append(np.std(np.abs(disp - true_disp)))
 
@@ -120,7 +154,7 @@ def plot_errin_vs_errout():
     ax.set_yscale("log")
     # ax.set_xlabel(r"$\abs{\tilde{H}_{\mathrm{eff}} -H_{\mathrm{eff}}}$")
     # ax.set_ylabel(r"$\abs{\tilde{\omega}(k) -\omega(k)}$")
-    ax.set_xlabel(r"Mean error $|\tilde{H}_{\mathrm{eff}} -H_{\mathrm{eff}}|$")
+    ax.set_xlabel(r"Mean error on all observables")
     ax.set_ylabel(r"Mean error on dispersion")
 
     m_edm.save_figure(

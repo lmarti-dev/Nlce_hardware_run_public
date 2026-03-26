@@ -101,6 +101,10 @@ def workflow_nq_aqt_j50(dry_run, which_backends: BACKEND_TYPES):
     return workflow_nq_aqt(dry_run, 0.5, which_backends)
 
 
+def workflow_nq_aqt_j30(dry_run, which_backends: BACKEND_TYPES):
+    return workflow_nq_aqt(dry_run, 0.3, which_backends)
+
+
 def workflow_nq_aqt_j80(dry_run, which_backends: BACKEND_TYPES):
     return workflow_nq_aqt(dry_run, 0.8, which_backends)
 
@@ -427,10 +431,10 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    # workflow_nq_aqt_hl(False, ["real_backend", "fake_backend", "statevector"])
-    # workflow_nq_aqt_j100(False, ["real_backend", "fake_backend", "statevector"])
-    # workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
+    workflow_nq_aqt_hl(False, ["real_backend", "fake_backend", "statevector"])
+    workflow_nq_aqt_j100(False, ["real_backend", "fake_backend", "statevector"])
+    workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
     # workflow_nq_aqt_sample_estim(False, 0.8, ["statevector", "fake_backend"])
-    # workflow_nq_aqt_sweep(False, ["real_backend", "fake_backend", "statevector"])
+    workflow_nq_aqt_sweep(False, ["real_backend", "fake_backend", "statevector"])
     workflow_nq_aqt_ladder(False, ["real_backend", "fake_backend", "statevector"])
     # workflow_nq_aqt_sweepconv(False, 0.8, ["statevector"])

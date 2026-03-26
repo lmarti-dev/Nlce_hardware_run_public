@@ -81,7 +81,7 @@ def average_result_matrices(
                     eld = out_d["results"][alg][si]["eld"]
                     gsd = out_d["results"][alg][si]["gsd"]
                     exd = out_d["results"][alg][si]["exd"]
-                    heff = heff_backend_type(eld, gsd, exd, backend)
+                    heff = heff_backend_type(eld, gsd, exd, alg, backend)
                     out_d["results"][alg][si]["heff"][backend] = heff
             disp = dispersion_all_backends(
                 out_d["results"][alg]["dict_l"],
@@ -120,7 +120,7 @@ def plot_disps(ds: list[dict], labels: list[str] = None):
                 eld = d["results"]["vqe"][si]["eld"]
                 gsd = d["results"]["vqe"][si]["gsd"]
                 exd = d["results"]["vqe"][si]["exd"]
-                heff = heff_backend_type(eld, gsd, exd, backend)
+                heff = heff_backend_type(eld, gsd, exd, "vqe", backend)
                 heffs.append(heff)
             disp = [dispersion_switcher(k, heffs[0], heffs[1]) for k in ks]
             disps[backend] = disp
@@ -184,7 +184,7 @@ def undepolarize_out_dict(out_d: dict, depol_rate: float) -> dict:
                 eld = out_d["results"]["vqe"][si]["eld"]
                 gsd = out_d["results"]["vqe"][si]["gsd"]
                 exd = out_d["results"]["vqe"][si]["exd"]
-                heff = heff_backend_type(eld, gsd, exd, backend)
+                heff = heff_backend_type(eld, gsd, "vqe", exd, backend)
                 out_d["results"]["vqe"][si]["heff"][backend] = heff
         disp = dispersion_all_backends(
             out_d["results"]["vqe"]["dict_l"],

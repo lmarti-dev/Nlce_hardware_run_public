@@ -4,6 +4,7 @@ from src.qcomp_nlce.workflow.workflow_tfim_1qp_dispersion import (
     workflow_nq_aqt_hl,
     workflow_nq_aqt_j100,
     workflow_nq_aqt_j80,
+    workflow_nq_aqt_j30,
 )
 from src.qcomp_nlce.utils.hardware import pending_jobs
 from typing import Callable

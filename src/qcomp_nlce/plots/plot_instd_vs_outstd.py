@@ -13,7 +13,7 @@ import numpy as np
 
 
 def plot_errin_vs_errout():
-    fpath = "vqe_tfim_80j_0hl_5q"
+    fpath = "1qp/vqe_tfim_80j_0hl_5q"
 
     dry_run = False
     m_edm = ExperimentDataManager(
@@ -98,7 +98,7 @@ def plot_errin_vs_errout():
     )
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel(r"Standard dev. of $\tilde{H}_{\mathrm{eff}}$")
+    ax.set_xlabel(r"Standard dev. of all observables")
     ax.set_ylabel("Mean standard dev. of dispersion")
 
     m_edm.save_figure(
