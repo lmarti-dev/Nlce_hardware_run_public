@@ -198,12 +198,14 @@ def sv_depol(dry_run: bool):
         )
 
 
-def depol_vs_shots(dry_run, J, which_backends: BACKEND_TYPES):
-    n_shots = int(200)
+def depol_vs_shots(dry_run):
+    J = 0.8
+    which_backends: BACKEND_TYPES = ["fake_backend", "statevector"]
+    n_shots = int(2000)
     which_hadamard_test = "stefan"
     n_qubits_max = 5
-    for provider_name in ("AQT", "AQT_BETTER_10", "AQT_BETTER_100", "AQT_BETTER_1000"):
-        for n_reps in (1, 10, 50):
+    for provider_name in ("AQT_WORSE_2", "AQT", "AQT_BETTER_10", "AQT_BETTER_100"):
+        for n_reps in (20,):
             workflow_nq(
                 dry_run,
                 n_qubits_max,

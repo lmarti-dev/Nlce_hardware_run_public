@@ -5,6 +5,8 @@ from src.qcomp_nlce.utils.workflow_utils import (
     dispersion_switcher,
 )
 
+import re
+
 from src.qcomp_nlce.utils.stats import (
     mean_std,
     mc_disp_from_res_dict,
@@ -197,3 +199,11 @@ def undepolarize_out_dict(out_d: dict, depol_rate: float) -> dict:
     mc_disp = mc_disp_from_res_dict(ks, out_d, "vqe", n_mc_samples, to_eotm=True)
     out_d["results"]["vqe"]["mc_disp"] = mc_disp
     return out_d
+
+
+def etopow(a: float):
+    r = f"{a:.2e}"
+    r = re.sub(r"e\+0*", r"\\cdot 10^{", r)
+    r = re.sub(r"e-0*", r"\\cdot 10^{-", r)
+    f = r + "}"
+    return f
