@@ -60,6 +60,8 @@ def depol_expect(o: np.ndarray, p: float, trham: float, n_qubits: int):
     return out
 
 
+LOOK AT SV VALS - REAL BACKEND VALS to GET depol noise
+
 def depolarize(o: np.ndarray, tro: float, p: float, n_qubits: int) -> np.ndarray:
     print(f"trace: {tro}")
     if isinstance(o, np.ndarray):
