@@ -15,11 +15,11 @@ def col_from_fpath(fpath: Path) -> tuple[int, float]:
     keys = ("AQT_BETTER_100", "AQT_WORSE_2", "AQT_WORSE_10", "AQT_BETTER_10", "AQT")
 
     providers = {
-        "AQT_WORSE_10": (0, 10),
-        "AQT_WORSE_2": (1, 2),
-        "AQT": (2, 1),
-        "AQT_BETTER_10": (3, 1 / 10),
-        "AQT_BETTER_100": (4, 1 / 100),
+        # "AQT_WORSE_10": (0, 10),
+        "AQT_WORSE_2": (0, 2),
+        "AQT": (1, 1),
+        "AQT_BETTER_10": (2, 1 / 10),
+        "AQT_BETTER_100": (3, 1 / 100),
     }
 
     for k in keys:
@@ -28,14 +28,14 @@ def col_from_fpath(fpath: Path) -> tuple[int, float]:
 
 
 def row_from_nreps(n_shots: int) -> int:
-    d = {200: 0, 2000: 1, 10000: 2}
+    d = {200: 0, 2000: 1, 10000: 2, 40000: 3}
     return d[n_shots]
 
 
 if __name__ == "__main__":
     style()
 
-    dry_run = True
+    dry_run = False
     m_edm = ExperimentDataManager(
         "plot_depol_vs_shots", project="nlce", dry_run=dry_run
     )
@@ -47,24 +47,25 @@ if __name__ == "__main__":
         r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_1reps",
         r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps",
         r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_50reps",
+        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_2000shots_x_20reps",
         r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_10_200shots_x_1reps",
         r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_10_200shots_x_10reps",
         r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_10_200shots_x_50reps",
+        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_10_2000shots_x_20reps",
         r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_100_200shots_x_1reps",
         r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_100_200shots_x_10reps",
         r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_100_200shots_x_50reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_WORSE_10_200shots_x_1reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_WORSE_10_200shots_x_10reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_WORSE_10_200shots_x_50reps",
+        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_100_2000shots_x_20reps",
         r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_WORSE_2_200shots_x_1reps",
         r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_WORSE_2_200shots_x_10reps",
         r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_WORSE_2_200shots_x_50reps",
+        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_WORSE_2_2000shots_x_20reps",
     )
 
     name = "TFIM_vqe_80j_0hl_5q"
 
-    ncols = 5
-    nrows = 3
+    ncols = 4
+    nrows = 4
 
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols)
 

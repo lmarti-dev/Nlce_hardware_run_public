@@ -129,7 +129,7 @@ def workflow_nq_aqt(dry_run, J, which_backends: BACKEND_TYPES):
     )
 
 
-def sv_depol(dry_run: bool):
+def aer_depol(dry_run: bool):
     provider_name: PROVIDER_ALIAS
     n_shots = int(-1)
     which_hadamard_test = "stefan"
@@ -221,7 +221,7 @@ def depol_vs_shots(dry_run):
             )
 
 
-def workflow_nq_aqt_sampling(dry_run, J, which_backends: BACKEND_TYPES):
+def n_reps_effect(dry_run, J, which_backends: BACKEND_TYPES):
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
     which_hadamard_test = "stefan"
@@ -517,4 +517,4 @@ if __name__ == "__main__":
     # workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
     # sweep_convergence(False, 0.8, ["statevector"])
     # depol_vs_shots(False, 0.8, ["fake_backend", "statevector"])
-    sv_depol(False)
+    depol_vs_shots(False)
