@@ -22,7 +22,6 @@ try:
         IQMFakeDeneb as IQMSmallFakeBackend,
     )
 except Exception:
-
     from iqm.qiskit_iqm.fake_backends.fake_adonis import (
         IQMFakeAdonis as IQMSmallFakeBackend,
     )
@@ -230,7 +229,6 @@ def get_backend(n_qubits: int, which: PROVIDER_ALIAS) -> Union[IBMBackend, MQPBa
 def get_appropriate_fake_backend(
     n_qubits: int, which: PROVIDER_ALIAS
 ) -> Union[FakeBackendV2, AQTResource]:
-
     if which == "IBM":
         if n_qubits <= 7:
             return FakeLagosV2()
@@ -289,6 +287,13 @@ def get_appropriate_fake_backend(
             n_improve = 2
         return aqt_better_fake_backend(n_improve)
 
+    elif "AQT_WORSE" in which:
+        if len(which.split("_")) == 3:
+            n_improve = float(which.split("_")[-1])
+        else:
+            n_improve = 2
+        return aqt_better_fake_backend(1 / n_improve)
+
     else:
         raise ValueError(f"Expected a provider, got: {which}")
 
@@ -296,7 +301,6 @@ def get_appropriate_fake_backend(
 def mean_std_tuples_from_res(
     res: EstimatorResult | PrimitiveResult,
 ) -> list[tuple[complex, float]]:
-
     out = []
     if isinstance(res, EstimatorResult):
         for m, s in zip(res.values, res.metadata):
@@ -315,7 +319,6 @@ def pending_jobs(n_qubits: int, provider_name: PROVIDER_ALIAS) -> int:
 
 
 def compute_mean_circ_stats(circs: list | QuantumCircuit, verbose: bool = False):
-
     if isinstance(circs, QuantumCircuit):
         circ_list = [circs]
     elif isinstance(circs, list):
@@ -414,7 +417,6 @@ def circuits_to_sampler_payload(
     parameters: np.ndarray,
     which: str = "v2",
 ):
-
     if isinstance(circuit, QuantumCircuit):
         circuit = [circuit]
 
@@ -428,7 +430,6 @@ def circuits_to_sampler_payload(
 
     isa_circuit = [compile_circuit_for_backend(c, backend, options) for c in circuit]
     if which == "v1":
-
         payload = []
         if isinstance(isa_circuit, QuantumCircuit):
             isa_circuit = [isa_circuit]
@@ -495,7 +496,6 @@ def circuits_to_estimator_payload(
         for c in circuit
     ]
     if which == "v1":
-
         payload = [[], [], []]
         # assume that for each circuit you want to measure each parameters
         if isinstance(isa_circuit, QuantumCircuit):
@@ -536,7 +536,6 @@ def circuits_to_estimator_payload(
 def get_backend_sampler(
     backend: BACKEND_ALIAS,
 ) -> SamplerV2 | AQTSampler:
-
     if isinstance(backend, AQTResource) or backend.name == "AQT20":
         sampler = AQTSampler(backend)
 
@@ -563,14 +562,12 @@ def backend_sample(
     parameters: np.ndarray,
     n_shots: int,
 ) -> BaseRuntimeJob:
-
     sampler = get_backend_sampler(backend)
 
     if isinstance(
         backend,
         (IBMBackend, FakeBackendV2, GenericBackendV2),
     ):
-
         payload = circuits_to_sampler_payload(backend, circuit, parameters, which="v2")
 
         job = sampler.run(
@@ -640,7 +637,6 @@ def backend_estimate(
     parameters: np.ndarray,
     n_shots: int,
 ) -> BaseRuntimeJob:
-
     # I believe only AQT now runs on V1, QExa can use V2 prims. (except the passmanager lol)
     # need MQPBackend in there because the AQT real backend is provided by MQP
     if isinstance(backend, (AQTResource, MQPBackend)) or backend.name == "AQT20":

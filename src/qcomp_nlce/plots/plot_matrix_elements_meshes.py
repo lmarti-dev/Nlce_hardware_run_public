@@ -54,6 +54,107 @@ def get_gs(
     )
 
 
+def complex_depol(mat: np.ndarray, true_mat: np.ndarray):
+    depols = np.zeros_like(mat)
+    for ii in range(mat.shape[0]):
+        for jj in range(mat.shape[1]):
+            re = mat[ii, jj].real
+            retrue = true_mat[ii, jj].real
+            im = mat[ii, jj].imag
+            imtrue = true_mat[ii, jj].imag
+            if np.isclose(retrue, 0):
+                depol_re = 0.0
+            else:
+                depol_re = 1 - re / retrue
+            if np.isclose(imtrue, 0):
+                depol_im = 0.0
+            else:
+                depol_im = 1 - im / imtrue
+
+            depols[ii, jj] = depol_re + 1j * depol_im
+    return depols
+
+
+def plot_matrix_breakdown_depolarization(
+    edm: ExperimentDataManager, item: list[str, str, str]
+):
+    fpath = item[0]
+    which_algorithm = item[1]
+    which_backend = item[2]
+    jobj = load_json(Path(DATA_DIR, fpath))
+    if "model_dir" in jobj["inputs"]:
+        which_model = jobj["inputs"]["model_dir"]
+    else:
+        which_model = jobj["inputs"]["which_model"]
+
+    textcolors = ["k", "w"]
+
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(8, 6), constrained_layout=True)
+    pn = jobj["inputs"]["provider_name"]
+    nq = jobj["inputs"]["n_qubits"]
+    n_shots = jobj["inputs"]["n_shots"]
+    n_reps = jobj["inputs"]["n_reps"]
+    n_shots *= n_reps
+
+    SIZES_D = {"dict_l": f"{nq} qubits", "dict_s": f"{nq - 1} qubits"}
+    WHICH_D = {
+        "eld": r"$\langle j | U | k \rangle$",
+        "exd": r"$\langle j | U^\dagger H U | k \rangle$",
+    }
+
+    for ind_x, size in enumerate(("dict_l", "dict_s")):
+        for ind_y, which_mat in enumerate(("eld", "exd")):
+            mat, stds = get_matrix(
+                jobj, size, which_mat, which_backend, which_algorithm
+            )
+            mat = apply_symmetry(mat, which_mat, which_algorithm)
+            true_mat = get_true_values(jobj, size, which_mat, which_algorithm)
+            stds /= np.sqrt(n_shots)
+            nq = len(mat)
+            depols = np.abs(complex_depol(mat, true_mat))
+            ax: plt.Axes = axes[ind_x, ind_y]
+            im = ax.imshow(np.abs(depols))
+            threshold = im.norm(np.max(depols)) / 2
+
+            for i in range(mat.shape[0]):
+                for j in range(mat.shape[1]):
+                    ttype = "val"
+                    if ttype == "val":
+                        sign = "" if mat[i, j].imag >= 0 else "-"
+                        u1 = parnum(mat[i, j].real, stds[i, j].real)
+                        u2 = parnum(np.abs(mat[i, j].imag), stds[i, j].imag)
+
+                        s = f"{u1}\n{sign}{u2}"
+                    elif ttype == "std":
+                        rstd = np.abs(stds[i, j].real)
+                        istd = np.abs(stds[i, j].imag)
+                        s = f"{float(rstd):.2f}\n{float(istd):.2f}"
+                    text = ax.text(
+                        j,
+                        i,
+                        s,
+                        ha="center",
+                        va="center",
+                        color=textcolors[int(im.norm(depols[i, j]) < threshold)],
+                        fontsize=7,
+                    )
+            cbar = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+            ax.set_title(rf"{SIZES_D[size]} - {WHICH_D[which_mat]}")
+            ax.grid(False)
+
+        ax.set_xticks(range(nq), range(1, 1 + nq))
+        ax.set_yticks(range(nq), range(1, 1 + nq))
+    # fig.tight_layout()
+    # fig.subplots_adjust(hspace=0.01, wspace=0.5)
+    edm.var_dump(**jobj["inputs"], fpath=fpath)
+    edm.save_figure(
+        fig,
+        f"{which_algorithm}_{which_backend}_{which_model}_meshes_depol",
+        fig_shape="double-size",
+        add_timestamp=False,
+    )
+
+
 def plot_matrix_breakdown(edm: ExperimentDataManager, item: list[str, str, str]):
     fpath = item[0]
     which_algorithm = item[1]
@@ -225,10 +326,10 @@ def plot_matrix_breakdown_error(edm: ExperimentDataManager, item: list[str, str,
     )
 
 
-if __name__ == "__main__":
+def real_runs():
     style()
     dry_run = False
-    which_backend = "real_backend"
+    which_backend = "fake_backend"
 
     TFIM_80j_sweep_fpath = (
         r"1qp/sweep_tfim_80j_0hl_5q/run_00000/data/chestnuts_00000.json"
@@ -256,7 +357,50 @@ if __name__ == "__main__":
         (TFIM_50j_10hl_vqe_fpath, "vqe", which_backend),
         (TFIM_20j_ladder_vqe_fpath, "vqe", which_backend),
     ):
-        plot_matrix_breakdown_error(edm, item)
-        plot_matrix_breakdown(edm, item)
+        # plot_matrix_breakdown_error(edm, item)
+        # plot_matrix_breakdown(edm, item)
+        plot_matrix_breakdown_depolarization(edm, item)
 
     # plt.show()
+
+
+def fake_runs():
+    style()
+    dry_run = False
+    which_backend = "fake_backend"
+
+    TFIM_80j_sweep_fpath = (
+        r"1qp/sweep_tfim_80j_0hl_5q/run_00000/data/chestnuts_00000.json"
+    )
+    TFIM_80j_vqe_fpath = r"1qp/vqe_tfim_80j_0hl_5q/run_00000/data/cantaloupe_00000.json"
+    TFIM_100j_vqe_fpath = r"1qp/vqe_tfim_100j_0hl_5q/run_00000/data/peanuts_00000.json"
+    TFIM_50j_10hl_vqe_fpath = (
+        r"1qp/vqe_tfim_50j_10hl_5q/run_00000/data/pears_00000.json"
+    )
+
+    TFIM_20j_ladder_vqe_fpath = (
+        r"1qp/vqe_tfim_20j_0hl_8q_ladder/run_00000/data/plantains_00000.json"
+    )
+
+    edm = ExperimentDataManager(
+        f"plot_meshes_{which_backend}",
+        project="nlce",
+        dry_run=dry_run,
+    )
+
+    for item in (
+        (TFIM_80j_sweep_fpath, "sweep", which_backend),
+        (TFIM_80j_vqe_fpath, "vqe", which_backend),
+        (TFIM_100j_vqe_fpath, "vqe", which_backend),
+        (TFIM_50j_10hl_vqe_fpath, "vqe", which_backend),
+        (TFIM_20j_ladder_vqe_fpath, "vqe", which_backend),
+    ):
+        # plot_matrix_breakdown_error(edm, item)
+        # plot_matrix_breakdown(edm, item)
+        plot_matrix_breakdown_depolarization(edm, item)
+
+    # plt.show()
+
+
+if __name__ == "__main__":
+    fake_runs()

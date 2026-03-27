@@ -129,6 +129,27 @@ def workflow_nq_aqt(dry_run, J, which_backends: BACKEND_TYPES):
     )
 
 
+def workflow_nq_aqt_depol_test(dry_run, J, which_backends: BACKEND_TYPES):
+    n_shots = int(200)
+    which_hadamard_test = "stefan"
+    n_qubits_max = 5
+    for provider_name in ("AQT", "AQT_BETTER_10", "AQT_BETTER_100", "AQT_BETTER_1000"):
+        for n_reps in (1, 10, 50):
+            workflow_nq(
+                dry_run,
+                n_qubits_max,
+                which_hadamard_test,
+                provider_name,
+                n_shots,
+                which_backends,
+                ["vqe"],
+                J=J,
+                n_reps=n_reps,
+                n_steps=10,
+                hl=0.0,
+            )
+
+
 def workflow_nq_aqt_sample_estim(dry_run, J, which_backends: BACKEND_TYPES):
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(2000)
@@ -179,7 +200,6 @@ def workflow_nq_aqt_sweep_30j(dry_run, which_backends: BACKEND_TYPES):
 
 
 def workflow_nq_aqt_sweep(J, dry_run, which_backends: BACKEND_TYPES):
-
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
     which_hadamard_test = "stefan"
@@ -439,10 +459,11 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    workflow_nq_aqt_sweep_80j(False, ["real_backend", "fake_backend", "statevector"])
+    # workflow_nq_aqt_sweep_80j(False, ["real_backend", "fake_backend", "statevector"])
     # workflow_nq_aqt_ladder(False, ["real_backend", "fake_backend", "statevector"])
-    workflow_nq_aqt_hl(False, ["real_backend", "fake_backend", "statevector"])
-    workflow_nq_aqt_j100(False, ["real_backend", "fake_backend", "statevector"])
-    workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
+    # workflow_nq_aqt_hl(False, ["real_backend", "fake_backend", "statevector"])
+    # workflow_nq_aqt_j100(False, ["real_backend", "fake_backend", "statevector"])
+    # workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
     # workflow_nq_aqt_sample_estim(False, 0.8, ["statevector", "fake_backend"])
     # workflow_nq_aqt_sweepconv(False, 0.8, ["statevector"])
+    workflow_nq_aqt_depol_test(False, 0.8, ["fake_backend", "statevector"])
