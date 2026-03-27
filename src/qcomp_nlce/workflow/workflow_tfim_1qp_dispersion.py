@@ -129,70 +129,73 @@ def workflow_nq_aqt(dry_run, J, which_backends: BACKEND_TYPES):
     )
 
 
-def megareps(dry_run: bool):
-    provider_name: PROVIDER_ALIAS = "AQT"
-    n_shots = int(200)
+def sv_depol(dry_run: bool):
+    provider_name: PROVIDER_ALIAS
+    n_shots = int(-1)
     which_hadamard_test = "stefan"
     n_qubits_max = 5
     which_backends = ["fake_backend", "statevector"]
 
-    n_reps = 100
+    n_reps = 1
 
-    # workflow_nq(
-    #     dry_run,
-    #     n_qubits_max,
-    #     which_hadamard_test,
-    #     provider_name,
-    #     n_shots,
-    #     which_backends,
-    #     ["sweep"],
-    #     J=0.8,
-    #     n_reps=n_reps,
-    #     n_steps=10,
-    #     hl=0.0,
-    # )
+    for vals in (1, 2, 5, 10, 20, 50, 100, 1000, 2000):
+        provider_name = f"AER_{vals}_{vals}"
 
-    workflow_nq(
-        dry_run,
-        n_qubits_max,
-        which_hadamard_test,
-        provider_name,
-        n_shots,
-        which_backends,
-        ["vqe"],
-        J=0.8,
-        n_reps=n_reps,
-        n_steps=10,
-        hl=0.0,
-    )
+        workflow_nq(
+            dry_run,
+            n_qubits_max,
+            which_hadamard_test,
+            provider_name,
+            n_shots,
+            which_backends,
+            ["sweep"],
+            J=0.8,
+            n_reps=n_reps,
+            n_steps=10,
+            hl=0.0,
+        )
 
-    workflow_nq(
-        dry_run,
-        n_qubits_max,
-        which_hadamard_test,
-        provider_name,
-        n_shots,
-        which_backends,
-        ["vqe"],
-        J=1.0,
-        n_reps=n_reps,
-        n_steps=10,
-        hl=0.0,
-    )
+        workflow_nq(
+            dry_run,
+            n_qubits_max,
+            which_hadamard_test,
+            provider_name,
+            n_shots,
+            which_backends,
+            ["vqe"],
+            J=0.8,
+            n_reps=n_reps,
+            n_steps=10,
+            hl=0.0,
+        )
 
-    workflow_nq(
-        dry_run,
-        n_qubits_max,
-        which_hadamard_test,
-        provider_name,
-        n_shots,
-        which_backends,
-        ["vqe"],
-        J=0.5,
-        n_reps=n_reps,
-        n_steps=10,
-        hl=0.1,
-    )
+        workflow_nq(
+            dry_run,
+            n_qubits_max,
+            which_hadamard_test,
+            provider_name,
+            n_shots,
+            which_backends,
+            ["vqe"],
+            J=1.0,
+            n_reps=n_reps,
+            n_steps=10,
+            hl=0.0,
+        )
+
+        workflow_nq(
+            dry_run,
+            n_qubits_max,
+            which_hadamard_test,
+            provider_name,
+            n_shots,
+            which_backends,
+            ["vqe"],
+            J=0.5,
+            n_reps=n_reps,
+            n_steps=10,
+            hl=0.1,
+        )
 
 
 def depol_vs_shots(dry_run, J, which_backends: BACKEND_TYPES):
@@ -512,4 +515,4 @@ if __name__ == "__main__":
     # workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
     # sweep_convergence(False, 0.8, ["statevector"])
     # depol_vs_shots(False, 0.8, ["fake_backend", "statevector"])
-    megareps(False)
+    sv_depol(False)
