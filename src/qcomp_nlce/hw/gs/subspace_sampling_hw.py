@@ -226,7 +226,7 @@ def measure_ground_state_energy_subspace_sampling_v2(
 
         counts = job.result()[0].join_data().get_counts()
 
-    elif which_backend == "statevector":
+    elif which_backend == "statevector" or n_shots == -1:
         bn = which_backend
         # return the true ground energy.
         #  I couldn't just get the VQE value

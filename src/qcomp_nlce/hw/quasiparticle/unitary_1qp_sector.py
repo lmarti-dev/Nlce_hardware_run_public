@@ -75,7 +75,12 @@ def measure_1qp_elements_v2(
 ):
 
     n_qubits = circuit.num_qubits
-    print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
+    if n_shots != -1:
+        print(
+            f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}"
+        )
+    else:
+        print("number of shots set to -1, aiming for best possible accuracy")
     comp_states = hamming_weight_states(n_qubits, 1)
     true_comp_vals = circuit_matrix_elements(circuit, comp_states)
 
@@ -104,7 +109,6 @@ def measure_1qp_elements_v2(
             backend = get_backend(circuit.num_qubits, provider_name)
         bn = backend.name
     # Session mode for faster execution
-
 
     comp_vals, stds = measure_matrix_elements(
         circuit,

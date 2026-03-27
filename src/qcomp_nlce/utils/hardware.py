@@ -17,6 +17,8 @@ from src.qcomp_nlce.utils.iqm_utils import (
     IQMFakeReallyGood,
 )
 
+from src.qcomp_nlce.utils.backends import depolarizing_backend
+
 try:
     from iqm.qiskit_iqm.fake_backends.fake_deneb import (
         IQMFakeDeneb as IQMSmallFakeBackend,
@@ -293,6 +295,15 @@ def get_appropriate_fake_backend(
         else:
             n_improve = 2
         return aqt_better_fake_backend(1 / n_improve)
+    elif "AER" in which:
+        # format AER_10_10
+        if len(which.split("_")) == 3:
+            fac1 = float(which.split("_")[1])
+            fac2 = float(which.split("_")[2])
+        else:
+            raise ValueError(f"Need to specify the facs for AER backend, got: {which}")
+
+        return depolarizing_backend(1 / fac1, 1 / fac2)
 
     else:
         raise ValueError(f"Expected a provider, got: {which}")
@@ -677,9 +688,13 @@ def backend_estimate(
             backend, circuit, parameters, observables
         )
 
+        if n_shots == -1:
+            precision = 1e-8
+        else:
+            precision = 1 / np.sqrt(n_shots)
         job = estimator.run(
             payload,
-            precision=1 / np.sqrt(n_shots),
+            precision=precision,
         )
     return job
 
