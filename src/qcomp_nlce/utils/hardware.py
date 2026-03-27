@@ -703,9 +703,6 @@ def manual_hamiltonian_circuits(
     circuit: QuantumCircuit,
     hamiltonian: SparsePauliOp,
 ) -> list[QuantumCircuit]:
-    if HAM_NAME_VAR not in hamiltonian.__dict__:
-        raise ValueError("Expected the hamiltonian to have name")
-
     n_qubits = hamiltonian.num_qubits
     # ZZZ
     z_circ = circuit.copy()

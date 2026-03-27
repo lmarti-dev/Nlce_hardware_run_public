@@ -864,7 +864,9 @@ def estimate_ham_with_reps(
     reps_per_job: int = 5,
 ):
     reps_per_job = min(n_reps, reps_per_job)
-    if backend != "statevector" and ("IQM" in backend.name or "EQE" in backend.name):
+    if (
+        backend != "statevector" and ("IQM" in backend.name or "EQE" in backend.name)
+    ) or True:
         job = measure_manual_circuit(backend, circuit, hamiltonian, n_shots)
         res = job.result()
         return estimation_from_samples(res, hamiltonian)

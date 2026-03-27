@@ -198,6 +198,27 @@ def aer_depol(dry_run: bool):
         )
 
 
+def depol_errmit_sweep(dry_run):
+    which_backends = ["fake_backend", "statevector"]
+    provider_name: PROVIDER_ALIAS = "AQT"
+    n_shots = int(2000)
+    which_hadamard_test = "stefan"
+    n_qubits_max = 5
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["sweep"],
+        J=0.8,
+        n_reps=1,
+        n_steps=10,
+        hl=0.0,
+    )
+
+
 def depol_vs_shots(dry_run):
     J = 0.8
     which_backends: BACKEND_TYPES = ["fake_backend", "statevector"]
@@ -517,4 +538,4 @@ if __name__ == "__main__":
     # workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
     # sweep_convergence(False, 0.8, ["statevector"])
     # depol_vs_shots(False, 0.8, ["fake_backend", "statevector"])
-    depol_vs_shots(False)
+    depol_errmit_sweep(True)
