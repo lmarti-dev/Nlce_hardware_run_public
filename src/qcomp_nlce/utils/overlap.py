@@ -374,6 +374,7 @@ def stefan_hadamard_test(
     counting_method: Literal["estimator", "samples"] = "estimator",
     n_reps: int = 10,
     reps_per_job: int = 5,
+    postfix: str = "",
 ):
     reps_per_job = min(n_reps, reps_per_job)
     # this is Stefan Wolf's test, a bit modified though
@@ -385,7 +386,7 @@ def stefan_hadamard_test(
 
     if counting_method == "estimator":
         on_hardware = is_hardware_run(which_backend)
-        _dirname = tmp_dirname(circuit, which_backend)
+        _dirname = tmp_dirname(circuit, which_backend, postfix=postfix)
 
         n_runs = int(n_reps // reps_per_job)
 
@@ -718,13 +719,14 @@ def measure_matrix_elements(
     which_hadamard_test: str,
     custom_idx: list[list[int]] = None,
     handcraft: bool = True,
+    postfix: str = "",
     n_reps: int = 1,
 ) -> np.ndarray:
     vals = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
     stds = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
 
     on_hardware = is_hardware_run(which_backend)
-    _dirname = tmp_dirname(circuit, which_backend)
+    _dirname = tmp_dirname(circuit, which_backend, postfix=postfix)
 
     if on_hardware:
         filename = f"{_dirname}/measure_matrix_elements.json"
@@ -798,7 +800,11 @@ def estimation_from_samples(
         val, std = trace_out_estimation(x_counts, [jj, jj + 1], -1)
         x_vals.append(val)
         x_stds.append(std)
-
+    mitigate_depolarization = True
+    if mitigate_depolarization:
+        z_depol = trace_out_estimation(z_counts, range(hamiltonian.num_qubits), -1)
+        p = 1 + z_depol[0]
+        z_vals = [z / (1 - p) for z in z_vals]
     ffval = -sum(x_vals) * J - sum(z_vals) * h
     ffstd = sum_std([sum_std(x_stds) * J, sum_std(z_vals) * h])
 
@@ -810,10 +816,11 @@ def measure_manual_circuit(
     circuit: QuantumCircuit,
     hamiltonian: SparsePauliOp,
     n_shots: int,
+    n_reps: int,
 ):
     [z_circ, x_circ, y_circ] = manual_hamiltonian_circuits(circuit, hamiltonian)
 
-    job = circuit_sampling_job([z_circ, x_circ], None, backend, n_shots)
+    job = circuit_sampling_job([z_circ, x_circ] * n_reps, None, backend, n_shots)
     return job
 
 
@@ -836,6 +843,8 @@ def measure_hamiltonian_element_manual(
         job = measure_manual_circuit(backend, circ_out, hamiltonian, n_shots)
         res = job.result()
         return estimation_from_samples(res, hamiltonian)
+
+    # this case never happens
     else:
         d = ["+", "-", "+i", "-i"]
         stds = []
@@ -862,19 +871,15 @@ def estimate_ham_with_reps(
     n_reps: int,
     which_backend: BACKEND_TYPES,
     reps_per_job: int = 5,
+    which_algorithm: str = "estimator",
+    postfix: str = "",
 ):
     reps_per_job = min(n_reps, reps_per_job)
-    if (
-        backend != "statevector" and ("IQM" in backend.name or "EQE" in backend.name)
-    ) or True:
-        job = measure_manual_circuit(backend, circuit, hamiltonian, n_shots)
-        res = job.result()
-        return estimation_from_samples(res, hamiltonian)
 
     n_runs = int(n_reps // reps_per_job)
 
     on_hardware = is_hardware_run(which_backend)
-    _dirname = tmp_dirname(circuit, which_backend)
+    _dirname = tmp_dirname(circuit, which_backend, postfix=postfix)
 
     run_list = init_run_split(_dirname, on_hardware)
 
@@ -883,19 +888,26 @@ def estimate_ham_with_reps(
     for run_ind in range(remaining_runs):
         print(f"Run number {run_ind + 1}/{remaining_runs}", end="\r")
 
-        job = circuit_estimation_job(
-            [circuit for _ in range(reps_per_job)],
-            [hamiltonian],
-            None,
-            backend,
-            n_shots,
-        )
+        if backend != "statevector" and (
+            "IQM" in backend.name or "EQE" in backend.name
+        ):
+            job = measure_manual_circuit(backend, circuit, hamiltonian, n_shots)
+            res = job.result()
+            val, std = estimation_from_samples(res, hamiltonian)
+        else:
+            job = circuit_estimation_job(
+                [circuit for _ in range(reps_per_job)],
+                [hamiltonian],
+                None,
+                backend,
+                n_shots,
+            )
 
-        # HARDWARE may fail HERE
-        res = job.result()
-        ...
+            # HARDWARE may fail HERE
+            res = job.result()
+            ...
 
-        vals, stds = res_to_lists(res)
+            vals, stds = res_to_lists(res)
         run_list.append([vals, stds])
         if on_hardware:
             tmp_save_run_file(_dirname, run_list)
@@ -956,12 +968,14 @@ def measure_hamiltonian_elements_v2(
     which_backend: str,
     n_shots: int,
     n_reps: int = 10,
+    which_algorithm: str = "estimator",
+    postfix: str = "",
 ):
     vals = np.zeros((len(states), len(states)), dtype=complex)
     stds = np.zeros((len(states), len(states)), dtype=complex)
 
     on_hardware = is_hardware_run(which_backend)
-    _dirname = tmp_dirname(circuit, which_backend)
+    _dirname = tmp_dirname(circuit, which_backend, postfix=postfix)
 
     if on_hardware:
         filename = f"{_dirname}/measure_hamiltonian_elements.json"
@@ -995,6 +1009,7 @@ def measure_hamiltonian_elements_v2(
                         backend,
                         which_backend=which_backend,
                         n_reps=n_reps,
+                        which_algorithm=which_algorithm,
                     )
 
                     if on_hardware:
@@ -1027,6 +1042,7 @@ def measure_hamiltonian_elements_v2(
                             backend,
                             which_backend=which_backend,
                             n_reps=n_reps,
+                            use_sampling=use_sampling,
                         )
                         vd[k] = (t_val, t_std)
 

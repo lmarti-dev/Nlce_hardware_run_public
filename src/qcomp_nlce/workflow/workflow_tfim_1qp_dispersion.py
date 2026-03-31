@@ -396,6 +396,9 @@ def workflow_nq(
     hl: float = 0,
     ladder: bool = False,
     ks: np.ndarray = None,
+    symmetries: bool = True,
+    postfix: str = "",
+    which_algorithm_ham: str = "estimator",
 ):
     # avoid the "unused arguments" warning
     # warnings.filterwarnings("ignore")
@@ -475,6 +478,9 @@ def workflow_nq(
             n_reps,
             hl=hl,
             ladder=ladder,
+            symmetries=symmetries,
+            postfix=postfix,
+            which_algorithm_ham=which_algorithm_ham,
         )
 
         out_dict["results"]["sweep"] = {
@@ -502,6 +508,9 @@ def workflow_nq(
             which_hadamard_test,
             n_reps=n_reps,
             which_model=which_model,
+            symmetries=symmetries,
+            postfix=postfix,
+            which_algorithm_ham=which_algorithm_ham,
         )
 
         out_dict["results"]["vqe"] = {
@@ -524,7 +533,7 @@ def workflow_nq(
     for _b in which_backends:
         show_diffs(out_dict, _b)
 
-    # plt.show()
+    plt.show()
 
     ...
 
@@ -538,4 +547,4 @@ if __name__ == "__main__":
     # workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
     # sweep_convergence(False, 0.8, ["statevector"])
     # depol_vs_shots(False, 0.8, ["fake_backend", "statevector"])
-    depol_errmit_sweep(True)
+    depol_errmit_sweep(False)

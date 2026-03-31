@@ -131,6 +131,7 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
     solve: bool = False,
     n_reps: int = 10,
     reps_per_job: int = 5,
+    postfix: str = "",
 ) -> dict:
     if solve:
         ground_energy = get_ground_energy(hamiltonian)
@@ -147,7 +148,7 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
 
     for which_backend in which_backends:
         on_hardware = is_hardware_run(which_backend)
-        _dirname = tmp_dirname(circuit, which_backend)
+        _dirname = tmp_dirname(circuit, which_backend, postfix=postfix)
 
         item = None
         if on_hardware:
@@ -168,6 +169,7 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
                 provider_name,
                 n_reps=n_reps,
                 reps_per_job=reps_per_job,
+                postfix=postfix,
             )
             if on_hardware:
                 save_tmp_item(item, filename)
@@ -195,6 +197,7 @@ def measure_ground_state_energy_subspace_sampling_v2(
     provider_name: str = "AQT",
     n_reps: int = 10,
     reps_per_job: int = 5,
+    postfix: str = "",
 ) -> dict:
     reps_per_job = min(n_reps, reps_per_job)
 
@@ -254,7 +257,7 @@ def measure_ground_state_energy_subspace_sampling_v2(
         bn = backend.name
 
         on_hardware = is_hardware_run(which_backend)
-        _dirname = tmp_dirname(circuit, which_backend)
+        _dirname = tmp_dirname(circuit, which_backend, postfix=postfix)
 
         n_runs = int(n_reps // reps_per_job)
 

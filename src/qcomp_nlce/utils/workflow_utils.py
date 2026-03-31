@@ -67,6 +67,9 @@ def vqe_dispersion(
     which_hadamard_test: str,
     n_reps: int,
     which_model: str,
+    postfix: str = "",
+    symmetries: bool = True,
+    which_algorithm_ham: str = "estimator",
 ):
     dict_l = vqe_heff(
         gs_dirname_l,
@@ -78,6 +81,9 @@ def vqe_dispersion(
         which_hadamard_test,
         n_reps=n_reps,
         which_model=which_model,
+        symmetries=symmetries,
+        postfix=postfix,
+        which_algorithm_ham=which_algorithm_ham,
     )
     dict_s = vqe_heff(
         gs_dirname_s,
@@ -89,6 +95,9 @@ def vqe_dispersion(
         which_hadamard_test,
         n_reps=n_reps,
         which_model=which_model,
+        symmetries=symmetries,
+        postfix=postfix,
+        which_algorithm_ham=which_algorithm_ham,
     )
 
     return (
@@ -112,6 +121,9 @@ def sweep_dispersion(
     n_reps: int = 1,
     hl: float = 0,
     ladder: bool = False,
+    postfix: str = "",
+    symmetries: bool = True,
+    which_algorithm_ham: str = "estimator",
 ):
     dict_l = sweep_heff(
         n_qubits_max,
@@ -126,6 +138,9 @@ def sweep_dispersion(
         n_reps=n_reps,
         hl=hl,
         ladder=ladder,
+        symmetries=symmetries,
+        postfix=postfix,
+        which_algorithm_ham=which_algorithm_ham,
     )
     dict_s = sweep_heff(
         n_qubits_max - 1,
@@ -140,6 +155,9 @@ def sweep_dispersion(
         n_reps=n_reps,
         hl=hl,
         ladder=ladder,
+        symmetries=symmetries,
+        postfix=postfix,
+        which_algorithm_ham=which_algorithm_ham,
     )
 
     return (
@@ -159,6 +177,9 @@ def vqe_heff(
     which_hadamard_test: str,
     n_reps: int,
     which_model: str,
+    postfix: str = "",
+    symmetries: bool = True,
+    which_algorithm_ham: str = "estimator",
 ) -> dict:
     hamiltonian1, elem_circuit, elem_weights, ground_energy = load_optimized_vqe(
         elem_dirname
@@ -193,6 +214,9 @@ def vqe_heff(
         group_size,
         which_hadamard_test,
         n_reps=n_reps,
+        symmetries=symmetries,
+        postfix=postfix,
+        which_algorithm_ham=which_algorithm_ham,
     )
 
 
@@ -222,6 +246,9 @@ def sweep_heff(
     n_reps: int = 1,
     hl: float = 0,
     ladder: bool = False,
+    postfix: str = "",
+    symmetries: bool = True,
+    which_algorithm_ham: str = "estimator",
 ):
     ham_j, ham_h = pick_model(n_qubits, J, hl, ladder)
     hamiltonian = ham_j + ham_h
@@ -255,6 +282,9 @@ def sweep_heff(
         group_size,
         which_hadamard_test,
         n_reps=n_reps,
+        symmetries=symmetries,
+        postfix=postfix,
+        which_algorithm_ham=which_algorithm_ham,
     )
 
 
@@ -280,7 +310,7 @@ def heff_backend_type(
     exd: dict,
     alg: ALGORITHMS_ALIAS,
     which_backend: BACKEND_TYPES,
-    reflect_symmetry: bool = True,
+    symmetries: bool = True,
 ):
     overlap = eld[which_backend]["values"]
     one_qp_expectation = exd[which_backend]["values"]
@@ -290,7 +320,7 @@ def heff_backend_type(
         gsk = "energy"
     gs_expectation = gsd[which_backend][gsk]
 
-    if reflect_symmetry:
+    if symmetries:
         overlap, one_qp_expectation = apply_symmetries(overlap, one_qp_expectation, alg)
 
     heff = H_effective(gs_expectation, one_qp_expectation, overlap)
@@ -309,6 +339,9 @@ def get_heff_values(
     which_hadamard_test: str = "stefan",
     solve: bool = True,
     n_reps: int = 1,
+    postfix: str = "",
+    symmetries: bool = True,
+    which_algorithm_ham: str = "estimator",
 ):
     print(f"Using {which_hadamard_test} hadamard test")
     print("-- Computing <j|U|k> --")
@@ -321,6 +354,7 @@ def get_heff_values(
         group_size=group_size,
         which_hadamard_test=which_hadamard_test,
         n_reps=n_reps,
+        postfix=postfix,
     )
 
     print("-- Computing ground state energy --")
@@ -332,6 +366,7 @@ def get_heff_values(
         provider_name=provider_name,
         solve=solve,
         n_reps=n_reps,
+        postfix=postfix,
     )
 
     print("-- Computing <j|U* H U|k> --")
@@ -343,6 +378,8 @@ def get_heff_values(
         n_shots=n_shots,
         solve=solve,
         n_reps=n_reps,
+        postfix=postfix,
+        which_algorithm=which_algorithm_ham,
     )
 
     heff = {}
@@ -356,6 +393,7 @@ def get_heff_values(
             expectations_dict,
             alg,
             which_backend,
+            symmetries=symmetries,
         )
 
     return {

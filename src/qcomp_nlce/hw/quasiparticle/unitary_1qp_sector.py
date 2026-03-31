@@ -30,6 +30,7 @@ def loop_measure_1qp_elements_v2(
     group_size: int = None,
     which_hadamard_test: str = "full",
     n_reps: int = 1,
+    postfix: str = "",
 ):
     n_qubits = circuit.num_qubits
     comp_states = hamming_weight_states(n_qubits, 1)
@@ -58,6 +59,7 @@ def loop_measure_1qp_elements_v2(
             group_size,
             which_hadamard_test,
             n_reps=n_reps,
+            postfix=postfix,
         )
         d[which_backend] = item[which_backend]
     return d
@@ -72,12 +74,12 @@ def measure_1qp_elements_v2(
     group_size: int = None,
     which_hadamard_test: HADAMARD_TESTS = "full",
     n_reps: int = 1,
+    postfix: str = "",
 ):
-
     n_qubits = circuit.num_qubits
     if n_shots != -1:
         print(
-            f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}"
+            f"Minimal trace error (only shot noise) {0.5 * (n_qubits) / np.sqrt(n_shots):.4e}"
         )
     else:
         print("number of shots set to -1, aiming for best possible accuracy")
@@ -100,7 +102,6 @@ def measure_1qp_elements_v2(
         backend = bn
 
     elif which_backend == "fake_backend" or which_backend == "real_backend":
-
         if which_backend == "fake_backend":
             backend = get_appropriate_fake_backend(
                 circuit.num_qubits, which=provider_name
@@ -120,6 +121,7 @@ def measure_1qp_elements_v2(
         custom_idx=custom_idx,
         which_hadamard_test=which_hadamard_test,
         n_reps=n_reps,
+        postfix=postfix,
     )
     print(f"{which_backend} ({bn})")
     td = compare_with_true(true_comp_vals, comp_vals, bn)
@@ -145,7 +147,9 @@ def measure_1qp_elements_v3(
 ):
     bn = get_backend_name(backend)
     n_qubits = circuit.num_qubits
-    print(f"Minimal trace error (only shot noise) {.5*(n_qubits)/np.sqrt(n_shots):.4e}")
+    print(
+        f"Minimal trace error (only shot noise) {0.5 * (n_qubits) / np.sqrt(n_shots):.4e}"
+    )
     comp_states = hamming_weight_states(n_qubits, 1)
     true_comp_vals = circuit_matrix_elements(circuit, comp_states)
 

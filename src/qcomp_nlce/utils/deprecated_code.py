@@ -3,6 +3,42 @@ from src.qcomp_nlce.utils.stats import mean_std
 import numpy as np
 
 
+def measure_1qp_expectation_v3(
+    hamiltonian: SparsePauliOp,
+    circuit: QuantumCircuit,
+    backend: BACKEND_ALIAS,
+    which_backend: BACKEND_TYPES,
+    true_comp_vals: np.ndarray = None,
+    n_shots: int = 1e3,
+):
+    n_qubits = circuit.num_qubits
+    print(
+        f"Minimal trace error (only shot noise) {0.5 * (n_qubits) / np.sqrt(n_shots):.4e}"
+    )
+    bn = get_backend_name(backend)
+    comp_states = hamming_weight_states(n_qubits, 1)
+    comp_vals, stds = measure_hamiltonian_elements_v2(
+        hamiltonian,
+        circuit,
+        comp_states,
+        None,
+        backend,
+        which_backend,
+        n_shots,
+    )
+    print(f"{which_backend} ({bn})")
+    td = compare_with_true(true_comp_vals, comp_vals, bn)
+
+    return {
+        which_backend: {
+            "name": bn,
+            "trace_dist": td,
+            "values": comp_vals,
+            "stds": stds,
+        }
+    }
+
+
 def measure_matrix_element_circuits(
     circuit: QuantumCircuit,
     x: str,
