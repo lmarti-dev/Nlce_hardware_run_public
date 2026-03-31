@@ -22,6 +22,8 @@ from src.qcomp_nlce.utils import (
     get_ground_energy,
     pfeuty_energy,
     ALGORITHMS_ALIAS,
+    RUNS_POSTFIX,
+    HAM_EXPECT_METHODS,
 )
 from src.qcomp_nlce.utils.dispersion import (
     exact_dispersion_1qp_1d,
@@ -67,9 +69,10 @@ def vqe_dispersion(
     which_hadamard_test: str,
     n_reps: int,
     which_model: str,
-    postfix: str = "",
+    postfix: RUNS_POSTFIX = "",
     symmetries: bool = True,
-    which_algorithm_ham: str = "estimator",
+    which_algorithm_ham: HAM_EXPECT_METHODS = "estimator",
+    mitigate_depolarization: bool = False,
 ):
     dict_l = vqe_heff(
         gs_dirname_l,
@@ -84,6 +87,7 @@ def vqe_dispersion(
         symmetries=symmetries,
         postfix=postfix,
         which_algorithm_ham=which_algorithm_ham,
+        mitigate_depolarization=mitigate_depolarization,
     )
     dict_s = vqe_heff(
         gs_dirname_s,
@@ -98,6 +102,7 @@ def vqe_dispersion(
         symmetries=symmetries,
         postfix=postfix,
         which_algorithm_ham=which_algorithm_ham,
+        mitigate_depolarization=mitigate_depolarization,
     )
 
     return (
@@ -121,9 +126,10 @@ def sweep_dispersion(
     n_reps: int = 1,
     hl: float = 0,
     ladder: bool = False,
-    postfix: str = "",
+    postfix: RUNS_POSTFIX = "",
     symmetries: bool = True,
-    which_algorithm_ham: str = "estimator",
+    which_algorithm_ham: HAM_EXPECT_METHODS = "estimator",
+    mitigate_depolarization: bool = False,
 ):
     dict_l = sweep_heff(
         n_qubits_max,
@@ -141,6 +147,7 @@ def sweep_dispersion(
         symmetries=symmetries,
         postfix=postfix,
         which_algorithm_ham=which_algorithm_ham,
+        mitigate_depolarization=mitigate_depolarization,
     )
     dict_s = sweep_heff(
         n_qubits_max - 1,
@@ -158,6 +165,7 @@ def sweep_dispersion(
         symmetries=symmetries,
         postfix=postfix,
         which_algorithm_ham=which_algorithm_ham,
+        mitigate_depolarization=mitigate_depolarization,
     )
 
     return (
@@ -177,9 +185,10 @@ def vqe_heff(
     which_hadamard_test: str,
     n_reps: int,
     which_model: str,
-    postfix: str = "",
+    postfix: RUNS_POSTFIX = "",
     symmetries: bool = True,
-    which_algorithm_ham: str = "estimator",
+    which_algorithm_ham: HAM_EXPECT_METHODS = "estimator",
+    mitigate_depolarization: bool = False,
 ) -> dict:
     hamiltonian1, elem_circuit, elem_weights, ground_energy = load_optimized_vqe(
         elem_dirname
@@ -217,6 +226,7 @@ def vqe_heff(
         symmetries=symmetries,
         postfix=postfix,
         which_algorithm_ham=which_algorithm_ham,
+        mitigate_depolarization=mitigate_depolarization,
     )
 
 
@@ -246,12 +256,14 @@ def sweep_heff(
     n_reps: int = 1,
     hl: float = 0,
     ladder: bool = False,
-    postfix: str = "",
+    postfix: RUNS_POSTFIX = "",
     symmetries: bool = True,
-    which_algorithm_ham: str = "estimator",
+    which_algorithm_ham: HAM_EXPECT_METHODS = "estimator",
+    mitigate_depolarization: bool = False,
 ):
     ham_j, ham_h = pick_model(n_qubits, J, hl, ladder)
     hamiltonian = ham_j + ham_h
+    hamiltonian.__dict__[HAM_NAME_VAR] = which_model
     min_gap = get_min_gap(hamiltonian)
     # the most important thing is to have enough steps!!!
     # the total time can be low-ish
@@ -285,6 +297,7 @@ def sweep_heff(
         symmetries=symmetries,
         postfix=postfix,
         which_algorithm_ham=which_algorithm_ham,
+        mitigate_depolarization=mitigate_depolarization,
     )
 
 
@@ -339,9 +352,10 @@ def get_heff_values(
     which_hadamard_test: str = "stefan",
     solve: bool = True,
     n_reps: int = 1,
-    postfix: str = "",
+    postfix: RUNS_POSTFIX = "",
     symmetries: bool = True,
-    which_algorithm_ham: str = "estimator",
+    which_algorithm_ham: HAM_EXPECT_METHODS = "estimator",
+    mitigate_depolarization: bool = False,
 ):
     print(f"Using {which_hadamard_test} hadamard test")
     print("-- Computing <j|U|k> --")
@@ -380,6 +394,7 @@ def get_heff_values(
         n_reps=n_reps,
         postfix=postfix,
         which_algorithm=which_algorithm_ham,
+        mitigate_depolarization=mitigate_depolarization,
     )
 
     heff = {}

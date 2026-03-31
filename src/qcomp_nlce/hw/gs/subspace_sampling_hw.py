@@ -11,16 +11,17 @@ from src.qcomp_nlce.utils.hardware import (
     get_backend_name,
     BACKEND_ALIAS,
     BACKEND_TYPES,
+    RUNS_POSTFIX,
 )
 from src.qcomp_nlce.utils.statevector import (
     sv_estimate_observables,
     sv_expectation_observables,
 )
 from src.qcomp_nlce.utils.measure import (
-    get_counts_from_job,
     get_counts_from_res,
     add_meas_layer,
     get_unique_bitstrings,
+    merge_count_list,
 )
 from src.qcomp_nlce.utils.circuit import (
     apply_parameters,
@@ -131,7 +132,7 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
     solve: bool = False,
     n_reps: int = 10,
     reps_per_job: int = 5,
-    postfix: str = "",
+    postfix: RUNS_POSTFIX = "",
 ) -> dict:
     if solve:
         ground_energy = get_ground_energy(hamiltonian)
@@ -177,17 +178,6 @@ def loop_measure_ground_state_energy_subspace_sampling_v2(
     return d
 
 
-def merge_count_list(clist: list[dict]) -> dict:
-    counts_out = {}
-    for c in clist:
-        for k in c:
-            if k in counts_out.keys():
-                counts_out[k] += c[k]
-            else:
-                counts_out[k] = c[k]
-    return counts_out
-
-
 def measure_ground_state_energy_subspace_sampling_v2(
     hamiltonian: SparsePauliOp,
     ground_energy: float,
@@ -197,7 +187,7 @@ def measure_ground_state_energy_subspace_sampling_v2(
     provider_name: str = "AQT",
     n_reps: int = 10,
     reps_per_job: int = 5,
-    postfix: str = "",
+    postfix: RUNS_POSTFIX = "",
 ) -> dict:
     reps_per_job = min(n_reps, reps_per_job)
 

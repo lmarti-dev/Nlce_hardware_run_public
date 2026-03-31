@@ -1,6 +1,4 @@
-import os
 from pathlib import Path
-from typing import Literal
 
 import numpy as np
 from src.qcomp_nlce.utils import (
@@ -10,15 +8,13 @@ from src.qcomp_nlce.utils import (
     get_backend,
     hamming_weight_states,
     measure_hamiltonian_elements_v2,
-    BACKEND_ALIAS,
-    get_backend_name,
     BACKEND_TYPES,
+    RUNS_POSTFIX,
+    HAM_EXPECT_METHODS,
 )
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
 
-
-from qiskit_ibm_runtime import Session
 
 HOME = Path(__file__).parent
 
@@ -31,8 +27,9 @@ def loop_measure_1qp_expectations_v2(
     provider_name: str = "IBM",
     n_shots: int = 1e3,
     n_reps: int = 1,
-    which_algorithm: str = "estimator",
-    postfix: str = "",
+    which_algorithm: HAM_EXPECT_METHODS = "estimator",
+    postfix: RUNS_POSTFIX = "",
+    mitigate_depolarization: bool = False,
 ):
     n_qubits = circuit.num_qubits
     comp_states = hamming_weight_states(n_qubits, 1)
@@ -57,6 +54,7 @@ def loop_measure_1qp_expectations_v2(
             n_reps=n_reps,
             which_algorithm=which_algorithm,
             postfix=postfix,
+            mitigate_depolarization=mitigate_depolarization,
         )
         d[which_backend] = item[which_backend]
     return d
@@ -70,8 +68,9 @@ def measure_1qp_expectations_v2(
     provider_name: str = "IBM",
     n_shots: int = 1e3,
     n_reps: int = 1,
-    which_algorithm: str = "estimator",
-    postfix: str = "",
+    which_algorithm: HAM_EXPECT_METHODS = "estimator",
+    postfix: RUNS_POSTFIX = "",
+    mitigate_depolarization: bool = False,
 ) -> np.ndarray:
     n_qubits = circuit.num_qubits
     print(
@@ -104,6 +103,7 @@ def measure_1qp_expectations_v2(
         n_reps=n_reps,
         which_algorithm=which_algorithm,
         postfix=postfix,
+        mitigate_depolarization=mitigate_depolarization,
     )
     print(f"{which_backend} ({bn})")
     td = compare_with_true(true_comp_vals, comp_vals, bn)

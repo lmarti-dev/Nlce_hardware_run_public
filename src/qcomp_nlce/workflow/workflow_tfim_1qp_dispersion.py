@@ -12,8 +12,12 @@ from src.qcomp_nlce.utils.workflow_utils import (
 )
 from src.qcomp_nlce.utils.vqe import get_optimal_n_layers
 from src.qcomp_nlce.utils.stats import mc_disp_from_res_dict
-from src.qcomp_nlce.utils.hardware import PROVIDER_ALIAS, BACKEND_TYPES
-from src.qcomp_nlce.utils.overlap import HADAMARD_TESTS
+from src.qcomp_nlce.utils.hardware import (
+    PROVIDER_ALIAS,
+    BACKEND_TYPES,
+    RUNS_POSTFIX,
+)
+from src.qcomp_nlce.utils.overlap import HADAMARD_TESTS, HAM_EXPECT_METHODS
 from src.qcomp_nlce.utils.constants import ALGORITHMS_ALIAS
 from src.qcomp_nlce.utils.hamiltonian import model_str
 from data_manager import ExperimentDataManager
@@ -27,7 +31,7 @@ def workflow_nq_ibm(dry_run):
     which_backends = [
         # "real_backend",
         "fake_backend",
-        "statevector",
+        # "statevector",
     ]
     provider_name: PROVIDER_ALIAS = "IBM_GENERIC"
     n_shots = int(1e6)
@@ -42,6 +46,7 @@ def workflow_nq_ibm(dry_run):
         which_backends,
         ["vqe"],
         J,
+        which_algorithm_ham="sampling",
     )
 
 
@@ -93,23 +98,23 @@ def workflow_nq_eqe(dry_run):
     )
 
 
-def workflow_nq_aqt_j100(dry_run, which_backends: BACKEND_TYPES):
-    return workflow_nq_aqt(dry_run, 1.0, which_backends)
+def workflow_nq_aqt_j100(dry_run, which_backends: BACKEND_TYPES, run_postfix):
+    return workflow_nq_aqt(dry_run, 1.0, which_backends, run_postfix)
 
 
-def workflow_nq_aqt_j50(dry_run, which_backends: BACKEND_TYPES):
-    return workflow_nq_aqt(dry_run, 0.5, which_backends)
+def workflow_nq_aqt_j50(dry_run, which_backends: BACKEND_TYPES, run_postfix):
+    return workflow_nq_aqt(dry_run, 0.5, which_backends, run_postfix)
 
 
-def workflow_nq_aqt_j30(dry_run, which_backends: BACKEND_TYPES):
-    return workflow_nq_aqt(dry_run, 0.3, which_backends)
+def workflow_nq_aqt_j30(dry_run, which_backends: BACKEND_TYPES, run_postfix):
+    return workflow_nq_aqt(dry_run, 0.3, which_backends, run_postfix)
 
 
-def workflow_nq_aqt_j80(dry_run, which_backends: BACKEND_TYPES):
-    return workflow_nq_aqt(dry_run, 0.8, which_backends)
+def workflow_nq_aqt_j80(dry_run, which_backends: BACKEND_TYPES, run_postfix):
+    return workflow_nq_aqt(dry_run, 0.8, which_backends, run_postfix)
 
 
-def workflow_nq_aqt(dry_run, J, which_backends: BACKEND_TYPES):
+def workflow_nq_aqt(dry_run, J, which_backends: BACKEND_TYPES, run_postfix):
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
     which_hadamard_test = "stefan"
@@ -126,6 +131,7 @@ def workflow_nq_aqt(dry_run, J, which_backends: BACKEND_TYPES):
         n_reps=10,
         n_steps=10,
         hl=0.0,
+        postfix=run_postfix,
     )
 
 
@@ -198,9 +204,9 @@ def aer_depol(dry_run: bool):
         )
 
 
-def depol_errmit_sweep(dry_run):
+def depol_errmit_vqe(dry_run):
     which_backends = ["fake_backend", "statevector"]
-    provider_name: PROVIDER_ALIAS = "AQT"
+    provider_name: PROVIDER_ALIAS = "AQT_BETTER_100"
     n_shots = int(2000)
     which_hadamard_test = "stefan"
     n_qubits_max = 5
@@ -211,11 +217,13 @@ def depol_errmit_sweep(dry_run):
         provider_name,
         n_shots,
         which_backends,
-        ["sweep"],
+        ["vqe"],
         J=0.8,
         n_reps=1,
-        n_steps=10,
+        n_steps=1,
         hl=0.0,
+        which_algorithm_ham="estimator",
+        mitigate_depolarization=False,
     )
 
 
@@ -357,7 +365,9 @@ def workflow_nq_aqt_ladder(dry_run, which_backends):
     )
 
 
-def workflow_nq_aqt_hl(dry_run, which_backends: BACKEND_TYPES):
+def workflow_nq_aqt_hl(
+    dry_run, which_backends: BACKEND_TYPES, run_postfix: RUNS_POSTFIX
+):
     J = 0.5
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
@@ -378,6 +388,7 @@ def workflow_nq_aqt_hl(dry_run, which_backends: BACKEND_TYPES):
         n_reps=n_reps,
         n_steps=0,
         hl=hl,
+        postfix=run_postfix,
     )
 
 
@@ -397,8 +408,9 @@ def workflow_nq(
     ladder: bool = False,
     ks: np.ndarray = None,
     symmetries: bool = True,
-    postfix: str = "",
-    which_algorithm_ham: str = "estimator",
+    postfix: RUNS_POSTFIX = "",
+    which_algorithm_ham: HAM_EXPECT_METHODS = "estimator",
+    mitigate_depolarization: bool = False,
 ):
     # avoid the "unused arguments" warning
     # warnings.filterwarnings("ignore")
@@ -460,6 +472,9 @@ def workflow_nq(
             "which_hadamard_test": which_hadamard_test,
             "n_reps": n_reps,
             "model_dir": model_dir,
+            "postfix": postfix,
+            "symmetries": symmetries,
+            "which_algorithm_ham": which_algorithm_ham,
         },
     }
     if "sweep" in which_algorithms:
@@ -481,6 +496,7 @@ def workflow_nq(
             symmetries=symmetries,
             postfix=postfix,
             which_algorithm_ham=which_algorithm_ham,
+            mitigate_depolarization=mitigate_depolarization,
         )
 
         out_dict["results"]["sweep"] = {
@@ -511,6 +527,7 @@ def workflow_nq(
             symmetries=symmetries,
             postfix=postfix,
             which_algorithm_ham=which_algorithm_ham,
+            mitigate_depolarization=mitigate_depolarization,
         )
 
         out_dict["results"]["vqe"] = {
@@ -547,4 +564,4 @@ if __name__ == "__main__":
     # workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
     # sweep_convergence(False, 0.8, ["statevector"])
     # depol_vs_shots(False, 0.8, ["fake_backend", "statevector"])
-    depol_errmit_sweep(False)
+    depol_errmit_vqe(False)

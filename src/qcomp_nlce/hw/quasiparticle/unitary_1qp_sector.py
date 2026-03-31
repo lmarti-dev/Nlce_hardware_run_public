@@ -13,10 +13,9 @@ from src.qcomp_nlce.utils import (
     BACKEND_ALIAS,
     BACKEND_TYPES,
     circuit_to_matrix,
+    RUNS_POSTFIX,
 )
 from pathlib import Path
-
-from qiskit_ibm_runtime import Session
 
 HOME = Path(__file__).parent
 
@@ -30,7 +29,7 @@ def loop_measure_1qp_elements_v2(
     group_size: int = None,
     which_hadamard_test: str = "full",
     n_reps: int = 1,
-    postfix: str = "",
+    postfix: RUNS_POSTFIX = "",
 ):
     n_qubits = circuit.num_qubits
     comp_states = hamming_weight_states(n_qubits, 1)
@@ -74,7 +73,7 @@ def measure_1qp_elements_v2(
     group_size: int = None,
     which_hadamard_test: HADAMARD_TESTS = "full",
     n_reps: int = 1,
-    postfix: str = "",
+    postfix: RUNS_POSTFIX = "",
 ):
     n_qubits = circuit.num_qubits
     if n_shots != -1:
