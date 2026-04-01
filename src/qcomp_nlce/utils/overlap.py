@@ -50,7 +50,7 @@ from src.qcomp_nlce.utils.hardware import (
     is_hardware_run,
     BACKEND_ALIAS,
     BACKEND_TYPES,
-    manual_hamiltonian_circuits,
+    zxy_basis_hamiltonian_circuits,
     RUNS_POSTFIX,
 )
 
@@ -805,7 +805,7 @@ def estimation_from_counts(
     if mitigate_depolarization:
         z_depol = trace_out_estimation(z_counts, range(hamiltonian.num_qubits), -1)
         p = 1 + z_depol[0]
-        # sanity check
+        # easy check and discard
         if p > 1 or p < 0:
             p = 0
 
@@ -849,14 +849,14 @@ def tfim_counts_from_res(res: PrimitiveResult, hamiltonian: SparsePauliOp, n_rep
     return z_counts, x_counts
 
 
-def measure_manual_circuit(
+def build_estimation_job_with_sampling(
     backend: BACKEND_ALIAS,
     circuit: QuantumCircuit,
     hamiltonian: SparsePauliOp,
     n_shots: int,
     n_reps: int,
 ):
-    [z_circ, x_circ, y_circ] = manual_hamiltonian_circuits(circuit, hamiltonian)
+    [z_circ, x_circ, y_circ] = zxy_basis_hamiltonian_circuits(circuit, hamiltonian)
 
     name = hamiltonian.__dict__[HAM_NAME_VAR]
 
@@ -921,7 +921,9 @@ def estimate_ham_with_reps(
     elif which_algorithm == "sampling":
         for run_ind in range(remaining_runs):
             print(f"Run number {run_ind + 1}/{remaining_runs}", end="\r")
-            job = measure_manual_circuit(backend, circuit, hamiltonian, n_shots, n_reps)
+            job = build_estimation_job_with_sampling(
+                backend, circuit, hamiltonian, n_shots, n_reps
+            )
 
             # HARDWARE may fail HERE
             res = job.result()

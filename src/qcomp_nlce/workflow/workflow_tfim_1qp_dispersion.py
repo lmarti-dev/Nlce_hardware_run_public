@@ -98,19 +98,19 @@ def workflow_nq_eqe(dry_run):
     )
 
 
-def workflow_nq_aqt_j100(dry_run, which_backends: BACKEND_TYPES, run_postfix):
+def workflow_nq_aqt_100j(dry_run, which_backends: BACKEND_TYPES, run_postfix):
     return workflow_nq_aqt(dry_run, 1.0, which_backends, run_postfix)
 
 
-def workflow_nq_aqt_j50(dry_run, which_backends: BACKEND_TYPES, run_postfix):
+def workflow_nq_aqt_50j(dry_run, which_backends: BACKEND_TYPES, run_postfix):
     return workflow_nq_aqt(dry_run, 0.5, which_backends, run_postfix)
 
 
-def workflow_nq_aqt_j30(dry_run, which_backends: BACKEND_TYPES, run_postfix):
+def workflow_nq_aqt_30j(dry_run, which_backends: BACKEND_TYPES, run_postfix):
     return workflow_nq_aqt(dry_run, 0.3, which_backends, run_postfix)
 
 
-def workflow_nq_aqt_j80(dry_run, which_backends: BACKEND_TYPES, run_postfix):
+def workflow_nq_aqt_80j(dry_run, which_backends: BACKEND_TYPES, run_postfix):
     return workflow_nq_aqt(dry_run, 0.8, which_backends, run_postfix)
 
 
@@ -296,6 +296,8 @@ def workflow_nq_aqt_sweep(J, dry_run, which_backends: BACKEND_TYPES):
         n_reps=10,
         n_steps=10,
         hl=0.0,
+        mitigate_depolarization=False,
+        which_algorithm_ham="sampling",
     )
 
 
@@ -564,4 +566,9 @@ if __name__ == "__main__":
     # workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
     # sweep_convergence(False, 0.8, ["statevector"])
     # depol_vs_shots(False, 0.8, ["fake_backend", "statevector"])
-    depol_errmit_vqe(False)
+    # depol_errmit_vqe(False)
+    # workflow_nq_aqt_30j(False, ["real_backend", "fake_backend", "statevector"], "")
+    # workflow_nq_aqt_sweep_30j(
+    #     True,
+    #     ["fake_backend", "statevector"],
+    # )

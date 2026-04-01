@@ -700,7 +700,7 @@ def backend_estimate(
     return job
 
 
-def manual_hamiltonian_circuits(
+def zxy_basis_hamiltonian_circuits(
     circuit: QuantumCircuit,
     hamiltonian: SparsePauliOp,
 ) -> list[QuantumCircuit]:
