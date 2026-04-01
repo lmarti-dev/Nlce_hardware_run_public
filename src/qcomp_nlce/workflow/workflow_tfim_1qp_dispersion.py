@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 from fauplotstyle import style
 
 
-def workflow_nq_ibm(dry_run):
+def run_ibm(dry_run):
     J = 1
     which_backends = [
         # "real_backend",
@@ -50,7 +50,7 @@ def workflow_nq_ibm(dry_run):
     )
 
 
-def workflow_nq_qexa(dry_run):
+def run_qexa(dry_run):
     J = 1
     which_backends = [
         # "real_backend",
@@ -74,7 +74,7 @@ def workflow_nq_qexa(dry_run):
     )
 
 
-def workflow_nq_eqe(dry_run):
+def run_eqe(dry_run):
     J = 0.8
     which_backends = [
         "real_backend",
@@ -98,24 +98,48 @@ def workflow_nq_eqe(dry_run):
     )
 
 
-def workflow_nq_aqt_100j(dry_run, which_backends: BACKEND_TYPES, run_postfix):
-    return workflow_nq_aqt(dry_run, 1.0, which_backends, run_postfix)
+def run_aqt_100j(dry_run, which_backends: BACKEND_TYPES, run_postfix: RUNS_POSTFIX):
+    return run_aqt_vqe(dry_run, 1.0, which_backends, run_postfix)
 
 
-def workflow_nq_aqt_50j(dry_run, which_backends: BACKEND_TYPES, run_postfix):
-    return workflow_nq_aqt(dry_run, 0.5, which_backends, run_postfix)
+def run_aqt_50j(dry_run, which_backends: BACKEND_TYPES, run_postfix: RUNS_POSTFIX):
+    return run_aqt_vqe(dry_run, 0.5, which_backends, run_postfix)
 
 
-def workflow_nq_aqt_30j(dry_run, which_backends: BACKEND_TYPES, run_postfix):
-    return workflow_nq_aqt(dry_run, 0.3, which_backends, run_postfix)
+def run_aqt_30j(dry_run, which_backends: BACKEND_TYPES, run_postfix: RUNS_POSTFIX):
+    return run_aqt_vqe(dry_run, 0.3, which_backends, run_postfix)
 
 
-def workflow_nq_aqt_80j(dry_run, which_backends: BACKEND_TYPES, run_postfix):
-    return workflow_nq_aqt(dry_run, 0.8, which_backends, run_postfix)
+def run_aqt_80j(dry_run, which_backends: BACKEND_TYPES, run_postfix: RUNS_POSTFIX):
+    return run_aqt_vqe(dry_run, 0.8, which_backends, run_postfix)
 
 
-def workflow_nq_aqt(dry_run, J, which_backends: BACKEND_TYPES, run_postfix):
+def run_aqt_vqe(dry_run, J, which_backends: BACKEND_TYPES, run_postfix: RUNS_POSTFIX):
     provider_name: PROVIDER_ALIAS = "AQT"
+    n_shots = int(200)
+    which_hadamard_test = "stefan"
+    n_qubits_max = 5
+    workflow_nq(
+        dry_run,
+        n_qubits_max,
+        which_hadamard_test,
+        provider_name,
+        n_shots,
+        which_backends,
+        ["vqe"],
+        J=J,
+        n_reps=10,
+        n_steps=10,
+        hl=0.0,
+        postfix=run_postfix,
+    )
+
+
+def run_debug(run_postfix: RUNS_POSTFIX):
+    dry_run = True
+    provider_name: PROVIDER_ALIAS = "AQT_BETTER_1000"
+    which_backends = ["fake_backend", "statevector"]
+    J = 0.8
     n_shots = int(200)
     which_hadamard_test = "stefan"
     n_qubits_max = 5
@@ -271,15 +295,19 @@ def n_reps_effect(dry_run, J, which_backends: BACKEND_TYPES):
         )
 
 
-def workflow_nq_aqt_sweep_80j(dry_run, which_backends: BACKEND_TYPES):
-    workflow_nq_aqt_sweep(0.8, dry_run, which_backends)
+def run_aqt_sweep_80j(
+    dry_run, which_backends: BACKEND_TYPES, run_postfix: RUNS_POSTFIX
+):
+    run_aqt_sweep(0.8, dry_run, which_backends, run_postfix)
 
 
-def workflow_nq_aqt_sweep_30j(dry_run, which_backends: BACKEND_TYPES):
-    workflow_nq_aqt_sweep(0.3, dry_run, which_backends)
+def run_aqt_sweep_30j(
+    dry_run, which_backends: BACKEND_TYPES, run_postfix: RUNS_POSTFIX
+):
+    run_aqt_sweep(0.3, dry_run, which_backends, run_postfix)
 
 
-def workflow_nq_aqt_sweep(J, dry_run, which_backends: BACKEND_TYPES):
+def run_aqt_sweep(J, dry_run, which_backends: BACKEND_TYPES, run_postfix: RUNS_POSTFIX):
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
     which_hadamard_test = "stefan"
@@ -297,11 +325,12 @@ def workflow_nq_aqt_sweep(J, dry_run, which_backends: BACKEND_TYPES):
         n_steps=10,
         hl=0.0,
         mitigate_depolarization=False,
-        which_algorithm_ham="sampling",
+        which_algorithm_ham="estimator",
+        postfix=run_postfix,
     )
 
 
-def workflow_nq_aqt_sweepsims(dry_run: bool, J: float, which_backends: BACKEND_TYPES):
+def run_aqt_sweepsims(dry_run: bool, J: float, which_backends: BACKEND_TYPES):
     n_shots = int(200)
     which_hadamard_test = "stefan"
     n_qubits_max = 5
@@ -343,7 +372,7 @@ def sweep_convergence(dry_run: bool, J: float, which_backends: BACKEND_TYPES):
         )
 
 
-def workflow_nq_aqt_ladder(dry_run, which_backends):
+def run_aqt_ladder(dry_run, which_backends):
     J = 0.20
 
     provider_name: PROVIDER_ALIAS = "AQT"
@@ -367,9 +396,7 @@ def workflow_nq_aqt_ladder(dry_run, which_backends):
     )
 
 
-def workflow_nq_aqt_hl(
-    dry_run, which_backends: BACKEND_TYPES, run_postfix: RUNS_POSTFIX
-):
+def run_aqt_hl(dry_run, which_backends: BACKEND_TYPES, run_postfix: RUNS_POSTFIX):
     J = 0.5
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
@@ -559,16 +586,19 @@ def workflow_nq(
 
 if __name__ == "__main__":
     style()
-    # workflow_nq_aqt_sweep_80j(False, ["real_backend", "fake_backend", "statevector"])
-    # workflow_nq_aqt_ladder(False, ["real_backend", "fake_backend", "statevector"])
-    # workflow_nq_aqt_hl(False, ["real_backend", "fake_backend", "statevector"])
-    # workflow_nq_aqt_j100(False, ["real_backend", "fake_backend", "statevector"])
-    # workflow_nq_aqt_j80(False, ["real_backend", "fake_backend", "statevector"])
+    # run_aqt_sweep_80j(False, ["real_backend", "fake_backend", "statevector"])
+    # run_aqt_ladder(False, ["real_backend", "fake_backend", "statevector"])
+    # run_aqt_hl(False, ["real_backend", "fake_backend", "statevector"])
+    # run_aqt_j100(False, ["real_backend", "fake_backend", "statevector"])
+    # run_aqt_80j(False, ["fake_backend", "statevector"], "RUN3")
     # sweep_convergence(False, 0.8, ["statevector"])
     # depol_vs_shots(False, 0.8, ["fake_backend", "statevector"])
     # depol_errmit_vqe(False)
-    # workflow_nq_aqt_30j(False, ["real_backend", "fake_backend", "statevector"], "")
-    # workflow_nq_aqt_sweep_30j(
+    # run_aqt_30j(False, ["real_backend", "fake_backend", "statevector"], "")
+    # run_aqt_sweep_30j(
     #     True,
     #     ["fake_backend", "statevector"],
     # )
+
+    run_aqt_80j(False, ["fake_backend", "statevector"], "RUN3")
+    run_aqt_sweep_80j(False, ["fake_backend", "statevector"], "RUN3")

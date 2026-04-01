@@ -32,10 +32,7 @@ from src.qcomp_nlce.utils.save import (
     tmp_get_item,
     tmp_dirname,
     TempListType,
-    tmp_check_run_list,
-    tmp_create_run_file,
     tmp_delete_run_file,
-    tmp_load_run_list,
     tmp_save_run_file,
     init_run_split,
 )
@@ -622,6 +619,7 @@ def measure_matrix_element(
     custom_idx: list[list[int]] = None,
     handcraft: bool = True,
     n_reps: int = 1,
+    postfix: RUNS_POSTFIX = "",
 ) -> Union[complex, tuple[complex, complex]]:
     # This computes <x|U|y>
 
@@ -640,6 +638,7 @@ def measure_matrix_element(
             backend,
             counting_method=counting_method,
             n_reps=n_reps,
+            postfix=postfix,
         )
         return ol, std
 
@@ -756,6 +755,7 @@ def measure_matrix_elements(
                     custom_idx=custom_idx,
                     handcraft=handcraft,
                     n_reps=n_reps,
+                    postfix=postfix,
                 )
                 vals[ind_x, ind_y] = jUk
                 stds[ind_x, ind_y] = std
@@ -1041,6 +1041,7 @@ def measure_hamiltonian_elements_v2(
                         n_reps=n_reps,
                         which_algorithm=which_algorithm,
                         mitigate_depolarization=mitigate_depolarization,
+                        postfix=postfix,
                     )
 
                     if on_hardware:
@@ -1075,6 +1076,7 @@ def measure_hamiltonian_elements_v2(
                             n_reps=n_reps,
                             which_algorithm=which_algorithm,
                             mitigate_depolarization=mitigate_depolarization,
+                            postfix=postfix,
                         )
                         vd[k] = (t_val, t_std)
 
