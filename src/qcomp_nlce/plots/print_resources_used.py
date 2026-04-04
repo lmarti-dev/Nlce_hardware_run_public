@@ -6,9 +6,10 @@ from src.qcomp_nlce.utils import (
 
 
 def heff_total_shots_paper():
-
     shots = {
+        "tfim_1d_hl_30j": 2000,
         "tfim_1d_hl_80j": 2000,
+        "tfim_1d_hl_30j_sweep": 2000,
         "tfim_1d_hl_80j_sweep": 2000,
         "tfim_1d_100j": 2000,
         "tfim_1d_80j_10hl": 2000,
@@ -16,6 +17,8 @@ def heff_total_shots_paper():
     }
 
     d = {
+        "tfim_1d_hl_30j": heff_n_expectation_values_1d(5, 1) * 1,
+        "tfim_1d_hl_30j_sweep": heff_n_expectation_values_1d(5, 1) * 1,
         "tfim_1d_hl_80j": heff_n_expectation_values_1d(5, 1) * 3,
         "tfim_1d_hl_80j_sweep": heff_n_expectation_values_1d(5, 1) * 3,
         "tfim_1d_100j": heff_n_expectation_values_1d(5, 1) * 3,
@@ -23,14 +26,16 @@ def heff_total_shots_paper():
         "tfim_1d_ladder": heff_n_expectation_values_ladder(8, 1),
     }
     for k in d:
-        print(f"{k}: {d[k]*shots[k]:.3e} shots")
-    print(f"total: {sum(d[k]*shots[k] for k in d):.3e} shots")
-    print(f"hours: {(1/6)*sum(d[k] for k in d):.2f}")
+        print(f"{k}: {d[k] * shots[k]:.3e} shots")
+    print(f"total: {sum(d[k] * shots[k] for k in d):.3e} shots")
+    print(f"hours: {(1 / 6) * sum(d[k] for k in d):.2f}")
 
 
 def circuits_per_example():
     d = {
+        "tfim_1d_hl_30j": heff_n_expectation_values_1d(5, 2) * 3,
         "tfim_1d_hl_80j": heff_n_expectation_values_1d(5, 2) * 3,
+        "tfim_1d_hl_30j_sweep": heff_n_expectation_values_1d(5, 2) * 3,
         "tfim_1d_hl_80j_sweep": heff_n_expectation_values_1d(5, 2) * 3,
         "tfim_1d_100j": heff_n_expectation_values_1d(5, 2) * 3,
         "tfim_1d_80j_10hl": heff_n_expectation_values_1d(5, 3) * 3,

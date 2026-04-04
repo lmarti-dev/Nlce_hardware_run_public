@@ -17,6 +17,7 @@ from src.qcomp_nlce.utils import (
     res_sim_dir,
     get_optimal_n_layers,
     baptize_circuit,
+    circuit_to_matrix,
 )
 
 import numpy as np
@@ -28,6 +29,14 @@ from pathlib import Path
 
 from data_manager import ExperimentDataManager
 
+
+def circ_ham_expect(circ: QuantumCircuit, hmat: np.ndarray):
+    cmat = circuit_to_matrix(circ)
+
+    sv = cmat[:, 0]
+    return sv.conj().dot(hmat @ sv)
+
+
 if __name__ == "__main__":
     dry_run = False
     edm = ExperimentDataManager("depol_parity_vs_true", dry_run=dry_run, project="nlce")
@@ -36,8 +45,8 @@ if __name__ == "__main__":
     J = 0.8
     hl = 0
     ladder = False
-    n_shots = 2000
-    n_reps = 20
+    n_shots = 10
+    n_reps = 2
     mitigate_depolarization = False
     which_algorithm = "estimator"
     provider_name = "AQT"
@@ -88,18 +97,24 @@ if __name__ == "__main__":
     )
     circuit.metadata["tmpname"] = name_part
 
-    parity_op = SparsePauliOp("Z" * n_qubits)
     diag_vals = np.zeros((n_qubits,))
     diag_stds = np.zeros((n_qubits,))
-    diag_dep_vals = np.zeros((n_qubits,))
-    diag_dep_stds = np.zeros((n_qubits,))
+    diag_true_vals = np.zeros((n_qubits,))
+    diag_parity_vals = np.zeros((n_qubits,))
+    diag_parity_true_vals = np.zeros((n_qubits,))
+    diag_parity_stds = np.zeros((n_qubits,))
     offd_vals = {k: np.zeros((n_qubits, n_qubits)) for k in OFFDIAG_SYMS}
+    offd_true_vals = {k: np.zeros((n_qubits, n_qubits)) for k in OFFDIAG_SYMS}
     offd_stds = {k: np.zeros((n_qubits, n_qubits)) for k in OFFDIAG_SYMS}
-    offd_dep_vals = {k: np.zeros((n_qubits, n_qubits)) for k in OFFDIAG_SYMS}
-    offd_dep_stds = {k: np.zeros((n_qubits, n_qubits)) for k in OFFDIAG_SYMS}
+    offd_parity_vals = {k: np.zeros((n_qubits, n_qubits)) for k in OFFDIAG_SYMS}
+    offd_parity_true_vals = {k: np.zeros((n_qubits, n_qubits)) for k in OFFDIAG_SYMS}
+    offd_parity_stds = {k: np.zeros((n_qubits, n_qubits)) for k in OFFDIAG_SYMS}
 
     states = hamming_weight_states(n_qubits, 1)
-    true_comp_vals = circ_ham_expectation_values(hamiltonian, circuit, states)
+    parity_op = SparsePauliOp("Z" * n_qubits)
+
+    hmat = hamiltonian.to_matrix()
+    parity_op_mat = parity_op.to_matrix()
 
     for ind_x, x in enumerate(states):
         for ind_y, y in enumerate(states[ind_x:]):
@@ -123,7 +138,7 @@ if __name__ == "__main__":
                     mitigate_depolarization=mitigate_depolarization,
                 )
 
-                dep_val, dep_std = estimate_ham_with_reps(
+                parity_val, parity_std = estimate_ham_with_reps(
                     parity_op,
                     circ_out,
                     n_shots,
@@ -137,9 +152,11 @@ if __name__ == "__main__":
                 print(f"{ind_x} - {ind_y} - {complex(val):.4f} ({complex(std):.4f})")
 
                 diag_vals[ind_x] = val
+                diag_true_vals[ind_x] = circ_ham_expect(circ_out, hmat)
                 diag_stds[ind_x] = std
-                diag_dep_vals[ind_x] = dep_val
-                diag_dep_stds[ind_x] = dep_std
+                diag_parity_vals[ind_x] = parity_val
+                diag_parity_true_vals[ind_x] = circ_ham_expect(circ_out, parity_op_mat)
+                diag_parity_stds[ind_x] = parity_std
 
             else:
                 for k in OFFDIAG_SYMS:
@@ -160,7 +177,7 @@ if __name__ == "__main__":
                         mitigate_depolarization=mitigate_depolarization,
                     )
 
-                    dep_val, dep_std = estimate_ham_with_reps(
+                    parity_val, parity_std = estimate_ham_with_reps(
                         parity_op,
                         circ_p,
                         n_shots,
@@ -170,14 +187,22 @@ if __name__ == "__main__":
                         which_algorithm=which_algorithm,
                         mitigate_depolarization=mitigate_depolarization,
                     )
+
+                    true_val = circ_ham_expect(circ_p, hmat)
+                    parity_true_val = circ_ham_expect(circ_p, parity_op_mat)
+
                     offd_vals[k][ind_x, ind_y] = t_val
                     offd_vals[k][ind_y, ind_x] = t_val.conj()
+                    offd_true_vals[k][ind_x, ind_y] = true_val
+                    offd_true_vals[k][ind_y, ind_x] = true_val.conj()
                     offd_stds[k][ind_x, ind_y] = t_std
                     offd_stds[k][ind_y, ind_x] = t_std.conj()
-                    offd_dep_vals[k][ind_x, ind_y] = dep_val
-                    offd_dep_vals[k][ind_y, ind_x] = dep_val.conj()
-                    offd_dep_stds[k][ind_x, ind_y] = dep_std
-                    offd_dep_stds[k][ind_y, ind_x] = dep_std.conj()
+                    offd_parity_vals[k][ind_x, ind_y] = parity_val
+                    offd_parity_vals[k][ind_y, ind_x] = parity_val.conj()
+                    offd_parity_true_vals[k][ind_x, ind_y] = parity_true_val
+                    offd_parity_true_vals[k][ind_y, ind_x] = parity_true_val.conj()
+                    offd_parity_stds[k][ind_x, ind_y] = parity_std
+                    offd_parity_stds[k][ind_y, ind_x] = parity_std.conj()
 
     edm.save_dict(
         {
@@ -194,13 +219,17 @@ if __name__ == "__main__":
             },
             "results": {
                 "diag_vals": diag_vals,
+                "diag_true_vals": diag_true_vals,
                 "diag_stds": diag_stds,
-                "diag_dep_vals": diag_dep_vals,
-                "diag_dep_stds": diag_dep_stds,
+                "diag_parity_vals": diag_parity_vals,
+                "diag_parity_true_vals": diag_parity_true_vals,
+                "diag_parity_stds": diag_parity_stds,
                 "offd_vals": offd_vals,
+                "offd_true_vals": offd_true_vals,
                 "offd_stds": offd_stds,
-                "offd_dep_vals": offd_dep_vals,
-                "offd_dep_stds": offd_dep_stds,
+                "offd_parity_vals": offd_parity_vals,
+                "offd_parity_true_vals": offd_parity_true_vals,
+                "offd_parity_stds": offd_parity_stds,
             },
         }
     )

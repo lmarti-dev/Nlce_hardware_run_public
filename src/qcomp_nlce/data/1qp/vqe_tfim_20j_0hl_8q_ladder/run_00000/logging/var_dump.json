@@ -48,5 +48,8 @@
     "which_hadamard_test": "stefan",
     "n_reps": 10,
     "model_dir": "vqe_20j_0hl_ladder",
-    "__timestamp": "2026_03_23_19_10_18"
+    "postfix": "",
+    "symmetries": true,
+    "which_algorithm_ham": "estimator",
+    "__timestamp": "2026_04_02_12_24_12"
 }

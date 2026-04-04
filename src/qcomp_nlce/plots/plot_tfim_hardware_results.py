@@ -9,23 +9,19 @@ from pathlib import Path
 
 style()
 
-fpath_tfim_100j_0hl = r"vqe_tfim_100j_0hl_5q"
-fpath_tfim_80j_0hl_sweep = r"sweep_tfim_80j_0hl_5q"
-fpath_tfim_80j_0hl = r"vqe_tfim_80j_0hl_5q"
-fpath_tfim_80j_0hl_run2 = r"vqe_tfim_80j_0hl_5q_run2"
-fpath_tfim_50j_10hl = r"vqe_tfim_50j_10hl_5q"
-
 dry_run = False
 m_edm = ExperimentDataManager(
     "plot_tfim_vqe_qpu_result", project="nlce", dry_run=dry_run
 )
 
 for items in (
+    ("vqe_tfim_30j_0hl_5q", "TFIM_30j_0hl", "vqe"),
     ("vqe_tfim_80j_0hl_5q", "TFIM_80j_0hl", "vqe"),
     ("vqe_tfim_80j_0hl_5q_run2", "TFIM_80j_0hl", "vqe"),
     ("vqe_tfim_50j_10hl_5q", "TFIM_50j_10hl", "vqe"),
     ("vqe_tfim_50j_10hl_5q_run2", "TFIM_50j_10hl", "vqe"),
     ("vqe_tfim_50j_10hl_5q_run3", "TFIM_50j_10hl", "vqe"),
+    ("sweep_tfim_30j_0hl_5q", "TFIM_30j_0hl", "sweep"),
     ("sweep_tfim_80j_0hl_5q", "TFIM_80j_0hl", "sweep"),
     ("sweep_tfim_80j_0hl_5q_run2", "TFIM_80j_0hl", "sweep"),
     ("vqe_tfim_100j_0hl_5q", "TFIM_100j_0hl", "vqe"),

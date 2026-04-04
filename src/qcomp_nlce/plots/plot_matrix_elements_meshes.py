@@ -240,13 +240,6 @@ def real_runs():
     style()
     dry_run = False
     which_backend = "real_backend"
-
-    TFIM_80j_sweep_fpath = r"1qp/sweep_tfim_80j_0hl_5q"
-    TFIM_80j_vqe_fpath = r"1qp/vqe_tfim_80j_0hl_5q"
-    TFIM_100j_vqe_fpath = r"1qp/vqe_tfim_100j_0hl_5q"
-    TFIM_50j_10hl_vqe_fpath = r"1qp/vqe_tfim_50j_10hl_5q"
-    TFIM_20j_ladder_vqe_fpath = r"1qp/vqe_tfim_20j_0hl_8q_ladder"
-
     edm = ExperimentDataManager(
         f"plot_meshes_{which_backend}",
         project="nlce",
@@ -254,11 +247,19 @@ def real_runs():
     )
 
     for item in (
-        (TFIM_80j_sweep_fpath, "sweep", which_backend),
-        (TFIM_80j_vqe_fpath, "vqe", which_backend),
-        (TFIM_100j_vqe_fpath, "vqe", which_backend),
-        (TFIM_50j_10hl_vqe_fpath, "vqe", which_backend),
-        (TFIM_20j_ladder_vqe_fpath, "vqe", which_backend),
+        ("1qp/sweep_tfim_80j_0hl_5q_run2", "sweep", which_backend),
+        ("1qp/sweep_tfim_80j_0hl_5q", "sweep", which_backend),
+        ("1qp/sweep_tfim_30j_0hl_5q", "sweep", which_backend),
+        ("1qp/vqe_tfim_30j_0hl_5q", "vqe", which_backend),
+        ("1qp/vqe_tfim_80j_0hl_5q", "vqe", which_backend),
+        ("1qp/vqe_tfim_80j_0hl_5q_run2", "vqe", which_backend),
+        ("1qp/vqe_tfim_100j_0hl_5q", "vqe", which_backend),
+        ("1qp/vqe_tfim_100j_0hl_5q_run2", "vqe", which_backend),
+        ("1qp/vqe_tfim_100j_0hl_5q_run3", "vqe", which_backend),
+        ("1qp/vqe_tfim_50j_10hl_5q", "vqe", which_backend),
+        ("1qp/vqe_tfim_50j_10hl_5q_run2", "vqe", which_backend),
+        ("1qp/vqe_tfim_50j_10hl_5q_run3", "vqe", which_backend),
+        ("1qp/vqe_tfim_20j_0hl_8q_ladder", "vqe", which_backend),
     ):
         # plot_matrix_breakdown_error(edm, item)
         # plot_matrix_breakdown(edm, item)

@@ -95,8 +95,8 @@ if __name__ == "__main__":
         ax.set_xticks([])
 
         if ii == nrows - 1:
-            l1q = depol_rate_2q * noise
-            l2q = depol_rate_1q * noise
+            l1q = depol_rate_1q * noise
+            l2q = depol_rate_2q * noise
             xlab = (
                 r"\begin{eqnarray*}"
                 rf"1q:& {etopow(l1q)}\\"
