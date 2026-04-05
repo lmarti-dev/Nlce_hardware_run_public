@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from fauplotstyle import style
 from src.qcomp_nlce.utils import DATA_DIR
 from pathlib import Path
-
+import os
 
 def col_from_fpath(fpath: Path) -> tuple[int, float]:
     keys = ("AQT_BETTER_100", "AQT_WORSE_2", "AQT_WORSE_10", "AQT_BETTER_10", "AQT")
@@ -23,7 +23,7 @@ def col_from_fpath(fpath: Path) -> tuple[int, float]:
     }
 
     for k in keys:
-        if k in fpath:
+        if k in fpath.as_posix():
             return providers[k]
 
 
@@ -32,37 +32,17 @@ def row_from_nreps(n_shots: int) -> int:
     return d[n_shots]
 
 
-if __name__ == "__main__":
-    style()
+def plot_4x4_from_fpaths(
+    fpaths: list[Path],
+    name: str,
+    depol_rate_1q: float,
+    depol_rate_2q: float,
+    dry_run: bool = True,
+):
 
-    dry_run = False
     m_edm = ExperimentDataManager(
-        "plot_depol_vs_shots", project="nlce", dry_run=dry_run
+        f"plot_depol_vs_shots_{name}", project="nlce", dry_run=dry_run
     )
-
-    depol_rate_2q = 0.01
-    depol_rate_1q = 0.003
-
-    fpaths = (
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_1reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_10reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_200shots_x_50reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_2000shots_x_20reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_10_200shots_x_1reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_10_200shots_x_10reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_10_200shots_x_50reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_10_2000shots_x_20reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_100_200shots_x_1reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_100_200shots_x_10reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_100_200shots_x_50reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_BETTER_100_2000shots_x_20reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_WORSE_2_200shots_x_1reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_WORSE_2_200shots_x_10reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_WORSE_2_200shots_x_50reps",
-        r"vqe_workflow_vqe_80j_0hl_hadam_stefan_AQT_WORSE_2_2000shots_x_20reps",
-    )
-
-    name = "TFIM_vqe_80j_0hl_5q"
 
     ncols = 4
     nrows = 4
@@ -70,7 +50,7 @@ if __name__ == "__main__":
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols)
 
     for fpath in fpaths:
-        edm = ExperimentDataManager.load(Path(DATA_DIR, "depol_vs_shots", fpath))
+        edm = ExperimentDataManager.load(fpath)
         d = edm.load_last_saved_data_file
 
         ks = d["inputs"]["ks"]
@@ -117,3 +97,40 @@ if __name__ == "__main__":
     )
 
     plt.show()
+
+
+def plot_tfim_80j(dry_run):    
+    style()
+
+
+    depol_rate_2q = 0.01
+    depol_rate_1q = 0.003
+
+    dirname = Path(DATA_DIR,"depol_vs_shots_80j")
+    fpaths = [Path(dirname,f) for f in os.listdir(dirname)]
+
+    name = "TFIM_vqe_80j_0hl_5q"
+
+    plot_4x4_from_fpaths(fpaths, name, depol_rate_1q, depol_rate_2q, dry_run)
+
+
+
+def plot_tfim_50j_10hl(dry_run):
+    style()
+
+    depol_rate_2q = 0.01
+    depol_rate_1q = 0.003
+
+    dirname = Path(DATA_DIR,"depol_vs_shots_50j_10hl")
+    fpaths = [Path(dirname,f) for f in os.listdir(dirname)]
+
+    name = "TFIM_vqe_50j_10hl_5q"
+
+    plot_4x4_from_fpaths(fpaths, name, depol_rate_1q, depol_rate_2q, dry_run)
+
+
+if __name__ == "__main__":
+
+    dry_run = True
+
+    plot_tfim_50j_10hl(dry_run)

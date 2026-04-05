@@ -252,13 +252,14 @@ def depol_errmit_vqe(dry_run):
 
 
 def depol_vs_shots(dry_run):
-    J = 0.8
+    J = 0.5
+    hl=0.1
     which_backends: BACKEND_TYPES = ["fake_backend", "statevector"]
-    n_shots = int(2000)
+
     which_hadamard_test = "stefan"
     n_qubits_max = 5
     for provider_name in ("AQT_WORSE_2", "AQT", "AQT_BETTER_10", "AQT_BETTER_100"):
-        for n_reps in (20,):
+        for n_shots,n_reps in ((200,1),(2000,1),(2000,5),(2000,20)):
             workflow_nq(
                 dry_run,
                 n_qubits_max,
@@ -270,7 +271,7 @@ def depol_vs_shots(dry_run):
                 J=J,
                 n_reps=n_reps,
                 n_steps=10,
-                hl=0.0,
+                hl=hl,
             )
 
 
