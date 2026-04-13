@@ -12,6 +12,8 @@ from src.qcomp_nlce.workflow.workflow_tfim_1qp_dispersion import (
 from src.qcomp_nlce.workflow.try_until_success import keep_trying
 
 from src.qcomp_nlce.plots.plot_offdiag_sv import plot_offdiag_elems
+from src.qcomp_nlce.test.circuit.lf_correction_to_matrices import print_lf_cdiff
+
 
 if __name__ == "__main__":
     # keep_trying(run_aqt_hl, "AQT")
@@ -23,4 +25,5 @@ if __name__ == "__main__":
     # keep_trying(run_aqt_j30, "AQT")
 
     # keep_trying(run_aqt_sweep_80j, "AQT")
-    plot_offdiag_elems(False)
+    # plot_offdiag_elems(False)
+    print_lf_cdiff()
