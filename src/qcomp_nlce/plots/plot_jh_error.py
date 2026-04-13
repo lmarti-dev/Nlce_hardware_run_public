@@ -71,7 +71,7 @@ if __name__ == "__main__":
         handles["sweep_tfim_30j_0hl_5q"],
         handles["vqe_tfim_20j_0hl_8q_ladder"],
     ]
-    lbs = ["VQE", "VQE LF", "Sweep", "VQE ladder"]
+    lbs = ["VQE", "VQE LF", "ASP", "VQE ladder"]
 
     ax.legend(
         hd,
