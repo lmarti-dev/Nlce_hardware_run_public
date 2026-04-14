@@ -1,0 +1,16 @@
+{
+    "init": {
+        "experiment_name": "plot_meshes_fake_backend",
+        "file_default_name": "palm",
+        "redirect_print_output": true,
+        "zero_padding_len": 5,
+        "experiment_date": "2026_03_27",
+        "use_runs": true,
+        "use_calendar": true,
+        "project": "nlce",
+        "notes": null
+    },
+    "run_number": 0,
+    "current_run_dir": "run_00000",
+    "__timestamp": "2026_03_27_21_57_38"
+}

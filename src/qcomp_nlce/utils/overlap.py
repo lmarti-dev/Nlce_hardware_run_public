@@ -770,6 +770,92 @@ def measure_matrix_elements(
     return vals, stds
 
 
+def stefan_hadamard_test_perrep(
+    circuit: QuantumCircuit,
+    parameters: np.ndarray,
+    n_shots: int,
+    x: str,
+    y: str,
+    which_backend: BACKEND_TYPES,
+    backend: BACKEND_ALIAS = "statevector",
+    n_reps: int = 10,
+    reps_per_job: int = 5,
+) -> list[complex]:
+    """Like stefan_hadamard_test but returns per-rep values instead of averaging."""
+    reps_per_job = min(n_reps, reps_per_job)
+    n_runs = int(n_reps // reps_per_job)
+    all_vals = []
+
+    for run_ind in range(n_runs):
+        print(f"Run number {run_ind + 1}/{n_runs}", end="\r")
+        stef_circuit = build_stefan_circuit_estimator(circuit, parameters, x, y)
+        proj = projector_ham(circuit.num_qubits, bitstring="0" * len(x))
+        hams = [
+            proj ^ SparsePauliOp("X"),
+            proj ^ SparsePauliOp("Y"),
+        ]
+        jobs = circuit_estimation_job(
+            backend=backend,
+            observables=hams,
+            circuit=[stef_circuit] * reps_per_job,
+            parameters=None,
+            n_shots=n_shots,
+        )
+        res = jobs.result()
+        vals, stds = get_hadam_estimator_list(res, reps_per_job)
+        all_vals.extend(vals)
+
+    return all_vals
+
+
+def measure_matrix_elements_perrep(
+    circuit: QuantumCircuit,
+    comp_states: list[str],
+    parameters: np.ndarray,
+    backend: BACKEND_ALIAS,
+    which_backend: str,
+    n_shots: int,
+    n_reps: int = 1,
+) -> list[np.ndarray]:
+    """Measure overlap matrix elements and return per-rep full matrices.
+
+    Returns a list of n_reps matrices, each NxN complex.
+    Each matrix element (i,j) at rep r is an independent noisy estimate of <i|U|j>.
+    Note: different elements at the same rep index are NOT from the same circuit shot,
+    but they are from the same "rep" index across independent Hadamard tests.
+    """
+    n = len(comp_states)
+    # perrep_vals[i][j] = list of n_reps complex values for element (i,j)
+    perrep_vals = [[None] * n for _ in range(n)]
+
+    for ind_x, x in enumerate(comp_states):
+        for ind_y, y in enumerate(comp_states):
+            vals_list = stefan_hadamard_test_perrep(
+                circuit,
+                parameters,
+                n_shots,
+                x,
+                y,
+                which_backend,
+                backend,
+                n_reps=n_reps,
+            )
+            perrep_vals[ind_x][ind_y] = vals_list
+            print(f"{ind_x} - {ind_y}: mean={np.mean(vals_list):.4f}")
+
+    # Assemble per-rep matrices
+    matrices = []
+    for r in range(n_reps):
+        mat = np.zeros((n, n), dtype=complex)
+        for i in range(n):
+            for j in range(n):
+                mat[i, j] = perrep_vals[i][j][r]
+        mat = reorder_matrix_elems(mat)
+        matrices.append(mat)
+
+    return matrices
+
+
 def estimation_from_samples(
     res: PrimitiveResult, hamiltonian: SparsePauliOp
 ) -> tuple[complex, complex]:

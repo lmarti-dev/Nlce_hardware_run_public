@@ -89,7 +89,7 @@ def plot_matrix_breakdown_depolarization(
 
     textcolors = ["k", "w"]
 
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(8, 6), constrained_layout=True)
+    fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 6), constrained_layout=True)
     pn = jobj["inputs"]["provider_name"]
     nq = jobj["inputs"]["n_qubits"]
     n_shots = jobj["inputs"]["n_shots"]
@@ -100,6 +100,7 @@ def plot_matrix_breakdown_depolarization(
     WHICH_D = {
         "eld": r"$\langle j | U | k \rangle$",
         "exd": r"$\langle j | U^\dagger H U | k \rangle$",
+        "gram": r"$O O^\dagger$",
     }
 
     for ind_x, size in enumerate(("dict_l", "dict_s")):
@@ -142,6 +143,37 @@ def plot_matrix_breakdown_depolarization(
             ax.set_title(rf"{SIZES_D[size]} - {WHICH_D[which_mat]}")
             ax.grid(False)
 
+        # Gram matrix: O @ O^dagger
+        overlap_mat, _ = get_matrix(
+            jobj, size, "eld", which_backend, which_algorithm
+        )
+        overlap_mat = apply_symmetry(overlap_mat, "eld", which_algorithm)
+        gram = overlap_mat @ overlap_mat.conj().T
+        true_overlap = get_true_values(jobj, size, "eld", which_algorithm)
+        gram_true = true_overlap @ true_overlap.conj().T
+        gram_depols = np.abs(complex_depol(gram, gram_true))
+
+        ax: plt.Axes = axes[ind_x, 2]
+        im = ax.imshow(gram_depols)
+        threshold = im.norm(np.max(gram_depols)) / 2
+
+        for i in range(gram.shape[0]):
+            for j in range(gram.shape[1]):
+                sign = "" if gram[i, j].imag >= 0 else "-"
+                s = f"{gram[i, j].real:.3f}\n{sign}{np.abs(gram[i, j].imag):.3f}"
+                ax.text(
+                    j,
+                    i,
+                    s,
+                    ha="center",
+                    va="center",
+                    color=textcolors[int(im.norm(gram_depols[i, j]) < threshold)],
+                    fontsize=7,
+                )
+        cbar = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        ax.set_title(rf"{SIZES_D[size]} - {WHICH_D['gram']}")
+        ax.grid(False)
+
         ax.set_xticks(range(nq), range(1, 1 + nq))
         ax.set_yticks(range(nq), range(1, 1 + nq))
     # fig.tight_layout()
@@ -167,7 +199,7 @@ def plot_matrix_breakdown(edm: ExperimentDataManager, item: list[str, str, str])
 
     textcolors = ["k", "w"]
 
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(8, 6), constrained_layout=True)
+    fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 6), constrained_layout=True)
     pn = jobj["inputs"]["provider_name"]
     nq = jobj["inputs"]["n_qubits"]
     n_shots = jobj["inputs"]["n_shots"]
@@ -178,6 +210,7 @@ def plot_matrix_breakdown(edm: ExperimentDataManager, item: list[str, str, str])
     WHICH_D = {
         "eld": rf"$\langle j | U | k \rangle$",
         "exd": rf"$\langle j | U^\dagger H U | k \rangle$",
+        "gram": rf"$O O^\dagger$",
     }
 
     for ind_x, size in enumerate(("dict_l", "dict_s")):
@@ -211,6 +244,33 @@ def plot_matrix_breakdown(edm: ExperimentDataManager, item: list[str, str, str])
             cbar = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
             ax.set_title(rf"{SIZES_D[size]} - {WHICH_D[which]}")
             ax.grid(False)
+
+        # Gram matrix: O @ O^dagger
+        overlap_mat, overlap_stds = get_matrix(
+            jobj, size, "eld", which_backend, which_algorithm
+        )
+        gram = overlap_mat @ overlap_mat.conj().T
+        agram = np.abs(gram)
+
+        ax: plt.Axes = axes[ind_x, 2]
+        im = ax.imshow(agram)
+        threshold = im.norm(np.max(agram)) / 2
+
+        for i in range(gram.shape[0]):
+            for j in range(gram.shape[1]):
+                sign = "" if gram[i, j].imag >= 0 else "-"
+                s = f"{gram[i, j].real:.3f}\n{sign}{np.abs(gram[i, j].imag):.3f}"
+                text = ax.text(
+                    j,
+                    i,
+                    s,
+                    ha="center",
+                    va="center",
+                    color=textcolors[int(im.norm(agram[i, j]) < threshold)],
+                )
+        cbar = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        ax.set_title(rf"{SIZES_D[size]} - {WHICH_D['gram']}")
+        ax.grid(False)
 
         ax.set_xticks(range(nq), range(1, 1 + nq))
         ax.set_yticks(range(nq), range(1, 1 + nq))
@@ -260,7 +320,7 @@ def plot_matrix_breakdown_error(edm: ExperimentDataManager, item: list[str, str,
 
     textcolors = ["k", "w"]
 
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(8, 6), constrained_layout=True)
+    fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 6), constrained_layout=True)
     pn = jobj["inputs"]["provider_name"]
     nq = jobj["inputs"]["n_qubits"]
     n_shots = jobj["inputs"]["n_shots"]
@@ -271,6 +331,7 @@ def plot_matrix_breakdown_error(edm: ExperimentDataManager, item: list[str, str,
     WHICH_D = {
         "eld": rf"$\langle j | U | k \rangle$",
         "exd": rf"$\langle j | U^\dagger H U | k \rangle$",
+        "gram": rf"$O O^\dagger$",
     }
 
     for ind_x, size in enumerate(("dict_l", "dict_s")):
@@ -313,6 +374,37 @@ def plot_matrix_breakdown_error(edm: ExperimentDataManager, item: list[str, str,
             ax.set_title(rf"{SIZES_D[size]} - {WHICH_D[which_mat]}")
             ax.grid(False)
 
+        # Gram matrix: O @ O^dagger
+        overlap_mat, overlap_stds = get_matrix(
+            jobj, size, "eld", which_backend, which_algorithm
+        )
+        overlap_mat = apply_symmetry(overlap_mat, "eld", which_algorithm)
+        gram = overlap_mat @ overlap_mat.conj().T
+        true_overlap = get_true_values(jobj, size, "eld", which_algorithm)
+        gram_true = true_overlap @ true_overlap.conj().T
+        gram_err = np.abs(gram_true - gram)
+
+        ax: plt.Axes = axes[ind_x, 2]
+        im = ax.imshow(np.abs(gram_err))
+        threshold = im.norm(np.max(gram_err)) / 2
+
+        for i in range(gram.shape[0]):
+            for j in range(gram.shape[1]):
+                sign = "" if gram[i, j].imag >= 0 else "-"
+                s = f"{gram[i, j].real:.3f}\n{sign}{np.abs(gram[i, j].imag):.3f}"
+                text = ax.text(
+                    j,
+                    i,
+                    s,
+                    ha="center",
+                    va="center",
+                    color=textcolors[int(im.norm(gram_err[i, j]) < threshold)],
+                    fontsize=7,
+                )
+        cbar = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        ax.set_title(rf"{SIZES_D[size]} - {WHICH_D['gram']}")
+        ax.grid(False)
+
         ax.set_xticks(range(nq), range(1, 1 + nq))
         ax.set_yticks(range(nq), range(1, 1 + nq))
     # fig.tight_layout()
@@ -329,7 +421,7 @@ def plot_matrix_breakdown_error(edm: ExperimentDataManager, item: list[str, str,
 def real_runs():
     style()
     dry_run = False
-    which_backend = "fake_backend"
+    which_backend = "statevector"
 
     TFIM_80j_sweep_fpath = (
         r"1qp/sweep_tfim_80j_0hl_5q/run_00000/data/chestnuts_00000.json"
