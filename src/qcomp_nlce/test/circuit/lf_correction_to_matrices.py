@@ -67,7 +67,10 @@ def expect_and_overlaps(hamiltonian: SparsePauliOp):
     e0 = np.min(vals)
     idx = np.array([2**j for j in range(n_qubits)], dtype=int)
 
-    vecs_1qp = vecs[:, idx]
+    overlaps = np.sum(np.abs(vecs[idx, :]) ** 2, axis=0)
+    __mm = np.argsort(overlaps)[-n_qubits:][::-1]
+
+    vecs_1qp = vecs[:, __mm]
     gs = vecs[:, 0]
 
     vecs_h0_1qp = np.zeros((2**n_qubits, n_qubits))
@@ -144,6 +147,18 @@ def plot_disp_corr(n_qubits: int, J: float, hl: float, ladder: bool = False):
 
     heff_corr_l = H_effective(e0_l, hcorr_l, ocorr_l)
     heff_corr_s = H_effective(e0_s, hcorr_s, ocorr_s)
+
+    print("heff_l")
+
+    pretty_print(heff_naked_l)
+    pretty_print(heff_corr_l)
+    pretty_print_diff(heff_naked_l, heff_corr_l)
+
+    print("heff_s")
+
+    pretty_print(heff_naked_s)
+    pretty_print(heff_corr_s)
+    pretty_print_diff(heff_naked_s, heff_corr_s)
 
     disp_naked = [
         dispersion_1d_thermodynamic(k, heff_naked_l, heff_naked_s) for k in ks
