@@ -1,7 +1,5 @@
-from src.qcomp_nlce.utils import get_aqt_backend, get_qexa_backend
+from src.qcomp_nlce.utils import pending_jobs
 
 
-backend = get_aqt_backend(10)
-
-
-...
+if __name__ == "__main__":
+    pending_jobs(10, "EQE")

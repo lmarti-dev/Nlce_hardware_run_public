@@ -177,6 +177,17 @@ def get_counts_from_res(
         raise RuntimeError(f"Unknown result: {res}")
 
 
+def merge_count_list(clist: list[dict]) -> dict:
+    counts_out = {}
+    for c in clist:
+        for k in c:
+            if k in counts_out.keys():
+                counts_out[k] += c[k]
+            else:
+                counts_out[k] = c[k]
+    return counts_out
+
+
 def get_counts_from_job(
     job: Union[BaseRuntimeJob, PrimitiveJob, MQPJob], ind: int = 0
 ) -> dict:

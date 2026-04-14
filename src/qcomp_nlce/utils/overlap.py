@@ -8,6 +8,7 @@ from src.qcomp_nlce.utils.measure import (
     get_counts_from_res,
     std_from_shots,
     trace_out_estimation,
+    merge_count_list,
 )
 from src.qcomp_nlce.utils.hamiltonian import (
     index_bits,
@@ -31,10 +32,7 @@ from src.qcomp_nlce.utils.save import (
     tmp_get_item,
     tmp_dirname,
     TempListType,
-    tmp_check_run_list,
-    tmp_create_run_file,
     tmp_delete_run_file,
-    tmp_load_run_list,
     tmp_save_run_file,
     init_run_split,
 )
@@ -49,8 +47,8 @@ from src.qcomp_nlce.utils.hardware import (
     is_hardware_run,
     BACKEND_ALIAS,
     BACKEND_TYPES,
-    manual_hamiltonian_circuits,
-    circuits_to_sampler_payload,
+    zxy_basis_hamiltonian_circuits,
+    RUNS_POSTFIX,
 )
 
 from src.qcomp_nlce.utils.stats import sum_std, mean_std
@@ -61,6 +59,7 @@ from typing import Union, Tuple, Literal, Dict, Any
 
 
 OFFDIAG_SYMS = ["+", "-", "+i", "-i"]
+HAM_EXPECT_METHODS = Literal["sampling", "estimator"]
 
 
 def custom_idx_groups_of_n(total_len: int, group_size: int = 2):
@@ -94,7 +93,7 @@ def iterative_hadamard_test_circuits(
     for x in range(len(custom_idx)):
         hadam_circuit = QuantumCircuit(circuit.num_qubits + 1)
         hadam_circuit.h(0)
-        if False == real_part:
+        if False is real_part:
             hadam_circuit.sdg(0)
         stuekchen = [g for l in custom_idx[:x] for g in l]
         circuit_stueckchen = [circuit[c] for c in stuekchen]
@@ -374,6 +373,7 @@ def stefan_hadamard_test(
     counting_method: Literal["estimator", "samples"] = "estimator",
     n_reps: int = 10,
     reps_per_job: int = 5,
+    postfix: RUNS_POSTFIX = "",
 ):
     reps_per_job = min(n_reps, reps_per_job)
     # this is Stefan Wolf's test, a bit modified though
@@ -385,7 +385,7 @@ def stefan_hadamard_test(
 
     if counting_method == "estimator":
         on_hardware = is_hardware_run(which_backend)
-        _dirname = tmp_dirname(circuit, which_backend)
+        _dirname = tmp_dirname(circuit, which_backend, postfix=postfix)
 
         n_runs = int(n_reps // reps_per_job)
 
@@ -454,7 +454,7 @@ def hadamard_test_circuit(
     n_qubits = circuit.num_qubits + 1
     hadam_circuit = QuantumCircuit(n_qubits)
     hadam_circuit.h(0)
-    if False == real_part:
+    if False is real_part:
         hadam_circuit.sdg(0)
 
     for ci in circuit:
@@ -619,6 +619,7 @@ def measure_matrix_element(
     custom_idx: list[list[int]] = None,
     handcraft: bool = True,
     n_reps: int = 1,
+    postfix: RUNS_POSTFIX = "",
 ) -> Union[complex, tuple[complex, complex]]:
     # This computes <x|U|y>
 
@@ -637,6 +638,7 @@ def measure_matrix_element(
             backend,
             counting_method=counting_method,
             n_reps=n_reps,
+            postfix=postfix,
         )
         return ol, std
 
@@ -718,13 +720,14 @@ def measure_matrix_elements(
     which_hadamard_test: str,
     custom_idx: list[list[int]] = None,
     handcraft: bool = True,
+    postfix: RUNS_POSTFIX = "",
     n_reps: int = 1,
 ) -> np.ndarray:
     vals = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
     stds = np.zeros((len(comp_states), len(comp_states)), dtype=complex)
 
     on_hardware = is_hardware_run(which_backend)
-    _dirname = tmp_dirname(circuit, which_backend)
+    _dirname = tmp_dirname(circuit, which_backend, postfix=postfix)
 
     if on_hardware:
         filename = f"{_dirname}/measure_matrix_elements.json"
@@ -752,6 +755,7 @@ def measure_matrix_elements(
                     custom_idx=custom_idx,
                     handcraft=handcraft,
                     n_reps=n_reps,
+                    postfix=postfix,
                 )
                 vals[ind_x, ind_y] = jUk
                 stds[ind_x, ind_y] = std
@@ -770,98 +774,12 @@ def measure_matrix_elements(
     return vals, stds
 
 
-def stefan_hadamard_test_perrep(
-    circuit: QuantumCircuit,
-    parameters: np.ndarray,
-    n_shots: int,
-    x: str,
-    y: str,
-    which_backend: BACKEND_TYPES,
-    backend: BACKEND_ALIAS = "statevector",
-    n_reps: int = 10,
-    reps_per_job: int = 5,
-) -> list[complex]:
-    """Like stefan_hadamard_test but returns per-rep values instead of averaging."""
-    reps_per_job = min(n_reps, reps_per_job)
-    n_runs = int(n_reps // reps_per_job)
-    all_vals = []
-
-    for run_ind in range(n_runs):
-        print(f"Run number {run_ind + 1}/{n_runs}", end="\r")
-        stef_circuit = build_stefan_circuit_estimator(circuit, parameters, x, y)
-        proj = projector_ham(circuit.num_qubits, bitstring="0" * len(x))
-        hams = [
-            proj ^ SparsePauliOp("X"),
-            proj ^ SparsePauliOp("Y"),
-        ]
-        jobs = circuit_estimation_job(
-            backend=backend,
-            observables=hams,
-            circuit=[stef_circuit] * reps_per_job,
-            parameters=None,
-            n_shots=n_shots,
-        )
-        res = jobs.result()
-        vals, stds = get_hadam_estimator_list(res, reps_per_job)
-        all_vals.extend(vals)
-
-    return all_vals
-
-
-def measure_matrix_elements_perrep(
-    circuit: QuantumCircuit,
-    comp_states: list[str],
-    parameters: np.ndarray,
-    backend: BACKEND_ALIAS,
-    which_backend: str,
-    n_shots: int,
-    n_reps: int = 1,
-) -> list[np.ndarray]:
-    """Measure overlap matrix elements and return per-rep full matrices.
-
-    Returns a list of n_reps matrices, each NxN complex.
-    Each matrix element (i,j) at rep r is an independent noisy estimate of <i|U|j>.
-    Note: different elements at the same rep index are NOT from the same circuit shot,
-    but they are from the same "rep" index across independent Hadamard tests.
-    """
-    n = len(comp_states)
-    # perrep_vals[i][j] = list of n_reps complex values for element (i,j)
-    perrep_vals = [[None] * n for _ in range(n)]
-
-    for ind_x, x in enumerate(comp_states):
-        for ind_y, y in enumerate(comp_states):
-            vals_list = stefan_hadamard_test_perrep(
-                circuit,
-                parameters,
-                n_shots,
-                x,
-                y,
-                which_backend,
-                backend,
-                n_reps=n_reps,
-            )
-            perrep_vals[ind_x][ind_y] = vals_list
-            print(f"{ind_x} - {ind_y}: mean={np.mean(vals_list):.4f}")
-
-    # Assemble per-rep matrices
-    matrices = []
-    for r in range(n_reps):
-        mat = np.zeros((n, n), dtype=complex)
-        for i in range(n):
-            for j in range(n):
-                mat[i, j] = perrep_vals[i][j][r]
-        mat = reorder_matrix_elems(mat)
-        matrices.append(mat)
-
-    return matrices
-
-
-def estimation_from_samples(
-    res: PrimitiveResult, hamiltonian: SparsePauliOp
+def estimation_from_counts(
+    z_counts: dict,
+    x_counts: dict,
+    hamiltonian: SparsePauliOp,
+    mitigate_depolarization: bool = True,
 ) -> tuple[complex, complex]:
-    z_counts = get_counts_from_res(res, hamiltonian.num_qubits, 0)
-    x_counts = get_counts_from_res(res, hamiltonian.num_qubits, 1)
-
     z_vals = []
     z_stds = []
     x_vals = []
@@ -884,60 +802,71 @@ def estimation_from_samples(
         val, std = trace_out_estimation(x_counts, [jj, jj + 1], -1)
         x_vals.append(val)
         x_stds.append(std)
+    if mitigate_depolarization:
+        z_depol = trace_out_estimation(z_counts, range(hamiltonian.num_qubits), -1)
+        p = 1 + z_depol[0]
+        # easy check and discard
+        if p > 1 or p < 0:
+            p = 0
 
+        z_vals = [z / (1 - p) for z in z_vals]
     ffval = -sum(x_vals) * J - sum(z_vals) * h
     ffstd = sum_std([sum_std(x_stds) * J, sum_std(z_vals) * h])
 
     return ffval, ffstd
 
 
-def measure_manual_circuit(
-    backend: BACKEND_ALIAS,
-    circuit: QuantumCircuit,
-    hamiltonian: SparsePauliOp,
-    n_shots: int,
-):
-    [z_circ, x_circ, y_circ] = manual_hamiltonian_circuits(circuit, hamiltonian)
+def tfim_counts_from_res(res: PrimitiveResult, hamiltonian: SparsePauliOp, n_reps: int):
+    name = hamiltonian.__dict__[HAM_NAME_VAR]
+    if "ladder" in name:
+        raise NotImplementedError("Ladder not implemented with samples")
 
-    job = circuit_sampling_job([z_circ, x_circ], None, backend, n_shots)
-    return job
-
-
-def measure_hamiltonian_element_manual(
-    hamiltonian: SparsePauliOp,
-    circuit: QuantumCircuit,
-    x: str,
-    y: str,
-    parameters: np.ndarray,
-    backend: BACKEND_ALIAS,
-    n_shots: int,
-    n_reps: int = -1,
-) -> tuple[complex, complex]:
-    if x == y:
-        circ_out = QuantumCircuit(circuit.num_qubits)
-        x_inds = index_bits(x, circuit.num_qubits, right_to_left=True)
-        for x_ind in x_inds:
-            circ_out.x(x_ind)
-        circ_out.compose(circuit, inplace=True)
-        job = measure_manual_circuit(backend, circ_out, hamiltonian, n_shots)
-        res = job.result()
-        return estimation_from_samples(res, hamiltonian)
+    if "_0hl" not in name:
+        n_basis = 3
     else:
-        d = ["+", "-", "+i", "-i"]
-        stds = []
-        vals = []
-        for k in d:
-            circ_p = prep_circ_superpos(x, y, k)
-            circ_p.compose(circuit, inplace=True)
-            job = measure_manual_circuit(backend, circ_p, hamiltonian, n_shots)
-            res = job.result()
-            val, std = estimation_from_samples(res, hamiltonian)
-            vals.append(val)
-            stds.append(std)
+        n_basis = 2
 
-        val = (vals[0] - vals[1]) / 2 + 1j * (vals[2] - vals[3]) / 2
-        std = sum_std(stds[0:2]) + 1j * sum_std(stds[2:4])
-        return val, std
+    z_counts = merge_count_list(
+        [
+            get_counts_from_res(res, hamiltonian.num_qubits, j * n_basis)
+            for j in range(n_reps)
+        ]
+    )
+    x_counts = merge_count_list(
+        [
+            get_counts_from_res(res, hamiltonian.num_qubits, 1 + j * n_basis)
+            for j in range(n_reps)
+        ]
+    )
+    if "_0hl" not in name:
+        y_counts = merge_count_list(
+            [
+                get_counts_from_res(res, hamiltonian.num_qubits, 2 + j * n_basis)
+                for j in range(n_reps)
+            ]
+        )
+        return z_counts, x_counts, y_counts
+    return z_counts, x_counts
+
+
+def build_estimation_job_with_sampling(
+    backend: BACKEND_ALIAS,
+    circuit: QuantumCircuit,
+    hamiltonian: SparsePauliOp,
+    n_shots: int,
+    n_reps: int,
+):
+    [z_circ, x_circ, y_circ] = zxy_basis_hamiltonian_circuits(circuit, hamiltonian)
+
+    name = hamiltonian.__dict__[HAM_NAME_VAR]
+
+    if "_0hl" not in name:
+        circs = [z_circ, x_circ, y_circ] * n_reps
+    else:
+        circs = [z_circ, x_circ] * n_reps
+
+    job = circuit_sampling_job(circs, None, backend, n_shots)
+    return job
 
 
 def estimate_ham_with_reps(
@@ -948,47 +877,73 @@ def estimate_ham_with_reps(
     n_reps: int,
     which_backend: BACKEND_TYPES,
     reps_per_job: int = 5,
+    which_algorithm: str = "estimator",
+    postfix: RUNS_POSTFIX = "",
+    mitigate_depolarization: bool = True,
 ):
     reps_per_job = min(n_reps, reps_per_job)
-    if (
-        backend != "statevector" and ("IQM" in backend.name or "EQE" in backend.name)
-    ) or True:
-        job = measure_manual_circuit(backend, circuit, hamiltonian, n_shots)
-        res = job.result()
-        return estimation_from_samples(res, hamiltonian)
 
     n_runs = int(n_reps // reps_per_job)
 
     on_hardware = is_hardware_run(which_backend)
-    _dirname = tmp_dirname(circuit, which_backend)
+    _dirname = tmp_dirname(circuit, which_backend, postfix=postfix)
 
     run_list = init_run_split(_dirname, on_hardware)
 
     remaining_runs = n_runs - len(run_list)
 
-    for run_ind in range(remaining_runs):
-        print(f"Run number {run_ind + 1}/{remaining_runs}", end="\r")
+    # statevector shouldn't be sample limited
+    if which_algorithm == "estimator" or which_backend == "statevector":
+        for run_ind in range(remaining_runs):
+            print(f"Run number {run_ind + 1}/{remaining_runs}", end="\r")
 
-        job = circuit_estimation_job(
-            [circuit for _ in range(reps_per_job)],
-            [hamiltonian],
-            None,
-            backend,
-            n_shots,
+            job = circuit_estimation_job(
+                [circuit for _ in range(reps_per_job)],
+                [hamiltonian],
+                None,
+                backend,
+                n_shots,
+            )
+
+            # HARDWARE may fail HERE
+            res = job.result()
+            ...
+
+            vals, stds = res_to_lists(res)
+            run_list.append([vals, stds])
+            if on_hardware:
+                tmp_save_run_file(_dirname, run_list)
+
+        return np.mean([v[0] for v in run_list]), mean_std(
+            np.array([v[1] for v in run_list]).flatten()
         )
 
-        # HARDWARE may fail HERE
-        res = job.result()
-        ...
+    elif which_algorithm == "sampling":
+        for run_ind in range(remaining_runs):
+            print(f"Run number {run_ind + 1}/{remaining_runs}", end="\r")
+            job = build_estimation_job_with_sampling(
+                backend, circuit, hamiltonian, n_shots, n_reps
+            )
 
-        vals, stds = res_to_lists(res)
-        run_list.append([vals, stds])
-        if on_hardware:
-            tmp_save_run_file(_dirname, run_list)
+            # HARDWARE may fail HERE
+            res = job.result()
 
-    return np.mean([v[0] for v in run_list]), mean_std(
-        np.array([v[1] for v in run_list]).flatten()
-    )
+            z_counts, x_counts = tfim_counts_from_res(res, hamiltonian, n_reps)
+
+            run_list.append([z_counts, x_counts])
+            if on_hardware:
+                tmp_save_run_file(_dirname, run_list)
+
+        z_counts = merge_count_list([m[0] for m in run_list])
+        x_counts = merge_count_list([m[1] for m in run_list])
+
+        val, std = estimation_from_counts(
+            z_counts,
+            x_counts,
+            hamiltonian,
+            mitigate_depolarization,
+        )
+        return val, std
 
 
 def res_to_lists(res: Union[EstimatorResult, Any]) -> tuple[list, list]:
@@ -1042,12 +997,15 @@ def measure_hamiltonian_elements_v2(
     which_backend: str,
     n_shots: int,
     n_reps: int = 10,
+    which_algorithm: str = "estimator",
+    postfix: RUNS_POSTFIX = "",
+    mitigate_depolarization: bool = False,
 ):
     vals = np.zeros((len(states), len(states)), dtype=complex)
     stds = np.zeros((len(states), len(states)), dtype=complex)
 
     on_hardware = is_hardware_run(which_backend)
-    _dirname = tmp_dirname(circuit, which_backend)
+    _dirname = tmp_dirname(circuit, which_backend, postfix=postfix)
 
     if on_hardware:
         filename = f"{_dirname}/measure_hamiltonian_elements.json"
@@ -1081,6 +1039,9 @@ def measure_hamiltonian_elements_v2(
                         backend,
                         which_backend=which_backend,
                         n_reps=n_reps,
+                        which_algorithm=which_algorithm,
+                        mitigate_depolarization=mitigate_depolarization,
+                        postfix=postfix,
                     )
 
                     if on_hardware:
@@ -1113,6 +1074,9 @@ def measure_hamiltonian_elements_v2(
                             backend,
                             which_backend=which_backend,
                             n_reps=n_reps,
+                            which_algorithm=which_algorithm,
+                            mitigate_depolarization=mitigate_depolarization,
+                            postfix=postfix,
                         )
                         vd[k] = (t_val, t_std)
 

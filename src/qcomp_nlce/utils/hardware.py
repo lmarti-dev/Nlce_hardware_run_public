@@ -94,10 +94,8 @@ from qiskit_ibm_runtime.fake_provider.fake_backend import FakeBackendV2
 
 from src.qcomp_nlce.utils.circuit import (
     isa_circuit_param_dict,
-    parameters_dict,
     parameters_exist,
     circ_stats,
-    measure_pauli_circuit,
 )
 
 try:
@@ -149,6 +147,9 @@ BACKEND_COLORS = {
     "ed": "#5FC5EC",
     "analytic": "#5F7CA3",
 }
+
+
+RUNS_POSTFIX = Literal["", "RUN2", "RUN3"]
 
 [
     "#228848",
@@ -699,7 +700,7 @@ def backend_estimate(
     return job
 
 
-def manual_hamiltonian_circuits(
+def zxy_basis_hamiltonian_circuits(
     circuit: QuantumCircuit,
     hamiltonian: SparsePauliOp,
 ) -> list[QuantumCircuit]:

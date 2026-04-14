@@ -10,6 +10,7 @@ import io
 
 
 from src.qcomp_nlce.utils.constants import ALGORITHMS_ALIAS
+from src.qcomp_nlce.utils.hardware import RUNS_POSTFIX
 
 
 def get_save_directory(dirname: str):
@@ -129,7 +130,9 @@ def tmp_entry_exists(l: TempListType, ind_x: int, ind_y: int):
     return False
 
 
-def tmp_dirname(circuit: QuantumCircuit, which_backend: str, postfix: str = ""):
+def tmp_dirname(
+    circuit: QuantumCircuit, which_backend: str, postfix: RUNS_POSTFIX = ""
+):
     if "tmpname" not in circuit.metadata.keys():
         raise ValueError(f"You did not give a tmpname to the circuit: {circuit.name}")
 

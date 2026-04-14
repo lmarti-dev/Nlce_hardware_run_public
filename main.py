@@ -1,22 +1,29 @@
 from src.qcomp_nlce.workflow.workflow_tfim_1qp_dispersion import (
-    workflow_nq_aqt_ladder,
-    workflow_nq_aqt_sweep_80j,
-    workflow_nq_aqt_sweep_30j,
-    workflow_nq_aqt_hl,
-    workflow_nq_aqt_j100,
-    workflow_nq_aqt_j80,
-    workflow_nq_aqt_j30,
+    run_aqt_ladder,
+    run_aqt_sweep_80j,
+    run_aqt_sweep_30j,
+    run_aqt_hl,
+    run_aqt_100j,
+    run_aqt_80j,
+    run_aqt_30j,
+    depol_vs_shots
 )
 
 from src.qcomp_nlce.workflow.try_until_success import keep_trying
 
-if __name__ == "__main__":
-    # keep_trying(workflow_nq_aqt_hl, "AQT")
-    # keep_trying(workflow_nq_aqt_ladder, "AQT")
-    # keep_trying(workflow_nq_aqt_j100, "AQT")
-    # keep_trying(workflow_nq_aqt_j80, "AQT")
-    keep_trying(workflow_nq_aqt_j30, "AQT")
-    keep_trying(workflow_nq_aqt_sweep_30j, "AQT")
-    # keep_trying(workflow_nq_aqt_j30, "AQT")
+from src.qcomp_nlce.plots.plot_offdiag_sv import plot_offdiag_elems
+from src.qcomp_nlce.test.circuit.lf_correction_to_matrices import print_lf_cdiff
 
-    # keep_trying(workflow_nq_aqt_sweep_80j, "AQT")
+
+if __name__ == "__main__":
+    # keep_trying(run_aqt_hl, "AQT")
+    # keep_trying(run_aqt_ladder, "AQT")
+    # keep_trying(run_aqt_j100, "AQT")
+    # keep_trying(run_aqt_j80, "AQT")
+    # keep_trying(run_aqt_80j, "AQT", postfix="RUN3")
+    # keep_trying(run_aqt_sweep_80j, "AQT", postfix="RUN3")
+    # keep_trying(run_aqt_j30, "AQT")
+
+    # keep_trying(run_aqt_sweep_80j, "AQT")
+    # plot_offdiag_elems(False)
+    print_lf_cdiff()

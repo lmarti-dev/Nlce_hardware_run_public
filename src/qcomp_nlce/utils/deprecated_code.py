@@ -3,6 +3,42 @@ from src.qcomp_nlce.utils.stats import mean_std
 import numpy as np
 
 
+def measure_1qp_expectation_v3(
+    hamiltonian: SparsePauliOp,
+    circuit: QuantumCircuit,
+    backend: BACKEND_ALIAS,
+    which_backend: BACKEND_TYPES,
+    true_comp_vals: np.ndarray = None,
+    n_shots: int = 1e3,
+):
+    n_qubits = circuit.num_qubits
+    print(
+        f"Minimal trace error (only shot noise) {0.5 * (n_qubits) / np.sqrt(n_shots):.4e}"
+    )
+    bn = get_backend_name(backend)
+    comp_states = hamming_weight_states(n_qubits, 1)
+    comp_vals, stds = measure_hamiltonian_elements_v2(
+        hamiltonian,
+        circuit,
+        comp_states,
+        None,
+        backend,
+        which_backend,
+        n_shots,
+    )
+    print(f"{which_backend} ({bn})")
+    td = compare_with_true(true_comp_vals, comp_vals, bn)
+
+    return {
+        which_backend: {
+            "name": bn,
+            "trace_dist": td,
+            "values": comp_vals,
+            "stds": stds,
+        }
+    }
+
+
 def measure_matrix_element_circuits(
     circuit: QuantumCircuit,
     x: str,
@@ -168,6 +204,45 @@ def iterative_hadamard_test_estimator(
     final_g, _, _, std = get_overlaps_from_res(jobs.result())
 
     return final_g, std
+
+
+def measure_hamiltonian_element_manual(
+    hamiltonian: SparsePauliOp,
+    circuit: QuantumCircuit,
+    x: str,
+    y: str,
+    parameters: np.ndarray,
+    backend: BACKEND_ALIAS,
+    n_shots: int,
+    n_reps: int = -1,
+) -> tuple[complex, complex]:
+    if x == y:
+        circ_out = QuantumCircuit(circuit.num_qubits)
+        x_inds = index_bits(x, circuit.num_qubits, right_to_left=True)
+        for x_ind in x_inds:
+            circ_out.x(x_ind)
+        circ_out.compose(circuit, inplace=True)
+        job = measure_manual_circuit(backend, circ_out, hamiltonian, n_shots)
+        res = job.result()
+        return estimation_from_samples(res, hamiltonian)
+
+    # this case never happens
+    else:
+        d = ["+", "-", "+i", "-i"]
+        stds = []
+        vals = []
+        for k in d:
+            circ_p = prep_circ_superpos(x, y, k)
+            circ_p.compose(circuit, inplace=True)
+            job = measure_manual_circuit(backend, circ_p, hamiltonian, n_shots)
+            res = job.result()
+            val, std = estimation_from_samples(res, hamiltonian)
+            vals.append(val)
+            stds.append(std)
+
+        val = (vals[0] - vals[1]) / 2 + 1j * (vals[2] - vals[3]) / 2
+        std = sum_std(stds[0:2]) + 1j * sum_std(stds[2:4])
+        return val, std
 
 
 def measure_hamiltonian_elements(
