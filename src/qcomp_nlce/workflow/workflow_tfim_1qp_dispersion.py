@@ -114,6 +114,33 @@ def run_aqt_80j(dry_run, which_backends: BACKEND_TYPES, run_postfix: RUNS_POSTFI
     return run_aqt_vqe(dry_run, 0.8, which_backends, run_postfix)
 
 
+def run_aqt_vqe_error_models(
+    dry_run,
+):
+    which_backends = ["fake_backend", "statevector"]
+    J = 0.8
+
+    provider_name: PROVIDER_ALIAS
+    for provider_name in ("AQT_DAMPING", "AQT_PAULI"):
+        n_shots = int(2000)
+        which_hadamard_test = "stefan"
+        n_qubits_max = 5
+        workflow_nq(
+            dry_run,
+            n_qubits_max,
+            which_hadamard_test,
+            provider_name,
+            n_shots,
+            which_backends,
+            ["vqe"],
+            J=J,
+            n_reps=20,
+            n_steps=10,
+            hl=0.0,
+            postfix="",
+        )
+
+
 def run_aqt_vqe(dry_run, J, which_backends: BACKEND_TYPES, run_postfix: RUNS_POSTFIX):
     provider_name: PROVIDER_ALIAS = "AQT"
     n_shots = int(200)
@@ -591,7 +618,7 @@ if __name__ == "__main__":
     # run_aqt_ladder(False, ["real_backend", "fake_backend", "statevector"])
     # run_aqt_hl(False, ["real_backend", "fake_backend", "statevector"])
     # run_aqt_j100(False, ["real_backend", "fake_backend", "statevector"])
-    run_aqt_80j(True, ["fake_backend", "statevector"], "RUN3")
+    # run_aqt_80j(True, ["fake_backend", "statevector"], "RUN3")
     # sweep_convergence(False, 0.8, ["statevector"])
     # depol_vs_shots(False, 0.8, ["fake_backend", "statevector"])
     # depol_errmit_vqe(False)
@@ -603,3 +630,4 @@ if __name__ == "__main__":
 
     # run_aqt_80j(False, ["fake_backend", "statevector"], "RUN3")
     # run_aqt_sweep_80j(False, ["fake_backend", "statevector"], "RUN3")
+    run_aqt_vqe_error_models(False)

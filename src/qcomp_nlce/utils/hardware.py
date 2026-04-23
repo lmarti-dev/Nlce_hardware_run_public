@@ -101,10 +101,14 @@ from src.qcomp_nlce.utils.circuit import (
 try:
     from src.qcomp_nlce.utils.aqt_utils import (
         aqt_better_fake_backend,
+        aqt_pauli_damping_backend,
+        aqt_pauli_fake_backend,
         OfflineSimulatorResourceBetter,
     )
 except ModuleNotFoundError:
     aqt_better_fake_backend: lambda x: ...
+    aqt_pauli_damping_backend: lambda x: ...
+    aqt_pauli_fake_backend: lambda x: ...
 
     class OfflineSimulatorResourceBetter: ...
 
@@ -289,6 +293,12 @@ def get_appropriate_fake_backend(
         else:
             n_improve = 2
         return aqt_better_fake_backend(n_improve)
+
+    elif "AQT_DAMPING" in which:
+        return aqt_pauli_damping_backend(0.001, 0.001)
+
+    elif "AQT_PAULI" in which:
+        return aqt_pauli_fake_backend(0.003)
 
     elif "AQT_WORSE" in which:
         if len(which.split("_")) == 3:
