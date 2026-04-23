@@ -21,7 +21,6 @@ def H_effective_pcat(
     gs_1qp: np.ndarray,
     one_qp_row_0: np.ndarray,
 ) -> np.ndarray:
-   
     N = one_qp_expectation.shape[0]
     A = overlap - np.outer(gs_1qp, one_qp_row_0) / gs_0
     T = A.conj().T @ inv(sqrtm(A @ A.conj().T))
@@ -36,7 +35,7 @@ def calculate_Ed(hamiltonian: np.ndarray) -> float:
 def H_effective_ed(hamiltonian: SparsePauliOp) -> np.ndarray:
     N = hamiltonian.num_qubits
     whole_ham = np.array(hamiltonian.to_matrix(False), dtype=complex)
-    indices = np.array([2 ** j for j in range(N)], dtype=int)
+    indices = np.array([2**j for j in range(N)], dtype=int)
 
     eigenvalues, eigenvectors = np.linalg.eigh(whole_ham)
     overlaps = np.sum(np.abs(eigenvectors[indices, :]) ** 2, axis=0)
@@ -53,7 +52,7 @@ def get_1qp_indices(ham_ref: SparsePauliOp, eigenvectors: np.ndarray) -> np.ndar
     N = ham_ref.num_qubits
     ref_mat = np.array(ham_ref.to_matrix(False), dtype=complex)
     _, eigvecs_ref = np.linalg.eigh(ref_mat)
-    Q = eigvecs_ref[:, 1:N + 1]
+    Q = eigvecs_ref[:, 1 : N + 1]
     proj = Q @ Q.conj().T
     column_norms = np.linalg.norm(proj @ eigenvectors, axis=0)
     return np.argsort(-column_norms)[:N]
@@ -62,7 +61,7 @@ def get_1qp_indices(ham_ref: SparsePauliOp, eigenvectors: np.ndarray) -> np.ndar
 def H_effective_ed_LF(hamiltonian: SparsePauliOp, ham_ref: SparsePauliOp) -> np.ndarray:
     N = hamiltonian.num_qubits
     whole_ham = np.array(hamiltonian.to_matrix(False), dtype=complex)
-    indices = np.array([2 ** j for j in range(N)], dtype=int)
+    indices = np.array([2**j for j in range(N)], dtype=int)
 
     eigenvalues, eigenvectors = np.linalg.eigh(whole_ham)
     indices_eigenvectors = get_1qp_indices(ham_ref, eigenvectors)

@@ -146,10 +146,9 @@ def res_dict_sampler(
     # because we're not looking at the true distribution
     # but rather the distribution of the estimator
     fac = 1
+    n_shots = _d["inputs"]["n_shots"]
+    n_reps = _d["inputs"]["n_reps"]
     if to_eotm:
-        n_shots = _d["inputs"]["n_shots"]
-        n_reps = _d["inputs"]["n_reps"]
-
         fac = 1 / np.sqrt(n_shots * n_reps)
 
     for be in res["dict_l"]["eld"]:
@@ -163,6 +162,8 @@ def res_dict_sampler(
             gs_expectation_std_l = (
                 res["dict_l"]["gsd"][be]["std"] * options["gsd_sup_fac"]
             )
+            if not to_eotm:
+                gs_expectation_std_l *= np.sqrt(n_shots * n_reps)
 
             overlap_s = res["dict_s"]["eld"][be]["values"]
             overlap_std_s = res["dict_s"]["eld"][be]["stds"] * fac
@@ -173,6 +174,10 @@ def res_dict_sampler(
             gs_expectation_std_s = (
                 res["dict_s"]["gsd"][be]["std"] * options["gsd_sup_fac"]
             )
+
+            if not to_eotm:
+                gs_expectation_std_s *= np.sqrt(n_shots * n_reps)
+
             sampler = get_heff_mc_sampler(
                 expectations_l,
                 expectations_std_l,

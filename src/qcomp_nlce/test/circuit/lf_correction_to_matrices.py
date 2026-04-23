@@ -8,6 +8,8 @@ from src.qcomp_nlce.utils import (
     get_ground_energy,
     dispersion_1d_thermodynamic,
     H_effective,
+    H_effective_ed_LF,
+    H_effective_ed,
 )
 from src.qcomp_nlce.utils.results import pretty_print, pretty_print_diff
 import numpy as np
@@ -117,23 +119,24 @@ def expect_and_overlaps(hamiltonian: SparsePauliOp):
                 gs_h0.dot(vecs_1qp[:, k]) / gs_ov
             )
 
-    # print("expects")
+    print("expects")
 
-    # pretty_print(hnaked)
-    # pretty_print(hcorr)
-    # pretty_print_diff(hnaked, hcorr)
+    pretty_print(hnaked)
+    pretty_print(hcorr)
+    pretty_print_diff(hnaked, hcorr)
 
-    # print("overlaps")
+    print("overlaps")
 
-    # pretty_print(onaked)
-    # pretty_print(ocorr)
-    # pretty_print_diff(onaked, ocorr)
+    pretty_print(onaked)
+    pretty_print(ocorr)
+    pretty_print_diff(onaked, ocorr)
 
     return hnaked, hcorr, onaked, ocorr, e0
 
 
-def plot_disp_corr(n_qubits: int, J: float, hl: float, ladder: bool = False):
-    ks = np.linspace(-np.pi, np.pi, 21)
+def get_lucas_disp_corrs(
+    ks: np.ndarray, n_qubits: int, J: float, hl: float, ladder: bool = False
+):
     ham_j, ham_h = pick_model(n_qubits, J, hl, ladder)
     hamiltonian_l = ham_j + ham_h
     hnaked_l, hcorr_l, onaked_l, ocorr_l, e0_l = expect_and_overlaps(hamiltonian_l)
@@ -165,10 +168,50 @@ def plot_disp_corr(n_qubits: int, J: float, hl: float, ladder: bool = False):
     ]
     disp_corr = [dispersion_1d_thermodynamic(k, heff_corr_l, heff_corr_s) for k in ks]
 
+    return disp_naked, disp_corr
+
+
+def get_sumeet_disp_corrs(
+    ks: np.ndarray, n_qubits: int, J: float, hl: float, ladder: bool = False
+):
+    ham_j_l, ham_h_l = pick_model(n_qubits, J, hl, ladder)
+    hamiltonian_l = ham_j_l + ham_h_l
+    ham_j_s, ham_h_s = pick_model(n_qubits - 1, J, hl, ladder)
+    hamiltonian_s = ham_j_s + ham_h_s
+
+    heff_naked_l = H_effective_ed(hamiltonian_l)
+    heff_naked_s = H_effective_ed(hamiltonian_s)
+
+    heff_corr_l = H_effective_ed_LF(hamiltonian_l, ham_h_l)
+    heff_corr_s = H_effective_ed_LF(hamiltonian_s, ham_h_s)
+
+    pretty_print_diff(heff_corr_l, heff_naked_l)
+
+    disp_naked = [
+        dispersion_1d_thermodynamic(k, heff_naked_l, heff_naked_s) for k in ks
+    ]
+    disp_corr = [dispersion_1d_thermodynamic(k, heff_corr_l, heff_corr_s) for k in ks]
+
+    return disp_naked, disp_corr
+
+
+def plot_all_corrs(n_qubits: int, J: float, hl: float, ladder: bool = False):
+    ks = np.linspace(0, np.pi, 21)
+    sumeet_disp_naked, sumeet_disp_corr = get_sumeet_disp_corrs(
+        ks, n_qubits, J, hl, ladder
+    )
+    lucas_disp_naked, lucas_disp_corrs = get_lucas_disp_corrs(
+        ks, n_qubits, J, hl, ladder
+    )
+
     fig, ax = plt.subplots()
 
-    ax.plot(ks, disp_naked, label="uncorrected")
-    ax.plot(ks, disp_corr, label="corrected")
+    ax.plot(ks, lucas_disp_naked, "s-", label="lucas uncorrected")
+    ax.plot(ks, lucas_disp_corrs, "d-", label="lucas corrected")
+    ax.plot(ks, sumeet_disp_naked, "x-", label="sumeet uncorrected")
+    ax.plot(ks, sumeet_disp_corr, "o-", label="sumeet corrected")
+
+    ax.legend()
 
     plt.show()
 
@@ -179,5 +222,4 @@ if __name__ == "__main__":
 
     hl = 0.1
     ladder = False
-
-    plot_disp_corr(n_qubits, J, hl, ladder)
+    plot_all_corrs(n_qubits, J, hl, ladder)
