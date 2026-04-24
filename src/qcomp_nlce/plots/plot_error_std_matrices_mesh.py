@@ -8,8 +8,9 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src.qcomp_nlce.utils import DATA_DIR
-from src.qcomp_nlce.utils.results import pretty_print
+from src.qcomp_nlce.utils import DATA_DIR, reorder_matrix_elems
+from src.qcomp_nlce.utils.results import pretty_print, pretty_print_diff
+from src.qcomp_nlce.utils.workflow_utils import apply_symmetries
 from data_manager import ExperimentDataManager
 from fauplotstyle import style
 
@@ -62,7 +63,91 @@ def within_error(c1: float, c2: float, std: float) -> bool:
         return False
 
 
-def plot_depol_megamesh(edm: ExperimentDataManager, fpath: Path):
+def plot_omatrix_depol_megamesh(edm: ExperimentDataManager):
+    fpath = "omatrix"
+    l_edm = ExperimentDataManager.load(Path(DATA_DIR, fpath))
+    jobj = l_edm.load_last_saved_data_file
+
+    textcolors = ["k", "w"]
+    provider = jobj["inputs"]["provider_name"]
+
+    fig, axes = plt.subplots(ncols=2, constrained_layout=True)
+
+    nq = jobj["inputs"]["n_qubits"]
+    n_shots = jobj["inputs"]["n_shots"]
+    n_qubits = jobj["inputs"]["n_qubits"]
+    n_reps = jobj["inputs"]["n_reps"]
+
+    mat = jobj["results"]["vals"]
+
+    # I'm so tired schi
+    true_mat = jobj["results"]["true_vals"] * 1j
+
+    mat_std = jobj["results"]["stds"]
+
+    mat, _ = apply_symmetries(reorder_matrix_elems(mat), mat, "vqe")
+    mat_std = reorder_matrix_elems(mat_std)
+
+    print("vals")
+    pretty_print(mat)
+    print("true")
+    pretty_print(true_mat)
+    print("diff")
+    pretty_print_diff(mat, true_mat)
+    print("std")
+    pretty_print(mat_std)
+
+    for jj, fn in enumerate((np.real, np.imag)):
+        color_cells = np.abs(fn(true_mat) - fn(mat)) / fn(mat_std)
+
+        print(f"error, {fn.__name__}")
+        pretty_print(color_cells)
+
+        ax: plt.Axes = axes[jj]
+        im = ax.imshow(color_cells)
+        threshold = im.norm(
+            (np.max(color_cells) - np.min(color_cells)) / 2 + np.min(color_cells)
+        )
+
+        for i in range(mat.shape[0]):
+            for j in range(mat.shape[1]):
+                s = (
+                    "Yes"
+                    if within_error(mat[i, j], true_mat[i, j], mat_std[i, j])
+                    else "No"
+                )
+
+                text = ax.text(
+                    j,
+                    i,
+                    s,
+                    ha="center",
+                    va="center",
+                    color=textcolors[int(im.norm(color_cells[i, j]) < threshold)],
+                    fontsize=7,
+                )
+        cbar = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        ax.grid(False)
+        ax.set_title(rf"$O_{{ij}}$, {fn.__name__}")
+
+        ax.set_xticks(range(nq), range(1, 1 + nq))
+        ax.set_yticks(range(nq), range(1, 1 + nq))
+
+    # fig.tight_layout()
+    # fig.subplots_adjust(hspace=0.01, wspace=0.5)
+    edm.var_dump(**jobj["inputs"], fpath=fpath)
+    edm.save_figure(
+        fig,
+        f"mesh_depol_{provider}_{n_reps}",
+        fig_shape="page-wide",
+        add_timestamp=False,
+    )
+
+    plt.show()
+
+
+def plot_hmatrix_depol_megamesh(edm: ExperimentDataManager):
+    fpath = "hmatrix"
     l_edm = ExperimentDataManager.load(Path(DATA_DIR, fpath))
     jobj = l_edm.load_last_saved_data_file
 
@@ -99,9 +184,9 @@ def plot_depol_megamesh(edm: ExperimentDataManager, fpath: Path):
         mat_std = rebuild_diag(mat_std, _diag_std)
         color_cells = np.abs(true_mat - mat) / np.abs(mat_std)
 
-        print(f", {k}, error")
+        print(f"{k}, error")
         pretty_print(color_cells)
-        print(f", {k}, std")
+        print(f"{k}, std")
         pretty_print(mat_std)
 
         ax: plt.Axes = axes[ind_y]
@@ -148,6 +233,7 @@ def plot_depol_megamesh(edm: ExperimentDataManager, fpath: Path):
 
 
 if __name__ == "__main__":
-    fpath = "hmatrix"
-    edm = ExperimentDataManager("within_std_megamesh", dry_run=False, project="nlce")
-    plot_depol_megamesh(edm, fpath)
+    edm = ExperimentDataManager(
+        "omatrix_within_std_megamesh", dry_run=True, project="nlce"
+    )
+    plot_omatrix_depol_megamesh(edm)
