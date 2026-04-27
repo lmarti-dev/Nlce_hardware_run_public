@@ -468,7 +468,10 @@ def plot_multiple_dispersions_1d(_l: list[dict]) -> plt.Figure:
 
 
 def plot_all_backends_dispersions_montecarlo(
-    _d: dict, which_circ: list = None, which_model: str = None
+    _d: dict,
+    which_circ: list = None,
+    which_model: str = None,
+    which_backends: list[BACKEND_TYPES] = None,
 ) -> plt.Figure:
     ks = _d["inputs"]["ks"]
     j = _d["inputs"]["J"]
@@ -483,7 +486,11 @@ def plot_all_backends_dispersions_montecarlo(
     for circ in which_circ:
         if circ == "ed":
             disp = res[circ]["disp"]
-            for be in disp:
+            if which_backends is None:
+                which_backends = disp.keys()
+            else:
+                which_backends = [k for k in which_backends if k in disp.keys()]
+            for be in which_backends:
                 if _ladder:
                     labels = BACKEND_LABELS[circ]
                     for _b in (0, 1):
@@ -503,7 +510,13 @@ def plot_all_backends_dispersions_montecarlo(
                     )
         else:
             disp = res[circ]["disp"]
-            for be in res[circ]["mc_disp"]:
+            if which_backends is None:
+                which_backends = res[circ]["mc_disp"].keys()
+            else:
+                which_backends = [
+                    k for k in which_backends if k in res[circ]["mc_disp"].keys()
+                ]
+            for be in which_backends:
                 if be == "real_backend":
                     fmt = "x-"
                     linewidth = 1.5

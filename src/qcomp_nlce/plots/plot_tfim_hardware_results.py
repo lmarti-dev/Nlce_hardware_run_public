@@ -39,7 +39,10 @@ for items in (
         which_model = d["inputs"]["which_model"]
 
     fig = plot_all_backends_dispersions_montecarlo(
-        d, which_circ=[alg, "ed"], which_model=fig_name
+        d,
+        which_circ=[alg, "ed"],
+        which_model=fig_name,
+        which_backends=["real_backend", "statevector"],
     )
 
     m_edm.var_dump(fpath=fpath)
