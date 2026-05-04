@@ -154,7 +154,6 @@ def TFIM(
     longitudinal_field: float = 0.0,
     ladder: bool = False,
 ) -> SparsePauliOp:
-
     if ladder:
         return TFIM_ladder(
             n_rungs=n_qubits, h=h, J=J, periodic=periodic, split_parts=split_parts
@@ -228,7 +227,7 @@ def TFIM(
 
 
 def model_str(J: float, hl: float, ladder: bool):
-    name = f"{str(int(J*100))}j_{str(int(hl*100))}hl"
+    name = f"{str(int(J * 100))}j_{str(int(hl * 100))}hl"
     if ladder:
         name += "_ladder"
     return name
@@ -364,7 +363,7 @@ def pretty_pauli_str(p: Pauli) -> str:
 
 def subspace_diagonalize(
     unique_bitstrings: Union[list[int], list[str]], ham: SparsePauliOp
-):
+) -> float:
     if isinstance(unique_bitstrings[0], str):
         ind_list = [
             from_bitstring(bx, len(bx), right_to_left=True) for bx in unique_bitstrings

@@ -285,7 +285,7 @@ def depol_vs_shots(dry_run):
 
     which_hadamard_test = "stefan"
     n_qubits_max = 5
-    for provider_name in ("AQT_WORSE_2", "AQT", "AQT_BETTER_10", "AQT_BETTER_100"):
+    for provider_name in ("AQT_PERFECT",):
         for n_shots, n_reps in ((200, 1), (2000, 1), (2000, 5), (2000, 20)):
             workflow_nq(
                 dry_run,

@@ -50,6 +50,30 @@ def aqt_better_fake_backend(improve_noise: float):
     return backend
 
 
+def aqt_no_noise():
+    simulator = OfflineSimulator(
+        id="offline_simulator_noise",
+        name="Offline noisy simulator (with bitflip and phaseflip)",
+        noisy=True,
+    )
+
+    provider = AQTProvider("ANY_ACCESS_TOKEN_WORKS_FOR_OFFLINE_USE")
+    backend = OfflineSimulatorResourceBetter(
+        provider=provider,
+        resource_id=Resource(
+            workspace_id="default",
+            resource_id=simulator.id,
+            resource_name=simulator.name,
+            resource_type="offline_simulator",
+            available_qubits=20,
+        ),
+        with_noise_model=False,
+        improve_noise=0,
+    )
+    backend._target = make_transpiler_target(Target, None)
+    return backend
+
+
 def aqt_pauli_fake_backend(prob: float = 0.01):
     simulator = OfflineSimulator(
         id="offline_simulator_noise",

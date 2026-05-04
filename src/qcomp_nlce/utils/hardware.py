@@ -103,6 +103,7 @@ try:
         aqt_better_fake_backend,
         aqt_pauli_damping_backend,
         aqt_pauli_fake_backend,
+        aqt_no_noise,
         OfflineSimulatorResourceBetter,
     )
 except ModuleNotFoundError:
@@ -299,6 +300,9 @@ def get_appropriate_fake_backend(
 
     elif "AQT_PAULI" in which:
         return aqt_pauli_fake_backend(0.003)
+
+    elif "AQT_PERFECT" in which:
+        return aqt_no_noise()
 
     elif "AQT_WORSE" in which:
         if len(which.split("_")) == 3:
