@@ -279,8 +279,8 @@ def depol_errmit_vqe(dry_run):
 
 
 def depol_vs_shots(dry_run):
-    J = 0.5
-    hl = 0.1
+    J = 0.8
+    hl = 0.0
     which_backends: BACKEND_TYPES = ["fake_backend", "statevector"]
 
     which_hadamard_test = "stefan"
@@ -607,7 +607,7 @@ def workflow_nq(
     for _b in which_backends:
         show_diffs(out_dict, _b)
 
-    plt.show()
+    # plt.show()
 
     ...
 
@@ -630,4 +630,4 @@ if __name__ == "__main__":
 
     # run_aqt_80j(False, ["fake_backend", "statevector"], "RUN3")
     # run_aqt_sweep_80j(False, ["fake_backend", "statevector"], "RUN3")
-    run_aqt_vqe_error_models(False)
+    depol_vs_shots(False)
