@@ -141,7 +141,7 @@ BACKEND_LABELS = {
     "fake_backend": "Noisy",
     "real_backend": "QPU",
     "statevector": "SV",
-    "ed": "ED",
+    "ed": "NLCE+ED",
     "analytic": "Analytic",
 }
 

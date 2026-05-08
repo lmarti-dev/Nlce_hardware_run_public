@@ -98,9 +98,11 @@ for crun in (
         color=BACKEND_COLORS["fake_backend"],
         label=f"{fb_label}, 20 steps",
     )
-    ax.plot(ks, ed, label="ED", color=BACKEND_COLORS["ed"])
+    ax.plot(ks, ed, label=BACKEND_LABELS["ed"], color=BACKEND_COLORS["ed"])
     if "_0hl" in name:
-        ax.plot(ks, ana, label="Analytic", color=BACKEND_COLORS["analytic"])
+        ax.plot(
+            ks, ana, label=BACKEND_LABELS["analytic"], color=BACKEND_COLORS["analytic"]
+        )
 
     ax.set_ylabel(r"$\omega(k)$")
     ax.set_xlabel("$k$")
@@ -110,6 +112,8 @@ for crun in (
         fontsize="x-small",
         columnspacing=1,
     )
+
+    ax.set_ylim(bottom=0)
     m_edm.save_figure(
         fig, filename=f"sweep_aqt_{name}", fig_shape="nice-y", add_timestamp=False
     )
