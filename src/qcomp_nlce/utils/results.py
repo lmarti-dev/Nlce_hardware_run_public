@@ -202,6 +202,8 @@ def undepolarize_out_dict(out_d: dict, depol_rate: float) -> dict:
 
 
 def etopow(a: float):
+    if a == 0:
+        return "0"
     r = f"{a:.2e}"
     r = re.sub(r"e\+0*", r"\\cdot 10^{", r)
     r = re.sub(r"e-0*", r"\\cdot 10^{-", r)
