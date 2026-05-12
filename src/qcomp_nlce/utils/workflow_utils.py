@@ -264,7 +264,7 @@ def sweep_heff(
     ham_j, ham_h = pick_model(n_qubits, J, hl, ladder)
     hamiltonian = ham_j + ham_h
     hamiltonian.__dict__[HAM_NAME_VAR] = which_model
-    min_gap = get_min_gap(hamiltonian)
+    # min_gap = get_min_gap(hamiltonian)
     # the most important thing is to have enough steps!!!
     # the total time can be low-ish
 
@@ -302,10 +302,10 @@ def sweep_heff(
 
 
 def apply_symmetries(eld: np.ndarray, exd: np.ndarray, alg: ALGORITHMS_ALIAS):
-    if alg == "vqe":
+    if alg == "vqe" or alg == "sweep":
         eld = (eld + eld[::-1, ::-1]) / 2
 
-    elif alg == "sweep":
+    elif alg == "swapapap":
         eld = (eld + eld[::-1, ::-1].T + eld[::-1, ::-1] + eld.T) / 4
     exd = (exd + exd[::-1, ::-1].T.conj() + exd.T.conj() + exd[::-1, ::-1]) / 4
     return eld, exd

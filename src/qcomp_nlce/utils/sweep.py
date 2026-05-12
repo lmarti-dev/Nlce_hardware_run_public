@@ -63,7 +63,6 @@ def get_tfim_sweep_circuit(
     sweep_function: str = "simple",
     synthesis: str = "suzuki",
 ) -> QuantumCircuit:
-
     sf = get_sweep_function(sweep_function)
     if synthesis == "lie":
         synth_fn = LieTrotter()

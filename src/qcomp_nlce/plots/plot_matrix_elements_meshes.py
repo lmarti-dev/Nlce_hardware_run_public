@@ -12,6 +12,7 @@ from typing import Literal
 from src.qcomp_nlce.utils import BACKEND_TYPES, DATA_DIR, ALGORITHMS_ALIAS
 from data_manager import ExperimentDataManager
 from fauplotstyle import style
+import os
 
 
 def load_json(fpath: Path) -> list:
@@ -93,6 +94,7 @@ def plot_matrix_breakdown(
     which_color: SHOWABLE,
     which_cell: SHOWABLE,
     show_std: bool = False,
+    fold_matrices: bool = False,
 ):
     fpath = item[0]
     which_algorithm = item[1]
@@ -126,7 +128,8 @@ def plot_matrix_breakdown(
             mat, stds = get_matrix(
                 jobj, size, which_mat, which_backend, which_algorithm
             )
-            mat = apply_symmetry(mat, which_mat, which_algorithm)
+            if fold_matrices:
+                mat = apply_symmetry(mat, which_mat, which_algorithm)
             true_mat = get_true_values(jobj, size, which_mat, which_algorithm)
             stds /= np.sqrt(n_shots)
             nq = len(mat)
@@ -269,6 +272,33 @@ def real_runs():
     # plt.show()
 
 
+def sweep_runs():
+    style()
+    dry_run = False
+    which_backend = "fake_backend"
+
+    edm = ExperimentDataManager(
+        f"plot_sweep_meshes_{which_backend}",
+        project="nlce",
+        dry_run=dry_run,
+    )
+
+    normal_10s = "error_decrease/current/10steps"
+    better10_10s = "error_decrease/better10x/10steps"
+    better100_10s = "error_decrease/better100x/10steps"
+    better100_20s = "error_decrease/better100x/20steps"
+
+    for item in (
+        (normal_10s, "sweep", which_backend),
+        (better10_10s, "sweep", which_backend),
+        (better100_10s, "sweep", which_backend),
+        (better100_20s, "sweep", which_backend),
+    ):
+        plot_matrix_breakdown(edm, item, "error", "value")
+
+    # plt.show()
+
+
 def fake_runs():
     style()
     dry_run = False
@@ -300,4 +330,4 @@ def fake_runs():
 
 
 if __name__ == "__main__":
-    real_runs()
+    sweep_runs()

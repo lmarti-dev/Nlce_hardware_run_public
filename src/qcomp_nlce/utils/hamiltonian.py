@@ -394,11 +394,14 @@ def eigenvector_decomposition(
     return fidelities
 
 
-def get_1qp_mat(ham: SparsePauliOp, sparse: bool):
+def get_1qp_mat(ham: SparsePauliOp | np.ndarray, sparse: bool):
     # this function returns the hamiltonian elements indexed
     # by the indices whose binary representation has hamming weight 1
     # i,e, <j|H|k> where |j> = |00010000> for example
-    mat = ham.to_matrix(sparse=sparse)
+    if isinstance(ham, SparsePauliOp):
+        mat = ham.to_matrix(sparse=sparse)
+    elif isinstance(ham, np.ndarray):
+        mat = ham
     n = int(np.log2(mat.shape[0]))
     sl = [int(2**x) for x in range(n)]
     return mat[np.ix_(sl, sl)]
