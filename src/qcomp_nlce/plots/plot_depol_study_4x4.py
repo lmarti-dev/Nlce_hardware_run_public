@@ -50,7 +50,6 @@ def plot_4x4_from_fpaths(
     depol_rate_2q: float,
     dry_run: bool = True,
 ):
-
     m_edm = ExperimentDataManager(
         f"plot_depol_vs_shots_{name}", project="nlce", dry_run=dry_run
     )
@@ -79,11 +78,11 @@ def plot_4x4_from_fpaths(
         ii = row_from_nreps(n_shots)
 
         if jj is not None:
-
             ax: plt.Axes = axes[ii, jj]
 
             ax.errorbar(ks, fb, yerr=fbstd, color=BACKEND_COLORS["fake_backend"])
             ax.plot(ks, sv, color=BACKEND_COLORS["statevector"])
+            # ax.plot(ks, ana, color=BACKEND_COLORS["analytic"])
 
             # ax.set_yticks([])
             # ax.set_xticks([])
@@ -150,7 +149,6 @@ def plot_tfim_50j_10hl(dry_run):
 
 
 if __name__ == "__main__":
-
     dry_run = False
 
     plot_tfim_50j_10hl(dry_run)

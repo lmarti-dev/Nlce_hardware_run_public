@@ -95,5 +95,5 @@ if __name__ == "__main__":
     vals_sv, stds_sv = res_to_lists(res_sv)
 
     print(
-        f"sv: {vals_sv}, fb: {vals_fb}, depol: {depol_rate}, corrected: {vals_fb/(1-depol_rate)}"
+        f"sv: {vals_sv}, fb: {vals_fb}, depol: {depol_rate}, corrected: {vals_fb / (1 - depol_rate)}"
     )

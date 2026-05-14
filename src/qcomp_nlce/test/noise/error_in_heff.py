@@ -1,6 +1,5 @@
-from src.qcomp_nlce.utils import TFIM, H_effective_ed
+from src.qcomp_nlce.utils import TFIM, H_effective_ed, dispersion_1d_thermodynamic
 from src.qcomp_nlce.utils.workflow_utils import (
-    dispersion_1d_thermodynamic,
     tfim_ed_dispersion,
 )
 from qiskit.quantum_info import SparsePauliOp
