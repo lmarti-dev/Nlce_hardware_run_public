@@ -16,6 +16,7 @@ from src.qcomp_nlce.utils import (
     get_tfim_ratio,
     sweep_time_from_steps,
     BACKEND_TYPES,
+    LABELS_ORDER,
     baptize_circuit,
     BACKEND_COLORS,
     HAM_NAME_VAR,
@@ -24,11 +25,13 @@ from src.qcomp_nlce.utils import (
     ALGORITHMS_ALIAS,
     RUNS_POSTFIX,
     HAM_EXPECT_METHODS,
+    QPU_RUN_COLOR,
 )
 from src.qcomp_nlce.utils.dispersion import (
     exact_dispersion_1qp_1d,
     dispersion_switcher,
 )
+
 
 from src.qcomp_nlce.utils.hardware import BACKEND_LABELS
 import io
@@ -41,6 +44,31 @@ from src.qcomp_nlce.utils.effective_hamiltonian import H_effective, H_effective_
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
+
+
+def stamp_with_alg(_d: dict, ax: plt.Axes):
+    k = [k for k in _d["results"].keys() if k == "sweep" or k == "vqe"][0]
+    ALGNAME = {"sweep": "NLCE+ASP", "vqe": "NLCE+VQE"}
+    if _d["inputs"]["ladder"]:
+        ax.text(
+            0.01,
+            0.01,
+            ALGNAME[k],
+            ha="left",
+            va="bottom",
+            transform=ax.transAxes,
+            fontsize="x-small",
+        )
+    else:
+        ax.text(
+            0.01,
+            0.99,
+            ALGNAME[k],
+            ha="left",
+            va="top",
+            transform=ax.transAxes,
+            fontsize="x-small",
+        )
 
 
 def dispersion_all_backends(
@@ -467,6 +495,29 @@ def plot_multiple_dispersions_1d(_l: list[dict]) -> plt.Figure:
     return fig
 
 
+def label_sorter(labels: list[str]) -> list[int]:
+    labels_values = {
+        "SV": 0,
+        "Noisy": 100,
+        "QPU": 200,
+        "NLCE+ED": 300,
+        "Analytic": 400,
+    }
+    stype = []
+    svals = []
+    for ll in labels:
+        for k in labels_values:
+            if k in ll:
+                v = labels_values[k]
+                if k in stype:
+                    v += len([m for m in stype if k == m])
+                svals.append(v)
+                stype.append(k)
+            else:
+                v = 1000
+    return np.argsort(svals).tolist()
+
+
 def plot_all_backends_dispersions_montecarlo(
     _d: dict,
     which_circ: list = None,
@@ -600,7 +651,114 @@ def plot_all_backends_dispersions_montecarlo(
     ax.set_ylim(bottom=0)
     ax.set_ylabel(r"$\omega(k)$")
     ax.set_xlabel("$k$")
+
+    stamp_with_alg(_d, ax)
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    order = label_sorter(labels)
     ax.legend(
+        [handles[idx] for idx in order],
+        [labels[idx] for idx in order],
+        ncol=2,
+        fontsize="x-small",
+        columnspacing=1,
+    )
+    return fig
+
+
+def plot_all_backends_dispersions_montecarlo_multiple_qpu(
+    _ds: list[dict],
+    which_model,
+    circ: str = None,
+    which_backends: list[BACKEND_TYPES] = [],
+) -> plt.Figure:
+    fig, ax = plt.subplots()
+    markers = "xds^"
+    for jj, _d in enumerate(_ds):
+        ks = _d["inputs"]["ks"]
+        j = _d["inputs"]["J"]
+
+        res = _d["results"]
+
+        disp = res[circ]["disp"]
+        if which_backends is None:
+            which_backends = res[circ]["mc_disp"].keys()
+        else:
+            which_backends = [
+                k for k in which_backends if k in res[circ]["mc_disp"].keys()
+            ]
+        for be in which_backends:
+            labels = BACKEND_LABELS[be]
+            if be == "real_backend":
+                fmt = f"{markers[jj]}-"
+                linewidth = 1.5
+                capsize = 2
+                markersize = 5
+                labels = labels + f" {jj + 1}"
+                color = QPU_RUN_COLOR[jj]
+            else:
+                fmt = "o--"
+                linewidth = 0.75
+                capsize = 1
+                markersize = 4
+                color = BACKEND_COLORS[be]
+            if be == "statevector" and jj == 0:
+                ax.plot(
+                    ks,
+                    disp[be],
+                    fmt,
+                    linewidth=linewidth,
+                    label=labels,
+                    color=color,
+                    markersize=markersize,
+                )
+            elif be != "statevector":
+                yerr = res[circ]["mc_disp"][be]["std"]
+                ax.errorbar(
+                    ks,
+                    disp[be],
+                    yerr,
+                    fmt=fmt,
+                    linewidth=linewidth,
+                    label=labels,
+                    color=color,
+                    capsize=capsize,
+                    markersize=markersize,
+                )
+        if which_model is None:
+            if "which_model" in _d["inputs"].keys():
+                which_model = _d["inputs"]["which_model"]
+            elif "model_dir" in _d["inputs"]:
+                which_model = _d["inputs"]["model_dir"]
+            else:
+                which_model = "TFIM_0hl"
+    if "_0hl" in which_model and "ladder" not in which_model:
+        ax.plot(
+            ks,
+            exact_dispersion_1qp_1d(j, ks),
+            label="Analytic",
+            color=BACKEND_COLORS["analytic"],
+        )
+    disp = res[circ]["disp"]["statevector"]
+    ax.plot(
+        ks,
+        disp,
+        label=BACKEND_LABELS["ed"],
+        color=BACKEND_COLORS["ed"],
+    )
+
+    ax.set_ylim(bottom=0)
+    ax.set_ylabel(r"$\omega(k)$")
+    ax.set_xlabel("$k$")
+
+    stamp_with_alg(_d, ax)
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+
+    order = label_sorter(labels)
+    ax.legend(
+        [handles[idx] for idx in order],
+        [labels[idx] for idx in order],
         ncol=2,
         fontsize="x-small",
         columnspacing=1,
@@ -658,6 +816,15 @@ def plot_bitstring_props(d):
                     markersize=markersize,
                 )
     ax.set_ylabel(r"Percentage of states")
+    ax.text(
+        0.99,
+        0.01,
+        "NLCE+VQE",
+        ha="right",
+        va="bottom",
+        transform=ax.transAxes,
+        fontsize="x-small",
+    )
     ax.set_xlabel("$J/h$")
     ax.legend(
         ncol=2,
@@ -717,7 +884,20 @@ def plot_0qp_gs_nlce(d: dict):
     )
     ax.set_ylabel("Ground state energy")
     ax.set_xlabel("$J/h$")
+    ax.text(
+        0.99,
+        0.99,
+        "NLCE+VQE",
+        ha="right",
+        va="top",
+        transform=ax.transAxes,
+        fontsize="x-small",
+    )
+    handles, labels = plt.gca().get_legend_handles_labels()
+    order = [LABELS_ORDER[label] for label in labels]
     ax.legend(
+        [handles[idx] for idx in order],
+        [labels[idx] for idx in order],
         ncol=2,
         fontsize="x-small",
         columnspacing=1,

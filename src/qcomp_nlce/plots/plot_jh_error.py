@@ -10,11 +10,11 @@ import numpy as np
 
 def getcolor(fpath):
     if "ladder" in fpath:
-        return "#971B2F"
+        return "#DA082B"
     elif "_0hl" in fpath:
-        return "#228848"
+        return "#2CC808"
     else:
-        return "#E87722"
+        return "#066B9D"
 
 
 if __name__ == "__main__":
@@ -66,19 +66,19 @@ if __name__ == "__main__":
         )
 
     hd = [
+        handles["sweep_tfim_30j_0hl_5q"],
         handles["vqe_tfim_30j_0hl_5q"],
         handles["vqe_tfim_50j_10hl_5q"],
-        handles["sweep_tfim_30j_0hl_5q"],
         handles["vqe_tfim_20j_0hl_8q_ladder"],
     ]
-    lbs = ["VQE", "VQE LF", "ASP", "VQE ladder"]
+    lbs = ["ASP chain", "VQE chain", "VQE LF chain", "VQE ladder"]
 
     ax.legend(
         hd,
         lbs,
         fontsize="x-small",
     )
-
+    ax.set_xlim(left=0)
     ax.set_xlabel(r"$J/h$")
     ax.set_ylabel(r"Mean dispersion error")
 

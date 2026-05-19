@@ -61,7 +61,7 @@ def plot_depol_megamesh(edm: ExperimentDataManager, fpath: Path):
     n_qubits = jobj["inputs"]["n_qubits"]
     n_reps = jobj["inputs"]["n_reps"]
 
-    which_obs = {"": r"\tilde{H}", "parity_": "Z" * n_qubits}
+    which_obs = {"": r"H^{[1]}", "parity_": "Z" * n_qubits}
 
     offdiag_dict = {
         "+": r"\gamma_1",
@@ -127,6 +127,90 @@ def plot_depol_megamesh(edm: ExperimentDataManager, fpath: Path):
         fig_shape="page-wide",
         add_timestamp=False,
     )
+
+    plt.show()
+
+
+def plot_depol_two_figs(edm: ExperimentDataManager, fpath: Path):
+    l_edm = ExperimentDataManager.load(Path(DATA_DIR, fpath))
+    jobj = l_edm.load_last_saved_data_file
+
+    textcolors = ["k", "w"]
+    provider = jobj["inputs"]["provider_name"]
+
+    nq = jobj["inputs"]["n_qubits"]
+    n_shots = jobj["inputs"]["n_shots"]
+    n_qubits = jobj["inputs"]["n_qubits"]
+    n_reps = jobj["inputs"]["n_reps"]
+
+    which_obs = {"": r"H^{[1]}", "parity_": "Z" * n_qubits}
+
+    offdiag_dict = {
+        "+": r"\gamma_1",
+        "-": r"\gamma_2",
+        "-i": r"\gamma_3",
+        "+i": r"\gamma_4",
+    }
+
+    for ind_obs, ob in enumerate(which_obs.keys()):
+        fig, axes = plt.subplots(
+            nrows=2, ncols=2, figsize=(8, 6), constrained_layout=True
+        )
+        for ind_gamma, k in enumerate(offdiag_dict.keys()):
+            mat = jobj["results"][f"offd_{ob}vals"][k]
+            _diag = jobj["results"][f"diag_{ob}vals"]
+
+            true_mat = jobj["results"][f"offd_{ob}true_vals"][k]
+            true_diag = jobj["results"][f"diag_{ob}true_vals"]
+
+            mat = rebuild_diag(mat, _diag)
+            true_mat = rebuild_diag(true_mat, true_diag)
+
+            cc = compute_depol(mat, true_mat)
+            # check if depol can be measured at all
+            cc[np.where(np.abs(mat) < 1 / np.sqrt(n_shots))] = np.nan
+
+            color_cells = cc
+
+            ax: plt.Axes = axes[ind_gamma // 2, ind_gamma % 2]
+            im = ax.imshow(color_cells)
+            threshold = im.norm(
+                (np.max(color_cells) - np.min(color_cells)) / 2 + np.min(color_cells)
+            )
+
+            for i in range(mat.shape[0]):
+                for j in range(mat.shape[1]):
+                    sign = "" if mat[i, j].imag >= 0 else "-"
+
+                    u1 = f"{mat[i, j]:.3f}"
+                    u2 = f"{true_mat[i, j]:.3f}"
+
+                    s = f"{u1}\n{sign}{u2}"
+
+                    text = ax.text(
+                        j,
+                        i,
+                        s,
+                        ha="center",
+                        va="center",
+                        color=textcolors[int(im.norm(color_cells[i, j]) < threshold)],
+                        fontsize=7,
+                    )
+            cbar = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+            ax.grid(False)
+            ax.set_title(rf"${offdiag_dict[k]}, {which_obs[ob]}$")
+
+            ax.set_xticks(range(nq), range(1, 1 + nq))
+            ax.set_yticks(range(nq), range(1, 1 + nq))
+
+        # fig.tight_layout()
+        # fig.subplots_adjust(hspace=0.01, wspace=0.5)
+        edm.var_dump(**jobj["inputs"], fpath=fpath)
+        edm.save_figure(
+            fig,
+            f"mesh_depol_{ob}{provider}_{n_reps}",
+            add_timestamp=False,
+        )
 
     plt.show()
 

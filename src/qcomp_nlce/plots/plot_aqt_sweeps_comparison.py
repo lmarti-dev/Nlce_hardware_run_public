@@ -4,6 +4,7 @@ from src.qcomp_nlce.utils import (
     exact_dispersion_1qp_1d,
     BACKEND_LABELS,
     BACKEND_COLORS,
+    LABELS_ORDER,
     DATA_DIR,
 )
 from data_manager import ExperimentDataManager
@@ -107,12 +108,34 @@ for crun in (
     ax.set_ylabel(r"$\omega(k)$")
     ax.set_xlabel("$k$")
     # ax.set_yscale("log")
+    handles, labels = plt.gca().get_legend_handles_labels()
+
+    custom_order = {
+        "SV, 10 steps": 0,
+        "SV, 20 steps": 1,
+        "Noisy, 10 steps": 2,
+        "Noisy, 20 steps": 3,
+        "NLCE+ED": 4,
+        "Analytic": 5,
+    }
+
+    order = [custom_order[label] for label in labels]
     ax.legend(
+        [handles[idx] for idx in order],
+        [labels[idx] for idx in order],
         ncol=2,
         fontsize="x-small",
         columnspacing=1,
     )
-
+    ax.text(
+        0.01,
+        0.99,
+        "NLCE+ASP",
+        ha="left",
+        va="top",
+        transform=ax.transAxes,
+        fontsize="x-small",
+    )
     ax.set_ylim(bottom=0)
     m_edm.save_figure(
         fig, filename=f"sweep_aqt_{name}", fig_shape="nice-y", add_timestamp=False

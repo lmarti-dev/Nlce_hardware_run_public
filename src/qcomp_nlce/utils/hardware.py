@@ -145,6 +145,14 @@ BACKEND_LABELS = {
     "analytic": "Analytic",
 }
 
+LABELS_ORDER = {
+    "SV": 0,
+    "Noisy": 1,
+    "QPU": 2,
+    "NLCE+ED": 3,
+    "Analytic": 4,
+}
+
 BACKEND_COLORS = {
     "fake_backend": "#228848",
     "real_backend": "#E87722",
@@ -153,6 +161,13 @@ BACKEND_COLORS = {
     "analytic": "#5F7CA3",
 }
 
+
+QPU_RUN_COLOR = {
+    0: "#E87722",
+    1: "#804416",
+    2: "#522B0D",
+    3: "#2B1809",
+}
 
 RUNS_POSTFIX = Literal["", "RUN2", "RUN3"]
 

@@ -42,7 +42,7 @@ for items in (
         d,
         which_circ=[alg, "ed"],
         which_model=fig_name,
-        which_backends=["real_backend", "statevector", "fake_backend"],
+        which_backends=["real_backend", "statevector"],
     )
 
     m_edm.var_dump(fpath=fpath)

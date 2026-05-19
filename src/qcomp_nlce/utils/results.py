@@ -11,7 +11,6 @@ from src.qcomp_nlce.utils.stats import (
     mean_std,
     mc_disp_from_res_dict,
 )
-from src.qcomp_nlce.utils.dispersion import dispersion_1d_thermodynamic
 from src.qcomp_nlce.utils.hardware import BACKEND_TYPES
 
 import matplotlib.pyplot as plt
