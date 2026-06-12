@@ -285,7 +285,13 @@ def depol_vs_shots(dry_run):
 
     which_hadamard_test = "stefan"
     n_qubits_max = 5
-    for provider_name in ("AQT_PERFECT",):
+    for provider_name in (
+        "AQT_WORSE_2",
+        "AQT",
+        "AQT_BETTER_10",
+        "AQT_BETTER_100",
+        "AQT_PERFECT",
+    ):
         for n_shots, n_reps in ((200, 1), (2000, 1), (2000, 5), (2000, 20)):
             workflow_nq(
                 dry_run,
@@ -298,6 +304,49 @@ def depol_vs_shots(dry_run):
                 J=J,
                 n_reps=n_reps,
                 n_steps=10,
+                hl=hl,
+            )
+            workflow_nq(
+                dry_run,
+                n_qubits_max,
+                which_hadamard_test,
+                provider_name,
+                n_shots,
+                which_backends,
+                ["vqe"],
+                J=J,
+                n_reps=n_reps,
+                n_steps=20,
+                hl=hl,
+            )
+
+
+def depol_vs_shots_asp(dry_run):
+    J = 0.8
+    hl = 0.0
+    which_backends: BACKEND_TYPES = ["fake_backend", "statevector"]
+
+    which_hadamard_test = "stefan"
+    n_qubits_max = 5
+    for provider_name in (
+        "AQT_WORSE_2",
+        "AQT",
+        "AQT_BETTER_10",
+        "AQT_BETTER_100",
+        "AQT_PERFECT",
+    ):
+        for n_shots, n_reps in ((200, 1), (2000, 1), (2000, 5), (2000, 20)):
+            workflow_nq(
+                dry_run,
+                n_qubits_max,
+                which_hadamard_test,
+                provider_name,
+                n_shots,
+                which_backends,
+                ["sweep"],
+                J=J,
+                n_reps=n_reps,
+                n_steps=20,
                 hl=hl,
             )
 
@@ -630,4 +679,4 @@ if __name__ == "__main__":
 
     # run_aqt_80j(False, ["fake_backend", "statevector"], "RUN3")
     # run_aqt_sweep_80j(False, ["fake_backend", "statevector"], "RUN3")
-    depol_vs_shots(False)
+    depol_vs_shots_asp(False)

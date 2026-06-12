@@ -155,6 +155,7 @@ LABELS_ORDER = {
 
 BACKEND_COLORS = {
     "fake_backend": "#228848",
+    "fake_backend2": "#0D341B",
     "real_backend": "#E87722",
     "statevector": "#971B2F",
     "ed": "#5FC5EC",
